@@ -3,13 +3,13 @@
 ## 学習目標
 
 このレッスンでは、Laravelでのデバッグ手法を習得し、問題解決能力を高めます。
+手順に沿って実装し、完了したコードと練習問題の回答を含めたプルリクエストを作成しましょう。
 
 ### 到達目標
 - `Log` ファサードを使ってログを出力できる
 - `dd()` と `dump()` の違いを理解し、使い分けられる
 - Laravel Telescope をインストールして活用できる
 
----
 
 ## なぜデバッグスキルが重要か？
 
@@ -19,7 +19,6 @@
 - **変数の中身を確認**して期待通りの値か検証できる
 - **処理の流れを追跡**してどこで問題が起きているか把握できる
 
----
 
 ## Step 1: dd() と dump() を使う
 
@@ -69,7 +68,6 @@ public function show(User $user)
 ddd($user);  // より詳細な情報が表示される
 ```
 
----
 
 ## Step 2: Log ファサードを使う
 
@@ -161,8 +159,6 @@ LOG_LEVEL=debug
 LOG_LEVEL=info
 ```
 
----
-
 ## Step 3: Laravel Telescope のインストール
 
 ### Telescope とは？
@@ -218,8 +214,6 @@ php artisan migrate
 4. 「Logs」タブでログを確認
 5. 「Exceptions」タブで例外を確認
 
----
-
 ## Step 4: 実践 - デバッグしてみよう
 
 ### 課題: 意図的にエラーを起こしてデバッグする
@@ -257,8 +251,6 @@ public function show(User $user)
 4. **問題を特定して修正する**
    - `full_name` は User モデルに存在しない
    - `name` プロパティを使うか、アクセサを追加する
-
----
 
 ## ベストプラクティス
 
@@ -310,66 +302,18 @@ protected function gate(): void
 }
 ```
 
----
-
-## まとめ
-
-このレッスンで学んだこと：
-
-1. **dd() / dump()**
-   - クイックデバッグに便利
-   - dd() は処理を停止、dump() は継続
-   - 本番コードには残さない
-
-2. **Log ファサード**
-   - ファイルにログを出力
-   - ログレベルで重要度を区別
-   - 本番環境でも使える
-
-3. **Laravel Telescope**
-   - ブラウザでデバッグ情報を確認
-   - クエリ、リクエスト、例外などを可視化
-   - N+1問題の発見に有効
-
----
-
 ## 練習問題
 
 ### 問題1
 `UserController@index`（ユーザー一覧API）に、取得したユーザー数をログ出力する処理を追加してください。
 
-<details>
-<summary>解答例</summary>
-
-```php
-public function index()
-{
-    $users = User::all();
-
-    Log::info('ユーザー一覧を取得しました', [
-        'count' => $users->count(),
-    ]);
-
-    return UserResource::collection($users);
-}
-```
-</details>
-
 ### 問題2
 Telescopeで、`/api/user/1` へのリクエストで実行されたSQLクエリを確認してください。何件のクエリが実行されましたか？
 
-<details>
-<summary>確認方法</summary>
+## 参考資料
 
-1. `http://localhost:8000/api/user/1` にアクセス
-2. Telescope (`http://localhost:8000/telescope`) を開く
-3. 「Requests」タブで該当のリクエストをクリック
-4. 「Queries」セクションで実行されたSQLを確認
-
-Route Model Binding を使っている場合、1件のSELECTクエリが実行されているはずです。
-</details>
-
----
+- [Laravel 公式ドキュメント - Logging](https://laravel.com/docs/logging)
+- [Laravel 公式ドキュメント - Telescope](https://laravel.com/docs/telescope)
 
 ## 次のレッスン
 
