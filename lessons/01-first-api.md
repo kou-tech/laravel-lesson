@@ -10,8 +10,6 @@
 - `UserController` でユーザー情報を取得して返せる
 - `UserResource` を使ってレスポンス形式を整えられる
 
----
-
 ## Step 1: APIルーティングの作成
 
 まず、このレッスンで実装するAPIの全体像を確認しましょう。
@@ -54,8 +52,6 @@ Route::get('/user', [UserController::class, 'show']);
 ```bash
 php artisan route:list --path=api/user
 ```
-
----
 
 ## Step 2: コントローラーの作成
 
@@ -111,8 +107,6 @@ curl http://localhost:8000/api/user
     "updated_at": "2025-01-01T00:00:00.000000Z"
 }
 ```
-
----
 
 ## Step 3: API Resourceの作成
 
@@ -221,8 +215,6 @@ curl http://localhost:8000/api/user
 - レスポンスが `data` でラップされています（API Resourceのデフォルト動作）
 - 指定したフィールドのみが含まれています
 - 日付のフォーマットが変わっています
-
----
 
 ## Step 4: 発展 - パスパラメータでユーザーを指定
 
