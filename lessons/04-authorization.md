@@ -10,8 +10,6 @@
 - Policy を使ったモデルベースの認可ができる
 - ユーザーに役割（role）を追加できる
 
----
-
 ## 認証 vs 認可
 
 | 概念 | 英語 | 質問 | 例 |
@@ -35,9 +33,13 @@
 → ログインしている かつ 自分自身の情報のみ編集可能
 ```
 
----
-
 ## Step 1: ユーザーに役割を追加する
+
+このStepでは以下を実装します：
+- [ ] マイグレーションを作成・実行
+- [ ] Userモデルに`role`フィールドを追加
+- [ ] UserRole Enumを作成
+- [ ] Userモデルにキャストと便利メソッドを追加
 
 ### マイグレーションの作成
 
@@ -145,9 +147,10 @@ public function isStudent(): bool
 }
 ```
 
----
-
 ## Step 2: Gateを使った認可
+
+このStepでは以下を実装します。
+- [ ] AppServiceProviderにGateを定義
 
 ### Gateとは？
 
@@ -210,15 +213,28 @@ if (Gate::denies('manage-courses')) {
 Gate::authorize('access-own-data', $targetUser);
 ```
 
----
-
 ## Step 3: Policyを使った認可
+
+このStepでは以下を実装します。
+- [ ] UserPolicyを作成
+- [ ] 認可メソッド（view, update, delete等）を実装
+
+### GateとPolicyの使い分け
+
+```mermaid
+flowchart TD
+    A[認可が必要] --> B{モデルに紐づく?}
+    B -->|Yes| C[Policy]
+    B -->|No| D[Gate]
+    C --> E[UserPolicy, CoursePolicy...]
+    D --> F[manage-courses, create-course...]
+```
 
 ### Policyとは？
 
 Policy は、**特定のモデル**に対する認可ルールをまとめたクラスです。
 
-Gate との違い：
+Gate との違い
 - Gate: 汎用的なアクション（「管理画面にアクセスできるか」）
 - Policy: モデルに紐づくアクション（「このユーザーを編集できるか」）
 
@@ -294,7 +310,7 @@ Laravel 11では、モデル名と一致するPolicyは自動的に登録され�
 
 - `User` モデル → `UserPolicy` が自動的に紐づく
 
-手動で登録する場合は `AppServiceProvider` で：
+手動で登録する場合は `AppServiceProvider` で、
 
 ```php
 use App\Models\User;
@@ -307,9 +323,9 @@ public function boot(): void
 }
 ```
 
----
-
 ## Step 4: Policyをコントローラーで使う
+
+このStepでは、Step 3で作成したPolicyの使い方を学びます（コード例は参考用）。
 
 ### authorize メソッド
 
@@ -364,9 +380,9 @@ class UserController extends Controller
 }
 ```
 
----
-
 ## Step 5: 認可エラーのレスポンス
+
+このStepでは、認可エラー時のレスポンスについて学びます（参考情報）。
 
 ### デフォルトの動作
 
@@ -395,17 +411,19 @@ public function update(User $user, User $model): Response
 }
 ```
 
----
-
 ## Step 6: 実践例 - ユーザー編集APIの保護
+
+このStepでは以下を実装します。
+- [ ] 認証が必要なルートを追加
+- [ ] UserControllerにupdateメソッドを実装（認可チェック付き）
 
 ### ルートの定義
 
 ```php
 // routes/api.php
 Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/me', [UserController::class, 'me']);
-    Route::patch('/users/{user}', [UserController::class, 'update']);
+    Route::get('/me', [App\Http\Controllers\Api\UserController::class, 'me']);
+    Route::patch('/users/{user}', [App\Http\Controllers\Api\UserController::class, 'update']);
 });
 ```
 
@@ -423,19 +441,15 @@ use Illuminate\Http\Request;
 
 class UserController extends Controller
 {
-    public function me(Request $request)
-    {
-        return new UserResource($request->user());
-    }
-
-    public function update(Request $request, User $user)
+    ...
+    public function update(Request $request, User $user): UserResource
     {
         // 認可チェック
         $this->authorize('update', $user);
 
         // バリデーション
         $validated = $request->validate([
-            'name' => ['sometimes', 'string', 'max:255'],
+            'name' => ['required', 'string', 'max:255'],
         ]);
 
         // 更新
@@ -450,102 +464,21 @@ class UserController extends Controller
 
 **自分自身を更新（成功）**
 
-```bash
-# ユーザーID=1でログインしている状態で
-curl -X PATCH http://localhost:8000/api/users/1 \
-  -H "Content-Type: application/json" \
-  -d '{"name": "新しい名前"}'
-```
 
 **他人を更新しようとする（失敗）**
 
-```bash
-# ユーザーID=1でログインしている状態で、ID=2を更新しようとする
-curl -X PATCH http://localhost:8000/api/users/2 \
-  -H "Content-Type: application/json" \
-  -d '{"name": "新しい名前"}'
-
-# 403 Forbidden が返る
-```
-
----
-
-## まとめ
-
-このレッスンで学んだこと：
-
-1. **認証 vs 認可**
-   - 認証: 誰か確認
-   - 認可: 何ができるか確認
-
-2. **Gate**
-   - 汎用的なアクションの認可
-   - `Gate::define()` で定義
-   - `Gate::authorize()` でチェック
-
-3. **Policy**
-   - モデルに紐づく認可
-   - `php artisan make:policy` で作成
-   - `$this->authorize()` でチェック
-
-4. **役割（Role）の実装**
-   - Enumで役割を定義
-   - `$casts` でキャスト
-   - ヘルパーメソッドで判定
-
----
 
 ## 練習問題
 
 ### 問題1
-UserPolicyに「講師のみ生徒の役割を変更できる」という認可を追加してください。
-
-<details>
-<summary>ヒント</summary>
-
-新しいメソッド `updateRole` を追加し、講師かどうかをチェックします。
-</details>
-
-<details>
-<summary>解答例</summary>
-
-```php
-public function updateRole(User $user, User $model): bool
-{
-    // 講師のみ役割を変更可能
-    return $user->isInstructor();
-}
-```
-
-コントローラーで：
-
-```php
-$this->authorize('updateRole', $targetUser);
-```
-</details>
+UserPolicyに `updateRole` メソッドを追加し、「講師のみ生徒の役割を変更できる」という認可を実装してください。
 
 ### 問題2
-Gateを使って「講師のみが講座を作成できる」という認可を追加してください。
+Gateを使って「講師のみが講座を作成できる」という認可 `create-course` を `AppServiceProvider` に追加してください。
 
-<details>
-<summary>解答例</summary>
+## 参考資料
 
-`AppServiceProvider.php`:
-
-```php
-Gate::define('create-course', function ($user) {
-    return $user->isInstructor();
-});
-```
-
-コントローラーで：
-
-```php
-Gate::authorize('create-course');
-```
-</details>
-
----
+- [Laravel 公式ドキュメント - Authorization](https://laravel.com/docs/authorization)
 
 ## 次のレッスン
 
