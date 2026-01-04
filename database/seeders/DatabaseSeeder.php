@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
                 'name' => 'Test User',
                 'password' => 'password',
                 'email_verified_at' => now(),
+                'role' => 'student',
             ]
         );
 
@@ -30,6 +31,7 @@ class DatabaseSeeder extends Seeder
                 'name' => 'Test User 2',
                 'password' => 'password',
                 'email_verified_at' => now(),
+                'role' => 'instructor',
             ]
         );
     }

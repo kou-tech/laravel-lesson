@@ -35,52 +35,10 @@
 
 ## Step 1: ユーザーに役割を追加する
 
-このStepでは以下を実装します：
-- [ ] マイグレーションを作成・実行
+このStepでは以下を実装します。
 - [ ] Userモデルに`role`フィールドを追加
 - [ ] UserRole Enumを作成
 - [ ] Userモデルにキャストと便利メソッドを追加
-
-### マイグレーションの作成
-
-まず、ユーザーに `role` フィールドを追加します。
-
-```bash
-php artisan make:migration add_role_to_users_table
-```
-
-### マイグレーションの実装
-
-```php
-<?php
-
-use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
-
-return new class extends Migration
-{
-    public function up(): void
-    {
-        Schema::table('users', function (Blueprint $table) {
-            $table->string('role')->default('student')->after('email');
-        });
-    }
-
-    public function down(): void
-    {
-        Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn('role');
-        });
-    }
-};
-```
-
-### マイグレーションの実行
-
-```bash
-php artisan migrate
-```
 
 ### Userモデルの修正
 
