@@ -10,33 +10,21 @@
 - HTTPメソッドとステータスコードを正しく使える
 - 受講管理システムのAPI仕様を設計できる
 
----
 
 ## RESTful APIとは？
 
 **REST**（Representational State Transfer）は、Web APIを設計するためのアーキテクチャスタイルです。
 
-### RESTの6原則
+### RESTの基本的な考え方
 
-1. **クライアント・サーバー分離**: フロントエンドとバックエンドを分離
-2. **ステートレス**: サーバーはリクエスト間で状態を保持しない
-3. **キャッシュ可能**: レスポンスをキャッシュできる
-4. **統一インターフェース**: 一貫したURL設計
-5. **レイヤードシステム**: 中間層（ロードバランサー等）を挟める
-6. **オンデマンドコード**（オプション）
+RESTful APIで意識すべきポイント。
 
-### リソース指向
+| 観点 | 内容 |
+|------|------|
+| リソース指向 | URLは「もの（名詞）」を表す（例: `/users`, `/courses`） |
+| HTTPメソッド | GET=取得、POST=作成、PATCH=更新、DELETE=削除 |
+| ステートレス | 各リクエストは独立しており、セッションに依存しない |
 
-RESTful APIでは、**リソース**（データ）を中心に設計します。
-
-```
-リソース例:
-- ユーザー (users)
-- 講座 (courses)
-- 受講 (enrollments)
-```
-
----
 
 ## HTTPメソッドの使い分け
 
@@ -73,7 +61,6 @@ PATCH /users/1
 }
 ```
 
----
 
 ## エンドポイント設計のルール
 
@@ -113,7 +100,6 @@ PATCH /users/1
 ❌ GET /users/instructors
 ```
 
----
 
 ## HTTPステータスコード
 
@@ -142,35 +128,53 @@ PATCH /users/1
 | 500 | Internal Server Error | サーバー内部エラー |
 | 503 | Service Unavailable | メンテナンス中 |
 
----
 
 ## 受講管理システムのAPI設計
 
 ### エンティティ関係図（ER図）
 
+```mermaid
+erDiagram
+    users ||--o{ attendances : "受講する"
+    courses ||--o{ attendances : "受講される"
+    users ||--o{ courses : "講師として担当"
+
+    users {
+        int id PK
+        string name
+        string email
+        string password
+        string role
+    }
+
+    courses {
+        int id PK
+        string title
+        string description
+        int instructor_id FK
+        int capacity
+        datetime created_at
+    }
+
+    attendances {
+        int id PK
+        int user_id FK
+        int course_id FK
+        datetime attended_at
+        string status
+    }
 ```
-┌─────────────┐       ┌─────────────────┐       ┌─────────────┐
-│   users     │       │   enrollments   │       │   courses   │
-├─────────────┤       ├─────────────────┤       ├─────────────┤
-│ id          │───┐   │ id              │   ┌───│ id          │
-│ name        │   │   │ user_id     ────│───┘   │ title       │
-│ email       │   └───│─course_id       │       │ description │
-│ password    │       │ enrolled_at     │       │ instructor_id│──┐
-│ role        │       │ status          │       │ capacity    │  │
-└─────────────┘       └─────────────────┘       │ created_at  │  │
-      ▲                                         └─────────────┘  │
-      │                                                          │
-      └──────────────────────────────────────────────────────────┘
-              講師（instructor）もUserテーブルの一員
-```
+
+> 講師（instructor）もUserテーブルの一員です。
 
 ### 関係性
 
-- **User** (1) → (N) **Enrollment**: 1人のユーザーは複数の講座を受講できる
-- **Course** (1) → (N) **Enrollment**: 1つの講座には複数の受講者がいる
-- **User** (1) → (N) **Course**: 1人の講師は複数の講座を担当できる
+| 親エンティティ | 子エンティティ | 関係 | 説明 |
+|---------------|----------------|------|------|
+| User | Attendance | 1 : N | 1人のユーザーは複数の講座を受講できる |
+| Course | Attendance | 1 : N | 1つの講座には複数の受講者がいる |
+| User | Course | 1 : N | 1人の講師は複数の講座を担当できる |
 
----
 
 ## API仕様一覧
 
@@ -205,12 +209,11 @@ PATCH /users/1
 
 | メソッド | エンドポイント | 説明 | 認証 | 認可 |
 |---------|---------------|------|------|------|
-| GET | /api/courses/{id}/enrollments | 講座の受講者一覧 | 必要 | 担当講師のみ |
-| POST | /api/courses/{id}/enroll | 講座に申し込む | 必要 | 生徒のみ |
-| DELETE | /api/courses/{id}/enroll | 受講をキャンセル | 必要 | 自分のみ |
-| GET | /api/me/enrollments | 自分の受講一覧 | 必要 | - |
+| GET | /api/courses/{id}/attendances | 講座の受講者一覧 | 必要 | 担当講師のみ |
+| POST | /api/courses/{id}/attend | 講座に申し込む | 必要 | 生徒のみ |
+| DELETE | /api/courses/{id}/attend | 受講をキャンセル | 必要 | 自分のみ |
+| GET | /api/me/attendances | 自分の受講一覧 | 必要 | - |
 
----
 
 ## リクエスト/レスポンス設計
 
@@ -236,7 +239,7 @@ GET /api/courses?page=1&per_page=10&status=active
                 "name": "山田先生"
             },
             "capacity": 20,
-            "enrolled_count": 15,
+            "attended_count": 15,
             "status": "active",
             "created_at": "2025-01-01T00:00:00Z"
         }
@@ -280,7 +283,7 @@ HTTP/1.1 201 Created
             "name": "山田先生"
         },
         "capacity": 20,
-        "enrolled_count": 0,
+        "attended_count": 0,
         "status": "draft",
         "created_at": "2025-01-01T00:00:00Z"
     }
@@ -301,12 +304,12 @@ HTTP/1.1 422 Unprocessable Entity
 }
 ```
 
-### 受講申し込み POST /api/courses/{id}/enroll
+### 受講申し込み POST /api/courses/{id}/attend
 
 **リクエスト**
 
 ```http
-POST /api/courses/1/enroll
+POST /api/courses/1/attend
 ```
 
 **レスポンス（成功）**
@@ -321,8 +324,8 @@ HTTP/1.1 201 Created
             "id": 1,
             "title": "Laravel入門"
         },
-        "enrolled_at": "2025-01-01T10:00:00Z",
-        "status": "enrolled"
+        "attended_at": "2025-01-01T10:00:00Z",
+        "status": "attended"
     },
     "message": "受講登録が完了しました。"
 }
@@ -338,7 +341,6 @@ HTTP/1.1 422 Unprocessable Entity
 }
 ```
 
----
 
 ## API設計のベストプラクティス
 
@@ -381,65 +383,13 @@ HTTP/1.1 422 Unprocessable Entity
 }
 ```
 
-### 4. 日付はISO 8601形式
-
-```json
-{
-    "created_at": "2025-01-01T10:00:00Z"  // ✅
-    "created_at": "2025/01/01 10:00:00"   // ❌
-}
-```
-
----
-
-## まとめ
-
-このレッスンで学んだこと：
-
-1. **RESTful APIの原則**
-   - リソース指向
-   - 統一インターフェース
-   - ステートレス
-
-2. **HTTPメソッド**
-   - GET: 取得
-   - POST: 作成
-   - PATCH: 部分更新
-   - DELETE: 削除
-
-3. **エンドポイント設計**
-   - 複数形の名詞を使う
-   - ネストは浅く
-   - フィルタはクエリパラメータ
-
-4. **ステータスコード**
-   - 200/201/204: 成功
-   - 400/401/403/404/422: クライアントエラー
-   - 500: サーバーエラー
-
----
-
 ## 練習問題
 
 ### 問題1
 「生徒が自分の受講履歴を取得する」エンドポイントを設計してください。
 
-<details>
-<summary>解答例</summary>
-
-```
-GET /api/me/enrollments
-```
-
-または
-
-```
-GET /api/users/{id}/enrollments
-```
-</details>
-
 ### 問題2
-以下のエンドポイント設計の問題点を指摘してください。
+以下のエンドポイント設計の問題点を指摘し、正しいエンドポイントを提案してください。
 
 ```
 GET /api/getCourseById/1
@@ -447,25 +397,10 @@ POST /api/createNewCourse
 DELETE /api/course/1/delete
 ```
 
-<details>
-<summary>解答</summary>
+## 参考資料
 
-```
-❌ GET /api/getCourseById/1
-✅ GET /api/courses/1
-→ 動詞を使わない、複数形にする
-
-❌ POST /api/createNewCourse
-✅ POST /api/courses
-→ 動詞を使わない
-
-❌ DELETE /api/course/1/delete
-✅ DELETE /api/courses/1
-→ 複数形にする、/deleteは不要（DELETEメソッドで明確）
-```
-</details>
-
----
+- [Laravel 公式ドキュメント - Controllers](https://laravel.com/docs/controllers)
+- [REST API Tutorial](https://restfulapi.net/)
 
 ## 次のレッスン
 

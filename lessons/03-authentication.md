@@ -259,7 +259,6 @@ Provider: ユーザー情報の取得方法を決める
 - [Laravel 公式ドキュメント - Fortify](https://laravel.com/docs/fortify)
 - [Laravel 公式ドキュメント - Sanctum](https://laravel.com/docs/sanctum)
 
----
 
 ## 次のレッスン
 
