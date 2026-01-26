@@ -1,4 +1,4 @@
-# Lesson 6: Course APIの実装
+# Lesson 6 Course APIの実装
 
 ## 学習目標
 
@@ -10,11 +10,9 @@
 - CourseResource / CourseCollection を使ってレスポンスを整形できる
 - Eloquent コレクションのメソッドを活用できる
 
----
+## Step 1 モデルの修正
 
-## Step 1: モデルの修正
-
-### CourseStatus Enum の作成
+### CourseStatus Enumの作成
 
 `app/Enums/CourseStatus.php`
 
@@ -40,7 +38,7 @@ enum CourseStatus: string
 }
 ```
 
-### Course モデルの修正
+### Courseモデルの修正
 
 `app/Models/Course.php`
 
@@ -78,13 +76,9 @@ class Course extends Model
 }
 ```
 
+## Step 2 API Resourceの作成
 
-
----
-
-## Step 2: API Resourceの作成
-
-### CourseResource の作成
+### CourseResourceの作成
 
 ```bash
 php artisan make:resource CourseResource
@@ -123,9 +117,7 @@ class CourseResource extends JsonResource
 }
 ```
 
----
-
-## Step 3: コントローラーの実装
+## Step 3 コントローラーの実装
 
 ### コントローラーの作成
 
@@ -133,7 +125,7 @@ class CourseResource extends JsonResource
 php artisan make:controller Api/CourseController
 ```
 
-### CourseController の実装
+### CourseControllerの実装
 
 `app/Http/Controllers/Api/CourseController.php`
 
@@ -243,9 +235,7 @@ class CourseController extends Controller
 }
 ```
 
----
-
-## Step 4: ルーティングの設定
+## Step 4 ルーティングの設定
 
 `routes/api.php`
 
@@ -272,11 +262,9 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 ```
 
----
+## Step 5 Policyの作成
 
-## Step 5: Policyの作成
-
-### CoursePolicy の作成
+### CoursePolicyの作成
 
 ```bash
 php artisan make:policy CoursePolicy --model=Course
@@ -322,9 +310,7 @@ class CoursePolicy
 }
 ```
 
----
-
-## Step 6: Eloquentコレクションの活用
+## Step 6 Eloquentコレクションの活用
 
 ### コレクションとは？
 
@@ -424,11 +410,9 @@ $result = Course::with('instructor')
     ->values();  // キーをリセット
 ```
 
----
+## Step 7 テストデータの作成
 
-## Step 7: テストデータの作成
-
-### Factory の作成
+### Factoryの作成
 
 ```bash
 php artisan make:factory CourseFactory
@@ -470,7 +454,7 @@ class CourseFactory extends Factory
 }
 ```
 
-### Seeder の作成
+### Seederの作成
 
 ```bash
 php artisan make:seeder CourseSeeder
@@ -514,8 +498,6 @@ class CourseSeeder extends Seeder
 php artisan db:seed --class=CourseSeeder
 ```
 
----
-
 ## 動作確認
 
 ### 講座一覧
@@ -532,7 +514,7 @@ curl http://localhost:8000/api/courses/1
 
 ### 講座作成（認証必要）
 
-ブラウザでログイン後、開発者ツールのコンソールで：
+ブラウザでログイン後、開発者ツールのコンソールで実行します。
 
 ```javascript
 fetch('/api/courses', {
@@ -559,8 +541,6 @@ fetch('/api/courses', {
 ### 問題2
 コレクションメソッドを使って、講座を status ごとにグループ化し、各ステータスの件数を取得してください。
 
----
-
 ## 次のレッスン
 
-[Lesson 7: 良いコードを書く](./07-clean-code.md) では、可読性の高い保守しやすいコードを書くための原則を学びます。
+[Lesson 7 良いコードを書く](./07-clean-code.md) では、可読性の高い保守しやすいコードを書くための原則を学びます。
