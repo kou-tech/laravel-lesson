@@ -427,52 +427,8 @@ public function transfer(User $from, User $to, int $amount)
 }
 ```
 
-<details>
-<summary>解答例</summary>
-
-```php
-public function transfer(User $from, User $to, int $amount)
-{
-    DB::transaction(function () use ($from, $to, $amount) {
-        // ロック付きで取得
-        $from = User::lockForUpdate()->find($from->id);
-        $to = User::lockForUpdate()->find($to->id);
-
-        if ($from->balance < $amount) {
-            throw new InsufficientBalanceException();
-        }
-
-        $from->decrement('balance', $amount);
-        $to->increment('balance', $amount);
-    });
-}
-```
-</details>
-
 ### 問題2
 受講キャンセル処理を実装してください。受講ステータスを `cancelled` に変更し、講座の `enrolled_count` を減らします。
-
-<details>
-<summary>解答例</summary>
-
-```php
-public function cancel(User $user, int $courseId): void
-{
-    DB::transaction(function () use ($user, $courseId) {
-        $enrollment = Enrollment::where('user_id', $user->id)
-            ->where('course_id', $courseId)
-            ->where('status', EnrollmentStatus::Enrolled)
-            ->lockForUpdate()
-            ->firstOrFail();
-
-        $enrollment->update([
-            'status' => EnrollmentStatus::Cancelled,
-        ]);
-    });
-}
-```
-</details>
-
 
 ## 次のレッスン
 

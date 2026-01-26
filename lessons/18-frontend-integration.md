@@ -524,20 +524,6 @@ export default function MyEnrollments({ enrollments }: Props) {
 4. マイページで確認 → `/my/enrollments`
 5. 受講キャンセル → 「キャンセルする」ボタン
 
-
-## まとめ
-
-このレッスンで学んだことを振り返ります。
-
-1. Inertia::render()でサーバーからReactにデータを渡し、型安全なpropsで受け取ります。
-
-2. useForm フックでフォームの状態管理を行い、バリデーションエラーを自動処理します。
-
-3. 共有データでは認証情報やフラッシュメッセージを全ページで共有できます。
-
-4. SPA的なUXとしてページ遷移が高速になり、フォーム送信もスムーズです。
-
-
 ## カリキュラム完了
 
 これで全18レッスンが完了しました。
@@ -552,13 +538,5 @@ export default function MyEnrollments({ enrollments }: Props) {
 - テスト → Feature/Unit テスト
 - 非同期処理 → メール/キュー
 - フロントエンド → Inertia + React
-
-### 今後の学習
-
-- TypeScript の深掘り
-- Laravel のキャッシュ戦略
-- CI/CD パイプライン
-- Docker での開発環境
-- AWS/GCP へのデプロイ
 
 お疲れ様でした！

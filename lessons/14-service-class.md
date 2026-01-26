@@ -527,22 +527,6 @@ class CourseServiceTest extends TestCase
 }
 ```
 
-
-## まとめ
-
-このレッスンで学んだことを振り返ります。
-
-1. Fat Controller の問題として、肥大化、テスト困難、再利用不可といった課題があります。
-
-2. サービスクラスの責務としてビジネスロジックを集約し、トランザクション管理を行い、コントローラーを薄く保ちます。
-
-3. カスタム例外でビジネスエラーを表現し、`render()` でレスポンスをカスタマイズできます。
-
-4. 設計ガイドラインとして、1サービス = 1ドメイン、モデルのロジックはモデルに、単純なCRUDは直接という原則があります。
-
-5. テスト容易性としてモックを注入でき、単体テストが書きやすくなります。
-
-
 ## 練習問題
 
 ### 問題1
@@ -550,32 +534,6 @@ class CourseServiceTest extends TestCase
 - 既にキャンセル済みの場合は例外
 - ステータスを `cancelled` に変更
 - キャンセル通知を送信
-
-<details>
-<summary>解答例</summary>
-
-```php
-public function cancel(User $user, Course $course): void
-{
-    $enrollment = Enrollment::where('user_id', $user->id)
-        ->where('course_id', $course->id)
-        ->firstOrFail();
-
-    if ($enrollment->status === EnrollmentStatus::Cancelled) {
-        throw new AlreadyCancelledException();
-    }
-
-    DB::transaction(function () use ($enrollment) {
-        $enrollment->update([
-            'status' => EnrollmentStatus::Cancelled,
-        ]);
-
-        $this->notificationService->sendEnrollmentCancellation($enrollment);
-    });
-}
-```
-</details>
-
 
 ## 次のレッスン
 

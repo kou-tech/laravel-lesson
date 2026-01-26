@@ -464,93 +464,13 @@ test('受講登録時にジョブがキューに追加される', function () {
 });
 ```
 
-
-## まとめ
-
-このレッスンで学んだことを振り返ります。
-
-1. Mailable クラスではメールの件名、本文、送信先を定義し、Blade テンプレートで本文を作成します。
-
-2. メール送信では `send()` が同期送信、`queue()` が非同期送信です。
-
-3. Job クラスではバックグラウンド処理を定義し、`dispatch()` でキューに追加します。
-
-4. キュー設定では `QUEUE_CONNECTION` で接続先を設定し、`queue:work` でワーカーを起動します。
-
-5. 失敗時の処理としてリトライ設定や `failed()` メソッドでエラーハンドリングを行います。
-
-
 ## 練習問題
 
 ### 問題1
 講座キャンセル時に送信する `EnrollmentCancellation` メールを作成してください。
 
-<details>
-<summary>解答例</summary>
-
-```php
-// app/Mail/EnrollmentCancellation.php
-class EnrollmentCancellation extends Mailable
-{
-    use Queueable, SerializesModels;
-
-    public function __construct(
-        public Enrollment $enrollment
-    ) {}
-
-    public function envelope(): Envelope
-    {
-        return new Envelope(
-            subject: '【受講キャンセル】' . $this->enrollment->course->title,
-        );
-    }
-
-    public function content(): Content
-    {
-        return new Content(
-            view: 'emails.enrollment-cancellation',
-        );
-    }
-}
-```
-</details>
-
 ### 問題2
 講座の開始1日前にリマインドメールを送信するジョブを作成してください。
-
-<details>
-<summary>解答例</summary>
-
-```php
-// app/Jobs/SendCourseReminder.php
-class SendCourseReminder implements ShouldQueue
-{
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
-
-    public function __construct(
-        public Course $course
-    ) {}
-
-    public function handle(): void
-    {
-        $enrollments = $this->course->enrollments()
-            ->with('user')
-            ->where('status', EnrollmentStatus::Enrolled)
-            ->get();
-
-        foreach ($enrollments as $enrollment) {
-            Mail::to($enrollment->user)
-                ->send(new CourseReminder($this->course));
-        }
-    }
-}
-
-// スケジューラーで1日前に実行
-// app/Console/Kernel.php
-$schedule->command('courses:send-reminders')->daily();
-```
-</details>
-
 
 ## 次のレッスン
 

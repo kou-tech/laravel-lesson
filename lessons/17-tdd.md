@@ -422,20 +422,6 @@ public function cancel(EnrollmentService $service)
 
 テストコードが仕様書の役割を果たします。
 
-
-## まとめ
-
-このレッスンで学んだことを振り返ります。
-
-1. TDDの3ステップとして、Red（失敗するテストを書く）、Green（テストを通す最小限のコード）、Refactor（コードを整理）があります。
-
-2. 小さなサイクルで1テストずつ追加し、常にテストがパスする状態を維持します。
-
-3. リファクタリングはテストがあるから安全に行え、サービスクラスへの抽出も安心です。
-
-4. 設計の改善として、テストしやすい = 良い設計であり、依存関係が明確になります。
-
-
 ## 練習問題
 
 ### 問題
@@ -446,31 +432,6 @@ public function cancel(EnrollmentService $service)
 - ドラフト状態の講座のみ公開可能
 - 公開済みの講座は再公開不可
 - 他の講師の講座は公開不可
-
-<details>
-<summary>ステップ1 最初のテスト</summary>
-
-```php
-public function test_instructor_can_publish_course(): void
-{
-    $instructor = User::factory()->instructor()->create();
-    $course = Course::factory()->create([
-        'instructor_id' => $instructor->id,
-        'status' => CourseStatus::Draft,
-    ]);
-
-    $response = $this->actingAs($instructor)
-        ->patchJson("/api/courses/{$course->id}/publish");
-
-    $response->assertOk();
-
-    $this->assertDatabaseHas('courses', [
-        'id' => $course->id,
-        'status' => CourseStatus::Active->value,
-    ]);
-}
-```
-</details>
 
 
 ## 次のレッスン

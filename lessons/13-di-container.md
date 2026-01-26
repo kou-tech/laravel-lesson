@@ -460,64 +460,8 @@ class EnrollmentControllerTest extends TestCase
 ### 問題1
 `NotificationServiceInterface` とその実装 `EmailNotificationService` を作成し、AppServiceProviderでバインドしてください。
 
-<details>
-<summary>解答例</summary>
-
-```php
-// app/Contracts/NotificationServiceInterface.php
-interface NotificationServiceInterface
-{
-    public function sendEnrollmentConfirmation(Enrollment $enrollment): void;
-}
-
-// app/Services/EmailNotificationService.php
-class EmailNotificationService implements NotificationServiceInterface
-{
-    public function sendEnrollmentConfirmation(Enrollment $enrollment): void
-    {
-        Mail::to($enrollment->user)->send(
-            new EnrollmentConfirmation($enrollment)
-        );
-    }
-}
-
-// app/Providers/AppServiceProvider.php
-$this->app->bind(
-    NotificationServiceInterface::class,
-    EmailNotificationService::class
-);
-```
-</details>
-
 ### 問題2
 テスト環境では通知を送信しない `FakeNotificationService` を作成し、テスト時はこちらが使われるように設定してください。
-
-<details>
-<summary>解答例</summary>
-
-```php
-// app/Services/FakeNotificationService.php
-class FakeNotificationService implements NotificationServiceInterface
-{
-    public function sendEnrollmentConfirmation(Enrollment $enrollment): void
-    {
-        // 何もしない（ログに記録するだけでも可）
-        Log::debug('Fake notification sent', ['enrollment_id' => $enrollment->id]);
-    }
-}
-
-// app/Providers/AppServiceProvider.php
-public function register(): void
-{
-    $implementation = app()->environment('testing')
-        ? FakeNotificationService::class
-        : EmailNotificationService::class;
-
-    $this->app->bind(NotificationServiceInterface::class, $implementation);
-}
-```
-</details>
-
 
 ## 次のレッスン
 

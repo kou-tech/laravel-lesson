@@ -450,35 +450,8 @@ class Enrollment extends Model
 ### 問題1
 User モデルに「登録からの日数」を返す `days_since_registration` アクセサを追加してください。
 
-<details>
-<summary>解答例</summary>
-
-```php
-protected function daysSinceRegistration(): Attribute
-{
-    return Attribute::make(
-        get: fn () => $this->created_at->diffInDays(now()),
-    );
-}
-```
-</details>
-
 ### 問題2
 Course モデルに、タイトルを保存時に前後の空白を除去するミューテタを追加してください。
-
-<details>
-<summary>解答例</summary>
-
-```php
-protected function title(): Attribute
-{
-    return Attribute::make(
-        set: fn (string $value) => trim($value),
-    );
-}
-```
-</details>
-
 
 ## 次のレッスン
 

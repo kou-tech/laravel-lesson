@@ -471,22 +471,6 @@ php artisan test --filter="講師は講座を作成できる"
 php artisan test --coverage
 ```
 
-
-## まとめ
-
-このレッスンで学んだことを振り返ります。
-
-1. Feature vs Unit テストでは、FeatureはAPI全体の動作、Unitはクラス単位のロジックをテストします。
-
-2. Factoryを使ってテストデータを効率的に作成し、Stateで状態を定義できます。
-
-3. 認証テストでは `actingAs()` でユーザーをシミュレートします。
-
-4. アサーションでレスポンス構造とデータベースの状態を検証します。
-
-5. モックでは外部依存を切り離し、Mail::fake() や Queue::fake() を活用します。
-
-
 ## 練習問題
 
 ### 問題1
@@ -494,54 +478,6 @@ php artisan test --coverage
 - 生徒は受講登録できる
 - 定員オーバー時は登録できない
 - 既に登録済みの場合はエラー
-
-<details>
-<summary>解答例</summary>
-
-```php
-describe('POST /api/courses/{course}/enroll', function () {
-    test('生徒は受講登録できる', function () {
-        $student = User::factory()->student()->create();
-        $course = Course::factory()->active()->create(['capacity' => 10]);
-
-        $response = $this->actingAs($student)
-            ->postJson("/api/courses/{$course->id}/enroll");
-
-        $response->assertCreated();
-
-        $this->assertDatabaseHas('enrollments', [
-            'user_id' => $student->id,
-            'course_id' => $course->id,
-        ]);
-    });
-
-    test('定員オーバー時は登録できない', function () {
-        $student = User::factory()->student()->create();
-        $course = Course::factory()->active()->create(['capacity' => 1]);
-        Enrollment::factory()->create(['course_id' => $course->id]);
-
-        $response = $this->actingAs($student)
-            ->postJson("/api/courses/{$course->id}/enroll");
-
-        $response->assertUnprocessable();
-    });
-
-    test('既に登録済みの場合はエラー', function () {
-        $student = User::factory()->student()->create();
-        $course = Course::factory()->active()->create();
-        Enrollment::factory()->create([
-            'user_id' => $student->id,
-            'course_id' => $course->id,
-        ]);
-
-        $response = $this->actingAs($student)
-            ->postJson("/api/courses/{$course->id}/enroll");
-
-        $response->assertUnprocessable();
-    });
-});
-```
-</details>
 
 
 ## 次のレッスン

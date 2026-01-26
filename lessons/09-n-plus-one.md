@@ -312,20 +312,6 @@ class CourseResource extends JsonResource
 - 意図しないN+1を防止
 - レスポンスサイズの最適化
 
-## まとめ
-
-このレッスンで学んだことを振り返ります。
-
-1. N+1問題では 1 + N回のクエリが発生し、データ量に比例して悪化します。
-
-2. Eager Loadingでは `with()` で事前ロードでき、ネスト・条件付きも可能です。
-
-3. カウントの最適化では `withCount()` でサブクエリを使い、データ自体は取得しません。
-
-4. 検出方法としてTelescopeで確認したり、`preventLazyLoading()` で例外をスローできます。
-
-5. ベストプラクティスとして、コントローラーで `with()` を明示し、`whenLoaded()` で安全にレスポンスを返しましょう。
-
 ## 練習問題
 
 ### 問題1
@@ -346,52 +332,8 @@ public function index()
 }
 ```
 
-<details>
-<summary>解答例</summary>
-
-```php
-public function index()
-{
-    $enrollments = Enrollment::where('status', 'enrolled')
-        ->with(['user:id,name', 'course:id,title'])
-        ->get();
-
-    return $enrollments->map(function ($enrollment) {
-        return [
-            'user_name' => $enrollment->user->name,
-            'course_title' => $enrollment->course->title,
-            'enrolled_at' => $enrollment->enrolled_at,
-        ];
-    });
-}
-```
-</details>
-
 ### 問題2
 講師ごとに担当講座数を取得するクエリを書いてください。
-
-<details>
-<summary>解答例</summary>
-
-```php
-$instructors = User::where('role', 'instructor')
-    ->withCount('courses')
-    ->get();
-
-foreach ($instructors as $instructor) {
-    echo "{$instructor->name}: {$instructor->courses_count}講座\n";
-}
-```
-
-※ User モデルに `courses()` リレーションを追加する必要があります。
-
-```php
-public function courses(): HasMany
-{
-    return $this->hasMany(Course::class, 'instructor_id');
-}
-```
-</details>
 
 ## 次のレッスン
 
