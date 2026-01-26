@@ -33,7 +33,7 @@ VSCodeの拡張機能タブで「Intelephense」を検索してインストー�
 
 ### 参考
 
-- [Intelephense公式サイト](https://intelephense.com/)
+- [Intelephense公式サイト](https://marketplace.visualstudio.com/items?itemName=bmewburn.vscode-intelephense-client)
 
 
 ## Laravel（公式拡張機能）
