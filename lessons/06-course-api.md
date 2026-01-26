@@ -12,108 +12,7 @@
 
 ---
 
-## Step 1: マイグレーションとモデルの作成
-
-### マイグレーションの作成
-
-```bash
-php artisan make:migration create_courses_table
-```
-
-### マイグレーションの実装
-
-```php
-<?php
-
-use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
-
-return new class extends Migration
-{
-    public function up(): void
-    {
-        Schema::create('courses', function (Blueprint $table) {
-            $table->id();
-            $table->string('title');
-            $table->text('description')->nullable();
-            $table->foreignId('instructor_id')->constrained('users')->onDelete('cascade');
-            $table->unsignedInteger('capacity')->default(20);
-            $table->string('status')->default('draft');
-            $table->timestamps();
-        });
-    }
-
-    public function down(): void
-    {
-        Schema::dropIfExists('courses');
-    }
-};
-```
-
-### マイグレーションの実行
-
-```bash
-php artisan migrate
-```
-
-### モデルの作成
-
-```bash
-php artisan make:model Course
-```
-
-### Course モデルの実装
-
-`app/Models/Course.php`
-
-```php
-<?php
-
-namespace App\Models;
-
-use App\Enums\CourseStatus;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-
-class Course extends Model
-{
-    use HasFactory;
-
-    protected $fillable = [
-        'title',
-        'description',
-        'instructor_id',
-        'capacity',
-        'status',
-    ];
-
-    protected function casts(): array
-    {
-        return [
-            'capacity' => 'integer',
-            'status' => CourseStatus::class,
-        ];
-    }
-
-    /**
-     * 講座の担当講師
-     */
-    public function instructor(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'instructor_id');
-    }
-
-    /**
-     * 公開中の講座のみを取得するスコープ
-     */
-    public function scopeActive($query)
-    {
-        return $query->where('status', CourseStatus::Active);
-    }
-}
-```
+## Step 1: モデルの修正
 
 ### CourseStatus Enum の作成
 
@@ -141,6 +40,46 @@ enum CourseStatus: string
 }
 ```
 
+### Course モデルの修正
+
+`app/Models/Course.php`
+
+```php
+<?php
+
+namespace App\Models;
+
+use App\Enums\CourseStatus; // 追加
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class Course extends Model
+{
+    ...
+
+    protected function casts(): array
+    {
+        return [
+            'capacity' => 'integer',
+            'status' => CourseStatus::class, // 変更
+        ];
+    }
+
+    ...
+
+    /**
+     * 公開中の講座のみを取得するスコープ
+     */
+    public function scopeActive($query)
+    {
+        return $query->where('status', CourseStatus::Active);
+    }
+}
+```
+
+
+
 ---
 
 ## Step 2: API Resourceの作成
@@ -163,58 +102,22 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 class CourseResource extends JsonResource
 {
-    public function toArray(Request $request): array
-    {
-        return [
-            'id' => $this->id,
-            'title' => $this->title,
-            'description' => $this->description,
-            'instructor' => [
-                'id' => $this->instructor->id,
-                'name' => $this->instructor->name,
-            ],
-            'capacity' => $this->capacity,
-            'status' => $this->status->value,
-            'status_label' => $this->status->label(),
-            'created_at' => $this->created_at->toISOString(),
-        ];
-    }
-}
-```
+    /** @var \App\Models\Course */
+    public $resource;
 
-### CourseCollection の作成
-
-```bash
-php artisan make:resource CourseCollection
-```
-
-`app/Http/Resources/CourseCollection.php`
-
-```php
-<?php
-
-namespace App\Http\Resources;
-
-use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\ResourceCollection;
-
-class CourseCollection extends ResourceCollection
-{
-    /**
-     * 各アイテムに使用するリソースクラスを指定
-     */
-    public $collects = CourseResource::class;
 
     public function toArray(Request $request): array
     {
         return [
-            'data' => $this->collection,
-            'meta' => [
-                'total' => $this->total(),
-                'per_page' => $this->perPage(),
-                'current_page' => $this->currentPage(),
-                'last_page' => $this->lastPage(),
-            ],
+            'id' => $this->resource->id,
+            'title' => $this->resource->title,
+            'description' => $this->resource->description,
+            'instructor' => new UserResource($this->resource->instructor),
+            'capacity' => $this->resource->capacity,
+            'status' => $this->resource->status,
+            'status_label' => $this->resource->status->label(),
+            'created_at' => $this->resource->created_at->toISOString(),
+
         ];
     }
 }
@@ -290,6 +193,7 @@ class CourseController extends Controller
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'capacity' => ['sometimes', 'integer', 'min:1', 'max:100'],
+            'status' => ['required', 'string', Rule::enum(CourseStatus::class)],
         ]);
 
         // 講座を作成（講師は認証ユーザー）
@@ -362,9 +266,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/me', [UserController::class, 'me']);
 
     // 講座管理
-    Route::post('/courses', [CourseController::class, 'store']);
-    Route::patch('/courses/{course}', [CourseController::class, 'update']);
-    Route::delete('/courses/{course}', [CourseController::class, 'destroy']);
+    Route::post('/courses', [App\Http\Controllers\Api\CourseController::class, 'store']);
+    Route::patch('/courses/{course}', [App\Http\Controllers\Api\CourseController::class, 'update']);
+    Route::delete('/courses/{course}', [App\Http\Controllers\Api\CourseController::class, 'destroy']);
 });
 ```
 
@@ -647,84 +551,13 @@ fetch('/api/courses', {
 .then(console.log);
 ```
 
----
-
-## まとめ
-
-このレッスンで学んだこと：
-
-1. **モデルとマイグレーション**
-   - リレーション（belongsTo）の定義
-   - Enumを使ったステータス管理
-   - ローカルスコープ
-
-2. **API Resource**
-   - 単一リソース（CourseResource）
-   - コレクション（CourseCollection）
-   - ページネーション情報の付与
-
-3. **コントローラー**
-   - CRUD操作の実装
-   - バリデーション
-   - 認可チェック
-
-4. **Eloquentコレクション**
-   - map, filter, pluck
-   - groupBy, sortBy
-   - sum, avg, first, last
-
----
-
 ## 練習問題
 
 ### 問題1
 講座一覧APIに「講師名で検索」機能を追加してください。
 
-<details>
-<summary>ヒント</summary>
-
-`whereHas` を使ってリレーション先で検索できます。
-</details>
-
-<details>
-<summary>解答例</summary>
-
-```php
-public function index(Request $request)
-{
-    $query = Course::with('instructor');
-
-    if ($request->has('instructor_name')) {
-        $query->whereHas('instructor', function ($q) use ($request) {
-            $q->where('name', 'like', '%' . $request->input('instructor_name') . '%');
-        });
-    }
-
-    // ...
-}
-```
-</details>
-
 ### 問題2
 コレクションメソッドを使って、講座を status ごとにグループ化し、各ステータスの件数を取得してください。
-
-<details>
-<summary>解答例</summary>
-
-```php
-$courses = Course::all();
-
-$countByStatus = $courses
-    ->groupBy('status')
-    ->map(fn ($group) => $group->count());
-
-// [
-//     'active' => 5,
-//     'draft' => 3,
-//     'closed' => 2,
-// ]
-```
-</details>
 
 ---
 
