@@ -1,4 +1,4 @@
-# Lesson 1: はじめてのAPI実装
+# Lesson 1 はじめてのAPI実装
 
 ## 学習目標
 
@@ -10,7 +10,7 @@
 - `UserController` でユーザー情報を取得して返せる
 - `UserResource` を使ってレスポンス形式を整えられる
 
-## Step 1: APIルーティングの作成
+## Step 1 APIルーティングの作成
 
 まず、このレッスンで実装するAPIの全体像を確認しましょう。
 
@@ -43,7 +43,7 @@ use App\Http\Controllers\Api\UserController;
 Route::get('/user', [UserController::class, 'show']);
 ```
 
-**ポイント**
+ポイント
 - APIルートは自動的に `/api` プレフィックスが付きます
 - つまり、実際のURLは `/api/user` になります
 
@@ -53,7 +53,7 @@ Route::get('/user', [UserController::class, 'show']);
 php artisan route:list --path=api/user
 ```
 
-## Step 2: コントローラーの作成
+## Step 2 コントローラーの作成
 
 ### artisan コマンドでコントローラーを生成
 
@@ -108,7 +108,7 @@ curl http://localhost:8000/api/user
 }
 ```
 
-## Step 3: API Resourceの作成
+## Step 3 API Resourceの作成
 
 ### なぜAPI Resourceを使うのか？
 
@@ -118,7 +118,7 @@ curl http://localhost:8000/api/user
 2. Controller のコードが肥大化する
 3. 他のエンドポイントでも同じ形式でユーザー情報を返したい場合、レスポンス形式がバラバラになったり、コードが重複する
 
-**API Resource** を使うと、これらの問題を解決できます。
+API Resourceを使うと、これらの問題を解決できます。
 
 ### API Resourceの生成
 
@@ -161,7 +161,7 @@ class UserResource extends JsonResource
 
 ```
 
-**ポイント**
+ポイント
 - `$this->resource` はUserモデルのインスタンスを指します
 - 返したいフィールドだけを指定できます
 - 日付のフォーマットも自由に変更できます
@@ -211,12 +211,12 @@ curl http://localhost:8000/api/user
 }
 ```
 
-**注目ポイント**
+注目ポイント
 - レスポンスが `data` でラップされています（API Resourceのデフォルト動作）
 - 指定したフィールドのみが含まれています
 - 日付のフォーマットが変わっています
 
-## Step 4: 発展 - パスパラメータでユーザーを指定
+## Step 4 発展 - パスパラメータでユーザーを指定
 
 現在は ID=1 のユーザーを固定で返していますが、URLで任意のユーザーIDを指定できるようにしましょう。
 

@@ -1,4 +1,4 @@
-# Lesson 4: 認可（Gate/Policy）を実装する
+# Lesson 4 認可（Gate/Policy）を実装する
 
 ## 学習目標
 
@@ -33,7 +33,7 @@
 → ログインしている かつ 自分自身の情報のみ編集可能
 ```
 
-## Step 1: ユーザーに役割を追加する
+## Step 1 ユーザーに役割を追加する
 
 このStepでは以下を実装します。
 - [ ] Userモデルに`role`フィールドを追加
@@ -105,7 +105,7 @@ public function isStudent(): bool
 }
 ```
 
-## Step 2: Gateを使った認可
+## Step 2 Gateを使った認可
 
 このStepでは以下を実装します。
 - [ ] AppServiceProviderにGateを定義
@@ -171,7 +171,7 @@ if (Gate::denies('manage-courses')) {
 Gate::authorize('access-own-data', $targetUser);
 ```
 
-## Step 3: Policyを使った認可
+## Step 3 Policyを使った認可
 
 このStepでは以下を実装します。
 - [ ] UserPolicyを作成
@@ -190,7 +190,7 @@ flowchart TD
 
 ### Policyとは？
 
-Policy は、**特定のモデル**に対する認可ルールをまとめたクラスです。
+Policy は、特定のモデルに対する認可ルールをまとめたクラスです。
 
 Gate との違い
 - Gate: 汎用的なアクション（「管理画面にアクセスできるか」）
@@ -281,7 +281,7 @@ public function boot(): void
 }
 ```
 
-## Step 4: Policyをコントローラーで使う
+## Step 4 Policyをコントローラーで使う
 
 このStepでは、Step 3で作成したPolicyの使い方を学びます（コード例は参考用）。
 
@@ -338,7 +338,7 @@ class UserController extends Controller
 }
 ```
 
-## Step 5: 認可エラーのレスポンス
+## Step 5 認可エラーのレスポンス
 
 このStepでは、認可エラー時のレスポンスについて学びます（参考情報）。
 
@@ -369,7 +369,7 @@ public function update(User $user, User $model): Response
 }
 ```
 
-## Step 6: 実践例 - ユーザー編集APIの保護
+## Step 6 実践例 - ユーザー編集APIの保護
 
 このStepでは以下を実装します。
 - [ ] 認証が必要なルートを追加
@@ -420,10 +420,10 @@ class UserController extends Controller
 
 ### 動作確認
 
-**自分自身を更新（成功）**
+自分自身を更新（成功）
 
 
-**他人を更新しようとする（失敗）**
+他人を更新しようとする（失敗）
 
 
 ## 練習問題

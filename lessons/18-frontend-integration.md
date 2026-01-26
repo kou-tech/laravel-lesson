@@ -1,4 +1,4 @@
-# Lesson 18: フロントエンドとの統合
+# Lesson 18 フロントエンドとの統合
 
 ## 学習目標
 
@@ -10,13 +10,12 @@
 - バリデーションエラーの表示ができる
 - 共有データ（Shared Data）を活用できる
 
----
 
 ## Inertiaとは？
 
 ### モダンなモノリス
 
-Inertiaは、**サーバーサイドルーティング**と**SPAのUX**を両立させるアダプターです。
+Inertiaは、サーバーサイドルーティングとSPAのUXを両立させるアダプターです。
 
 ```
 従来のSPA:
@@ -32,9 +31,8 @@ Laravel + React（同一プロジェクト）
 - 完全なTypeScript対応
 ```
 
----
 
-## Step 1: Inertia の基本
+## Step 1 Inertia の基本
 
 ### コントローラーからページを表示
 
@@ -120,9 +118,8 @@ export default function CoursesIndex({ courses }: Props) {
 }
 ```
 
----
 
-## Step 2: フォームの送信
+## Step 2 フォームの送信
 
 ### useForm フック
 
@@ -230,9 +227,8 @@ public function store(StoreCourseRequest $request)
 }
 ```
 
----
 
-## Step 3: 受講登録フロー
+## Step 3 受講登録フロー
 
 ### 講座詳細ページ
 
@@ -339,13 +335,12 @@ class EnrollmentController extends Controller
 }
 ```
 
----
 
-## Step 4: 共有データ（Shared Data）
+## Step 4 共有データ（Shared Data）
 
 ### HandleInertiaRequests ミドルウェア
 
-`app/Http/Middleware/HandleInertiaRequests.php`:
+`app/Http/Middleware/HandleInertiaRequests.php` に以下のように記述します。
 
 ```php
 public function share(Request $request): array
@@ -408,9 +403,8 @@ export default function CoursesShow({ course, isEnrolled }: Props) {
 }
 ```
 
----
 
-## Step 5: ルーティングの整理
+## Step 5 ルーティングの整理
 
 ### web.php
 
@@ -450,9 +444,8 @@ Route::middleware('auth')->group(function () {
 });
 ```
 
----
 
-## Step 6: マイページの実装
+## Step 6 マイページの実装
 
 ### 受講一覧ページ
 
@@ -520,41 +513,30 @@ export default function MyEnrollments({ enrollments }: Props) {
 }
 ```
 
----
 
-## Step 7: 動作確認
+## Step 7 動作確認
 
 ### 全体の流れを確認
 
-1. **講座一覧を表示**: `/courses`
-2. **講座詳細を表示**: `/courses/1`
-3. **受講登録**: 「受講登録する」ボタン
-4. **マイページで確認**: `/my/enrollments`
-5. **受講キャンセル**: 「キャンセルする」ボタン
+1. 講座一覧を表示 → `/courses`
+2. 講座詳細を表示 → `/courses/1`
+3. 受講登録 → 「受講登録する」ボタン
+4. マイページで確認 → `/my/enrollments`
+5. 受講キャンセル → 「キャンセルする」ボタン
 
----
 
 ## まとめ
 
-このレッスンで学んだこと：
+このレッスンで学んだことを振り返ります。
 
-1. **Inertia::render()**
-   - サーバーからReactにデータを渡す
-   - 型安全なpropsで受け取り
+1. Inertia::render()でサーバーからReactにデータを渡し、型安全なpropsで受け取ります。
 
-2. **useForm フック**
-   - フォームの状態管理
-   - バリデーションエラーの自動処理
+2. useForm フックでフォームの状態管理を行い、バリデーションエラーを自動処理します。
 
-3. **共有データ**
-   - 認証情報の共有
-   - フラッシュメッセージ
+3. 共有データでは認証情報やフラッシュメッセージを全ページで共有できます。
 
-4. **SPA的なUX**
-   - ページ遷移が高速
-   - フォーム送信がスムーズ
+4. SPA的なUXとしてページ遷移が高速になり、フォーム送信もスムーズです。
 
----
 
 ## カリキュラム完了
 
@@ -562,14 +544,14 @@ export default function MyEnrollments({ enrollments }: Props) {
 
 ### 完成した受講管理システム
 
-- **ユーザー認証**: Fortify
-- **API**: RESTful設計
-- **認可**: Gate/Policy
-- **データベース**: 適切な制約
-- **ビジネスロジック**: サービスクラス
-- **テスト**: Feature/Unit テスト
-- **非同期処理**: メール/キュー
-- **フロントエンド**: Inertia + React
+- ユーザー認証 → Fortify
+- API → RESTful設計
+- 認可 → Gate/Policy
+- データベース → 適切な制約
+- ビジネスロジック → サービスクラス
+- テスト → Feature/Unit テスト
+- 非同期処理 → メール/キュー
+- フロントエンド → Inertia + React
 
 ### 今後の学習
 

@@ -1,4 +1,4 @@
-# Lesson 2: デバッグ手法を身につける
+# Lesson 2 デバッグ手法を身につける
 
 ## 学習目標
 
@@ -25,7 +25,7 @@
 Laravelには複数のデバッグ手法があります。状況に応じて使い分けましょう。
 
 
-## Step 1: Log ファサードを使う
+## Step 1 Log ファサードを使う
 
 ### なぜログを使うのか？
 
@@ -103,7 +103,7 @@ LOG_LEVEL=debug
 LOG_LEVEL=info
 ```
 
-## Step 2: Laravel Telescope のインストール
+## Step 2 Laravel Telescope のインストール
 
 ### Telescope とは？
 
@@ -158,7 +158,7 @@ php artisan migrate
 4. 「Logs」タブでログを確認
 5. 「Exceptions」タブで例外を確認
 
-## Step 3: 実践 - デバッグしてみよう
+## Step 3 実践 - デバッグしてみよう
 
 ### 課題: 意図的にエラーを起こしてデバッグする
 
@@ -178,21 +178,21 @@ public function show(User $user): UserResource
 
 ### デバッグの手順
 
-1. **APIを呼び出す**
+1. APIを呼び出す
    ```bash
    curl http://localhost:8000/api/user/1
    ```
 
-2. **ログを確認する**
+2. ログを確認する
    ```bash
    tail -f storage/logs/laravel.log
    ```
 
-3. **Telescopeで確認する**
+3. Telescopeで確認する
    - Logs タブで出力されたログを確認
    - Requests タブでリクエストの詳細を確認
 
-4. **問題を特定して修正する**
+4. 問題を特定して修正する
    - `full_name` は User モデルに存在しない
    - `name` プロパティを使うか、アクセサを追加する
 

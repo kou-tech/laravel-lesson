@@ -1,4 +1,4 @@
-# Lesson 13: サービスコンテナとDI
+# Lesson 13 サービスコンテナとDI
 
 ## 学習目標
 
@@ -10,7 +10,6 @@
 - コンストラクタインジェクションを使える
 - インターフェースとバインディングを設定できる
 
----
 
 ## 依存性とは？
 
@@ -30,12 +29,11 @@ class EnrollmentController extends Controller
 }
 ```
 
-**問題点**:
+このコードには以下の問題点があります。
 - `EnrollmentService` を直接 new している
 - テスト時にモックに差し替えられない
 - `EnrollmentService` のコンストラクタが変わると、このコードも変更が必要
 
----
 
 ## 依存性注入（DI）とは？
 
@@ -59,14 +57,13 @@ class EnrollmentController extends Controller
 }
 ```
 
-**メリット**:
+依存性注入のメリットは以下の通りです。
 - クラス間の結合度が下がる
 - テスト時にモックを注入できる
 - 依存関係が明確になる
 
----
 
-## Step 1: サービスコンテナとは？
+## Step 1 サービスコンテナとは？
 
 ### Laravelの「依存性解決マシン」
 
@@ -102,7 +99,7 @@ class NotificationService
 }
 ```
 
-`EnrollmentService` を要求すると:
+`EnrollmentService` を要求すると、以下の順序で解決されます。
 
 1. `EnrollmentService` のコンストラクタを解析
 2. `NotificationService` が必要 → 再帰的に解決
@@ -110,9 +107,8 @@ class NotificationService
 4. `MailService` が必要 → 再帰的に解決
 5. 全ての依存を解決してインスタンス化
 
----
 
-## Step 2: コンストラクタインジェクション
+## Step 2 コンストラクタインジェクション
 
 ### コントローラーでの使用
 
@@ -140,7 +136,7 @@ class CourseController extends Controller
 
 ### メソッドインジェクション
 
-メソッドの引数でも依存性を受け取れます:
+メソッドの引数でも依存性を受け取れます。
 
 ```php
 public function store(
@@ -152,13 +148,12 @@ public function store(
 }
 ```
 
----
 
-## Step 3: バインディング
+## Step 3 バインディング
 
 ### 基本的なバインド
 
-`app/Providers/AppServiceProvider.php`:
+`app/Providers/AppServiceProvider.php` に以下のように記述します。
 
 ```php
 use App\Services\EnrollmentService;
@@ -176,7 +171,7 @@ public function register(): void
 
 ### シングルトン
 
-アプリケーション全体で1つのインスタンスを共有:
+アプリケーション全体で1つのインスタンスを共有します。
 
 ```php
 $this->app->singleton(CacheService::class, function ($app) {
@@ -193,9 +188,8 @@ $this->app->singleton(CacheService::class, function ($app) {
 | `bind` | 毎回新しいインスタンス | 状態を持つサービス |
 | `singleton` | 1つのインスタンスを共有 | 状態を持たない、またはキャッシュしたいサービス |
 
----
 
-## Step 4: インターフェースへのバインド
+## Step 4 インターフェースへのバインド
 
 ### なぜインターフェースを使うか？
 
@@ -221,7 +215,7 @@ class EnrollmentService
 
 ### インターフェースの定義
 
-`app/Contracts/MailerInterface.php`:
+`app/Contracts/MailerInterface.php` に以下のように定義します。
 
 ```php
 <?php
@@ -236,7 +230,7 @@ interface MailerInterface
 
 ### 実装クラス
 
-`app/Services/SmtpMailer.php`:
+`app/Services/SmtpMailer.php` に以下のように実装します。
 
 ```php
 <?php
@@ -281,11 +275,10 @@ public function register(): void
 }
 ```
 
----
 
-## Step 5: 実践 - EnrollmentService のリファクタリング
+## Step 5 実践 - EnrollmentService のリファクタリング
 
-### Before: 密結合
+### Before（密結合）
 
 ```php
 class EnrollmentController extends Controller
@@ -312,7 +305,7 @@ class EnrollmentController extends Controller
 }
 ```
 
-### After: DIを活用
+### After（DIを活用）
 
 #### インターフェース
 
@@ -431,11 +424,10 @@ public function register(): void
 }
 ```
 
----
 
-## Step 6: テストでのモック
+## Step 6 テストでのモック
 
-### DIのメリット: テスト容易性
+### DIのメリット（テスト容易性）
 
 ```php
 use App\Contracts\EnrollmentServiceInterface;
@@ -462,34 +454,6 @@ class EnrollmentControllerTest extends TestCase
     }
 }
 ```
-
----
-
-## まとめ
-
-このレッスンで学んだこと：
-
-1. **依存性注入（DI）**
-   - 依存オブジェクトを外から渡す
-   - 結合度を下げる
-
-2. **サービスコンテナ**
-   - Laravelの依存解決エンジン
-   - 自動的に依存を解決
-
-3. **バインディング**
-   - `bind`: 毎回新規インスタンス
-   - `singleton`: 共有インスタンス
-
-4. **インターフェース**
-   - 実装から切り離す
-   - 環境ごとに差し替え可能
-
-5. **テスト容易性**
-   - モックを簡単に注入
-   - 単体テストが書きやすい
-
----
 
 ## 練習問題
 
@@ -554,8 +518,7 @@ public function register(): void
 ```
 </details>
 
----
 
 ## 次のレッスン
 
-[Lesson 14: サービスクラスの設計](./14-service-class.md) では、ビジネスロジックをサービスクラスに分離する設計を学びます。
+[Lesson 14 サービスクラスの設計](./14-service-class.md) では、ビジネスロジックをサービスクラスに分離する設計を学びます。

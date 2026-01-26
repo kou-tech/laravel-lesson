@@ -1,4 +1,4 @@
-# Lesson 0: おすすめのVSCode拡張機能
+# Lesson 0 おすすめのVSCode拡張機能
 
 ## はじめに
 

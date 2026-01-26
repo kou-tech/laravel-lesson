@@ -1,4 +1,4 @@
-# Lesson 14: サービスクラスの設計
+# Lesson 14 サービスクラスの設計
 
 ## 学習目標
 
@@ -10,7 +10,6 @@
 - カスタム例外クラスを作成できる
 - コントローラーを薄く保てる
 
----
 
 ## Fat Controller の問題
 
@@ -62,13 +61,12 @@ class CourseController extends Controller
 }
 ```
 
-**問題点**:
+このコードには以下の問題点があります。
 - コントローラーが肥大化（100行以上になることも）
 - ビジネスロジックとHTTP処理が混在
 - テストが困難
 - 再利用できない
 
----
 
 ## サービスクラスの役割
 
@@ -96,9 +94,8 @@ class CourseController extends Controller
 └─────────────────────────────────────────────────────┘
 ```
 
----
 
-## Step 1: CourseService の作成
+## Step 1 CourseService の作成
 
 ### ディレクトリ構成
 
@@ -222,9 +219,8 @@ class CourseService
 }
 ```
 
----
 
-## Step 2: カスタム例外クラス
+## Step 2 カスタム例外クラス
 
 ### 例外クラスの作成
 
@@ -308,9 +304,8 @@ class DuplicateCourseTitleException extends BusinessException
 }
 ```
 
----
 
-## Step 3: シンプルなコントローラー
+## Step 3 シンプルなコントローラー
 
 ```php
 <?php
@@ -374,9 +369,8 @@ class CourseController extends Controller
 }
 ```
 
----
 
-## Step 4: NotificationService
+## Step 4 NotificationService
 
 ```php
 <?php
@@ -415,9 +409,8 @@ class NotificationService
 }
 ```
 
----
 
-## Step 5: サービス設計のガイドライン
+## Step 5 サービス設計のガイドライン
 
 ### 1. 1サービス = 1ドメイン
 
@@ -478,9 +471,8 @@ public function store(StoreCourseRequest $request)
 }
 ```
 
----
 
-## Step 6: テストしやすい設計
+## Step 6 テストしやすい設計
 
 ### サービスの単体テスト
 
@@ -535,39 +527,26 @@ class CourseServiceTest extends TestCase
 }
 ```
 
----
 
 ## まとめ
 
-このレッスンで学んだこと：
+このレッスンで学んだことを振り返ります。
 
-1. **Fat Controller の問題**
-   - 肥大化、テスト困難、再利用不可
+1. Fat Controller の問題として、肥大化、テスト困難、再利用不可といった課題があります。
 
-2. **サービスクラスの責務**
-   - ビジネスロジックを集約
-   - トランザクション管理
-   - コントローラーを薄く
+2. サービスクラスの責務としてビジネスロジックを集約し、トランザクション管理を行い、コントローラーを薄く保ちます。
 
-3. **カスタム例外**
-   - ビジネスエラーを表現
-   - `render()` でレスポンスをカスタマイズ
+3. カスタム例外でビジネスエラーを表現し、`render()` でレスポンスをカスタマイズできます。
 
-4. **設計ガイドライン**
-   - 1サービス = 1ドメイン
-   - モデルのロジックはモデルに
-   - 単純なCRUDは直接
+4. 設計ガイドラインとして、1サービス = 1ドメイン、モデルのロジックはモデルに、単純なCRUDは直接という原則があります。
 
-5. **テスト容易性**
-   - モックを注入
-   - 単体テストが書きやすい
+5. テスト容易性としてモックを注入でき、単体テストが書きやすくなります。
 
----
 
 ## 練習問題
 
 ### 問題1
-`EnrollmentService` の `cancel` メソッドを実装してください。以下の要件を満たすこと:
+`EnrollmentService` の `cancel` メソッドを実装してください。以下の要件を満たしてください。
 - 既にキャンセル済みの場合は例外
 - ステータスを `cancelled` に変更
 - キャンセル通知を送信
@@ -597,8 +576,7 @@ public function cancel(User $user, Course $course): void
 ```
 </details>
 
----
 
 ## 次のレッスン
 
-[Lesson 15: 自動テストの書き方](./15-testing.md) では、PHPUnit/Pestを使った自動テストを書き、品質を担保する方法を学びます。
+[Lesson 15 自動テストの書き方](./15-testing.md) では、PHPUnit/Pestを使った自動テストを書き、品質を担保する方法を学びます。

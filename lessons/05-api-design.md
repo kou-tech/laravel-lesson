@@ -1,4 +1,4 @@
-# Lesson 5: API設計の基本
+# Lesson 5 API設計の基本
 
 ## 学習目標
 
@@ -13,7 +13,7 @@
 
 ## RESTful APIとは？
 
-**REST**（Representational State Transfer）は、Web APIを設計するためのアーキテクチャスタイルです。
+REST（Representational State Transfer）は、Web APIを設計するためのアーキテクチャスタイルです。
 
 ### RESTの基本的な考え方
 
@@ -219,13 +219,13 @@ erDiagram
 
 ### 講座一覧 GET /api/courses
 
-**リクエスト**
+リクエスト
 
 ```http
 GET /api/courses?page=1&per_page=10&status=active
 ```
 
-**レスポンス**
+レスポンス
 
 ```json
 {
@@ -255,7 +255,7 @@ GET /api/courses?page=1&per_page=10&status=active
 
 ### 講座作成 POST /api/courses
 
-**リクエスト**
+リクエスト
 
 ```http
 POST /api/courses
@@ -268,7 +268,7 @@ Content-Type: application/json
 }
 ```
 
-**レスポンス（成功）**
+レスポンス（成功）
 
 ```http
 HTTP/1.1 201 Created
@@ -290,7 +290,7 @@ HTTP/1.1 201 Created
 }
 ```
 
-**レスポンス（バリデーションエラー）**
+レスポンス（バリデーションエラー）
 
 ```http
 HTTP/1.1 422 Unprocessable Entity
@@ -306,13 +306,13 @@ HTTP/1.1 422 Unprocessable Entity
 
 ### 受講申し込み POST /api/courses/{id}/attend
 
-**リクエスト**
+リクエスト
 
 ```http
 POST /api/courses/1/attend
 ```
 
-**レスポンス（成功）**
+レスポンス（成功）
 
 ```http
 HTTP/1.1 201 Created
@@ -331,7 +331,7 @@ HTTP/1.1 201 Created
 }
 ```
 
-**レスポンス（定員オーバー）**
+レスポンス（定員オーバー）
 
 ```http
 HTTP/1.1 422 Unprocessable Entity

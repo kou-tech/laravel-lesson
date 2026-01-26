@@ -1,4 +1,4 @@
-# Lesson 17: TDDで機能を追加する
+# Lesson 17 TDDで機能を追加する
 
 ## 学習目標
 
@@ -9,13 +9,12 @@
 - テストを先に書いて機能を実装できる
 - リファクタリングの安全性を体験する
 
----
 
 ## TDDとは？
 
 ### Test-Driven Development（テスト駆動開発）
 
-**テストを先に書いてから、そのテストを通すコードを書く**開発手法です。
+テストを先に書いてから、そのテストを通すコードを書く開発手法です。
 
 ### TDDの3ステップサイクル
 
@@ -29,9 +28,8 @@
      （1に戻る）
 ```
 
----
 
-## 実践: 受講キャンセル機能をTDDで実装
+## 実践 受講キャンセル機能をTDDで実装
 
 ### 要件
 
@@ -40,9 +38,8 @@
 - キャンセル済みの受講は再キャンセル不可
 - キャンセル時にメール通知を送信
 
----
 
-## Step 1: Red - 失敗するテストを書く
+## Step 1 Red - 失敗するテストを書く
 
 ### テストファイルの作成
 
@@ -111,9 +108,8 @@ FAILED  Tests\Feature\Api\EnrollmentCancelTest > student can cancel enrollment
 
 ルートが存在しないので404エラー。これがRed状態です。
 
----
 
-## Step 2: Green - テストを通す最小限のコード
+## Step 2 Green - テストを通す最小限のコード
 
 ### ルートを追加
 
@@ -159,9 +155,8 @@ PASS  Tests\Feature\Api\EnrollmentCancelTest > student can cancel enrollment
 
 Green状態になりました。
 
----
 
-## Step 3: 次のテストを追加（Red）
+## Step 3 次のテストを追加（Red）
 
 ### 3日前以降はキャンセル不可
 
@@ -202,9 +197,8 @@ php artisan test --filter=test_cannot_cancel_within_3_days
 FAILED  Expected status code 422 but received 200.
 ```
 
----
 
-## Step 4: 実装を追加（Green）
+## Step 4 実装を追加（Green）
 
 ### コントローラーを修正
 
@@ -242,9 +236,8 @@ PASS  Tests\Feature\Api\EnrollmentCancelTest > student can cancel enrollment
 PASS  Tests\Feature\Api\EnrollmentCancelTest > cannot cancel within 3 days before start
 ```
 
----
 
-## Step 5: さらにテストを追加
+## Step 5 さらにテストを追加
 
 ### 再キャンセル不可
 
@@ -290,9 +283,8 @@ public function test_cannot_cancel_others_enrollment(): void
 
 これらのテストは既存の実装で通ります。
 
----
 
-## Step 6: Refactor - コードを整理
+## Step 6 Refactor - コードを整理
 
 ### サービスクラスに抽出
 
@@ -347,9 +339,8 @@ php artisan test tests/Feature/Api/EnrollmentCancelTest.php
 
 全てのテストがパスすれば、リファクタリング成功です。
 
----
 
-## Step 7: メール通知のテストを追加
+## Step 7 メール通知のテストを追加
 
 ```php
 use Illuminate\Support\Facades\Mail;
@@ -397,13 +388,12 @@ public function cancel(User $user, Course $course): void
 }
 ```
 
----
 
 ## TDDのメリット
 
 ### 1. 設計が改善される
 
-テストしやすいコード = 良い設計
+テストしやすいコード = 良い設計です。
 
 ```php
 // ❌ テストしにくい（依存が隠れている）
@@ -422,45 +412,34 @@ public function cancel(EnrollmentService $service)
 
 ### 2. 過剰な実装を防ぐ
 
-テストが通るまで次のコードを書かない → 必要最小限の実装
+テストが通るまで次のコードを書かないため、必要最小限の実装になります。
 
 ### 3. リファクタリングの安心感
 
-テストがあるので、大胆に書き換えられる
+テストがあるので、大胆に書き換えられます。
 
 ### 4. ドキュメントになる
 
-テストコードが仕様書の役割を果たす
+テストコードが仕様書の役割を果たします。
 
----
 
 ## まとめ
 
-このレッスンで学んだこと：
+このレッスンで学んだことを振り返ります。
 
-1. **TDDの3ステップ**
-   - Red: 失敗するテストを書く
-   - Green: テストを通す最小限のコード
-   - Refactor: コードを整理
+1. TDDの3ステップとして、Red（失敗するテストを書く）、Green（テストを通す最小限のコード）、Refactor（コードを整理）があります。
 
-2. **小さなサイクル**
-   - 1テストずつ追加
-   - 常にテストがパスする状態を維持
+2. 小さなサイクルで1テストずつ追加し、常にテストがパスする状態を維持します。
 
-3. **リファクタリング**
-   - テストがあるから安全
-   - サービスクラスへの抽出
+3. リファクタリングはテストがあるから安全に行え、サービスクラスへの抽出も安心です。
 
-4. **設計の改善**
-   - テストしやすい = 良い設計
-   - 依存関係が明確になる
+4. 設計の改善として、テストしやすい = 良い設計であり、依存関係が明確になります。
 
----
 
 ## 練習問題
 
 ### 問題
-以下の機能をTDDで実装してください:
+以下の機能をTDDで実装してください。
 
 「講師は自分の講座を公開できる（status を active に変更）」
 
@@ -469,7 +448,7 @@ public function cancel(EnrollmentService $service)
 - 他の講師の講座は公開不可
 
 <details>
-<summary>ステップ1: 最初のテスト</summary>
+<summary>ステップ1 最初のテスト</summary>
 
 ```php
 public function test_instructor_can_publish_course(): void
@@ -493,8 +472,7 @@ public function test_instructor_can_publish_course(): void
 ```
 </details>
 
----
 
 ## 次のレッスン
 
-[Lesson 18: フロントエンドとの統合](./18-frontend-integration.md) では、Inertiaを使ってフロントエンドと統合し、受講管理システムを完成させます。
+[Lesson 18 フロントエンドとの統合](./18-frontend-integration.md) では、Inertiaを使ってフロントエンドと統合し、受講管理システムを完成させます。

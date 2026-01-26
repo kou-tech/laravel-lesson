@@ -1,4 +1,4 @@
-# Lesson 10: 安全なモデルの記述
+# Lesson 10 安全なモデルの記述
 
 ## 学習目標
 
@@ -10,7 +10,6 @@
 - `$casts` でデータ型を変換できる
 - アクセサ/ミューテタを活用できる
 
----
 
 ## Mass Assignment脆弱性とは？
 
@@ -48,11 +47,10 @@ public function store(Request $request)
 
 `$request->all()` を使うと、`role` や `is_verified` も設定されてしまいます。
 
----
 
-## Step 1: $fillable で許可するカラムを指定
+## Step 1 $fillable で許可するカラムを指定
 
-### $fillable の設定
+### $fillableの設定
 
 ```php
 class User extends Authenticatable
@@ -88,11 +86,10 @@ public function store(Request $request)
 }
 ```
 
----
 
-## Step 2: $guarded で禁止するカラムを指定
+## Step 2 $guarded で禁止するカラムを指定
 
-### $guarded の設定
+### $guardedの設定
 
 ```php
 class User extends Authenticatable
@@ -116,7 +113,7 @@ class User extends Authenticatable
 | `$fillable` | ホワイトリスト | カラム数が少ない、セキュリティ重視 |
 | `$guarded` | ブラックリスト | カラム数が多い、柔軟性重視 |
 
-**推奨**: `$fillable` を使う（明示的で安全）
+推奨は `$fillable` を使うこと（明示的で安全）です。
 
 ### $guarded = [] は危険
 
@@ -127,9 +124,8 @@ protected $guarded = [];
 
 テストやシーダーで使うことはありますが、本番コードでは避けてください。
 
----
 
-## Step 3: $casts でデータ型を変換
+## Step 3 $casts でデータ型を変換
 
 ### なぜキャストが必要？
 
@@ -207,9 +203,8 @@ if ($course->status === CourseStatus::Active) {
 }
 ```
 
----
 
-## Step 4: アクセサとミューテタ
+## Step 4 アクセサとミューテタ
 
 ### アクセサ（取得時の加工）
 
@@ -290,9 +285,8 @@ protected function name(): Attribute
 }
 ```
 
----
 
-## Step 5: $hidden と $visible
+## Step 5 $hidden と $visible
 
 ### APIレスポンスから除外
 
@@ -332,7 +326,7 @@ class User extends Authenticatable
 }
 ```
 
-**注意**: `$visible` を設定すると、それ以外は全て隠れます。
+`$visible` を設定すると、それ以外は全て隠れるため注意してください。
 
 ### 一時的に変更
 
@@ -344,9 +338,8 @@ $user->makeVisible(['password']);
 $user->makeHidden(['email']);
 ```
 
----
 
-## Step 6: 属性の追加
+## Step 6 属性の追加
 
 ### $appends で仮想属性を追加
 
@@ -387,9 +380,8 @@ class Course extends Model
 }
 ```
 
----
 
-## Step 7: Enrollmentモデルの完成
+## Step 7 Enrollmentモデルの完成
 
 ```php
 <?php
@@ -453,33 +445,6 @@ class Enrollment extends Model
 }
 ```
 
----
-
-## まとめ
-
-このレッスンで学んだこと：
-
-1. **Mass Assignment脆弱性**
-   - 意図しないカラムが更新される危険
-   - `$fillable` で許可リストを指定
-
-2. **$fillable vs $guarded**
-   - `$fillable`: ホワイトリスト（推奨）
-   - `$guarded`: ブラックリスト
-
-3. **$casts**
-   - データ型を自動変換
-   - Enum、datetime、array など
-
-4. **アクセサ/ミューテタ**
-   - 取得/保存時にデータを加工
-   - 仮想属性の作成
-
-5. **$hidden / $visible / $appends**
-   - シリアライズの制御
-
----
-
 ## 練習問題
 
 ### 問題1
@@ -514,8 +479,7 @@ protected function title(): Attribute
 ```
 </details>
 
----
 
 ## 次のレッスン
 
-[Lesson 11: トランザクション処理](./11-transaction.md) では、データの整合性を保つためのトランザクション処理を学びます。
+[Lesson 11 トランザクション処理](./11-transaction.md) では、データの整合性を保つためのトランザクション処理を学びます。

@@ -1,4 +1,4 @@
-# Lesson 11: トランザクション処理
+# Lesson 11 トランザクション処理
 
 ## 学習目標
 
@@ -10,7 +10,6 @@
 - 例外発生時のロールバックを理解する
 - デッドロック対策ができる
 
----
 
 ## トランザクションとは？
 
@@ -38,17 +37,16 @@ public function enroll(User $user, Course $course)
 }
 ```
 
-**問題**: メール送信で失敗した場合
+メール送信で失敗した場合、以下のような問題が発生します。
 
 - 受講レコードは作成済み ✓
 - 講座の受講者数は更新済み ✓
 - メールは送信されていない ✗
 
-**データの不整合**が発生します。
+このようにデータの不整合が発生します。
 
----
 
-## Step 1: DB::transaction() で解決
+## Step 1 DB::transaction() で解決
 
 ### 基本的な使い方
 
@@ -103,7 +101,7 @@ public function enroll(User $user, Course $course)
 
 ### 例外の再スロー
 
-トランザクション内で例外をキャッチして処理する場合：
+トランザクション内で例外をキャッチして処理する場合は以下のようにします。
 
 ```php
 DB::transaction(function () {
@@ -119,9 +117,8 @@ DB::transaction(function () {
 });
 ```
 
----
 
-## Step 2: 手動トランザクション制御
+## Step 2 手動トランザクション制御
 
 ### より細かい制御が必要な場合
 
@@ -167,15 +164,14 @@ public function complexOperation()
 | `DB::transaction()` | シンプル、例外時に自動ロールバック | 細かい制御が難しい |
 | 手動（begin/commit/rollback） | 柔軟な制御が可能 | 書き忘れのリスク |
 
-**推奨**: 特別な理由がなければ `DB::transaction()` を使う
+特別な理由がなければ `DB::transaction()` を使うことを推奨します。
 
----
 
-## Step 3: 排他制御（ロック）
+## Step 3 排他制御（ロック）
 
-### 問題: 競合状態
+### 競合状態の問題
 
-2人のユーザーが同時に残り1席の講座に申し込む場合：
+2人のユーザーが同時に残り1席の講座に申し込む場合を考えます。
 
 ```
 ユーザーA: 残席確認 → 1席 → 登録実行
@@ -208,24 +204,23 @@ public function enroll(User $user, int $courseId)
 }
 ```
 
-**lockForUpdate()** は、そのレコードを他のトランザクションが更新できないようにロックします。
+`lockForUpdate()` は、そのレコードを他のトランザクションが更新できないようにロックします。
 
 ### sharedLock（共有ロック）
 
-読み取りのみの場合に使用：
+読み取りのみの場合に使用します。
 
 ```php
 $course = Course::sharedLock()->find($courseId);
 // 他のトランザクションは読み取り可能、更新は不可
 ```
 
----
 
-## Step 4: デッドロック対策
+## Step 4 デッドロック対策
 
 ### デッドロックとは？
 
-2つのトランザクションが互いにロックを待ち合う状態：
+2つのトランザクションが互いにロックを待ち合う状態です。
 
 ```
 トランザクションA: users をロック → courses のロックを待つ
@@ -233,7 +228,7 @@ $course = Course::sharedLock()->find($courseId);
 → 永久に待ち続ける（デッドロック）
 ```
 
-### 対策1: ロック順序を統一
+### 対策1 ロック順序を統一
 
 ```php
 // ✅ 常に同じ順序でロック
@@ -244,7 +239,7 @@ DB::transaction(function () {
 });
 ```
 
-### 対策2: リトライ処理
+### 対策2 リトライ処理
 
 ```php
 use Illuminate\Database\DeadlockException;
@@ -270,7 +265,7 @@ while ($attempt < $maxAttempts) {
 
 ### DB::transaction() のリトライ機能
 
-`DB::transaction()` は第2引数でリトライ回数を指定できます：
+`DB::transaction()` は第2引数でリトライ回数を指定できます。
 
 ```php
 DB::transaction(function () {
@@ -278,9 +273,8 @@ DB::transaction(function () {
 }, 5);  // デッドロック時に最大5回リトライ
 ```
 
----
 
-## Step 5: 実践 - 受講登録APIの実装
+## Step 5 実践 - 受講登録APIの実装
 
 ### EnrollmentService
 
@@ -386,9 +380,8 @@ class EnrollmentController extends Controller
 }
 ```
 
----
 
-## Step 6: トランザクションのテスト
+## Step 6 トランザクションのテスト
 
 ### テストでのトランザクション確認
 
@@ -420,34 +413,6 @@ class EnrollmentTest extends TestCase
     }
 }
 ```
-
----
-
-## まとめ
-
-このレッスンで学んだこと：
-
-1. **トランザクションの必要性**
-   - 複数のDB操作を原子的に実行
-   - 失敗時は全てロールバック
-
-2. **DB::transaction()**
-   - クロージャ内で操作
-   - 例外時に自動ロールバック
-
-3. **排他制御**
-   - `lockForUpdate()` で行ロック
-   - 競合状態を防止
-
-4. **デッドロック対策**
-   - ロック順序の統一
-   - リトライ処理
-
-5. **ベストプラクティス**
-   - メール送信はトランザクション外
-   - 適切な例外処理
-
----
 
 ## 練習問題
 
@@ -508,8 +473,7 @@ public function cancel(User $user, int $courseId): void
 ```
 </details>
 
----
 
 ## 次のレッスン
 
-[Lesson 12: FormRequestによるバリデーション](./12-validation.md) では、堅牢なバリデーション設計を学びます。
+[Lesson 12 FormRequestによるバリデーション](./12-validation.md) では、堅牢なバリデーション設計を学びます。

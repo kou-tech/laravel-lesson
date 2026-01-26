@@ -1,4 +1,4 @@
-# Lesson 16: メールとジョブ機能
+# Lesson 16 メールとジョブ機能
 
 ## 学習目標
 
@@ -10,11 +10,10 @@
 - Job クラスを作成してキューに投入できる
 - 非同期処理の仕組みを理解する
 
----
 
 ## なぜ非同期処理が必要か？
 
-### 問題: 同期処理のボトルネック
+### 同期処理のボトルネック
 
 ```php
 public function store(Request $request, Course $course)
@@ -30,7 +29,7 @@ public function store(Request $request, Course $course)
 
 ユーザーは3秒以上待たされます。
 
-### 解決: 非同期処理
+### 非同期処理による解決
 
 ```php
 public function store(Request $request, Course $course)
@@ -46,9 +45,8 @@ public function store(Request $request, Course $course)
 
 メール送信はバックグラウンドで実行されます。
 
----
 
-## Step 1: Mailable の作成
+## Step 1 Mailable の作成
 
 ### コマンドで生成
 
@@ -58,7 +56,7 @@ php artisan make:mail EnrollmentConfirmation
 
 ### Mailable の実装
 
-`app/Mail/EnrollmentConfirmation.php`:
+`app/Mail/EnrollmentConfirmation.php` に以下のように実装します。
 
 ```php
 <?php
@@ -109,7 +107,7 @@ class EnrollmentConfirmation extends Mailable
 
 ### メールテンプレート
 
-`resources/views/emails/enrollment-confirmation.blade.php`:
+`resources/views/emails/enrollment-confirmation.blade.php` に以下のように記述します。
 
 ```blade
 <!DOCTYPE html>
@@ -144,9 +142,8 @@ class EnrollmentConfirmation extends Mailable
 </html>
 ```
 
----
 
-## Step 2: メールの送信
+## Step 2 メールの送信
 
 ### 同期送信
 
@@ -177,9 +174,8 @@ Mail::to($user)->later(
 );
 ```
 
----
 
-## Step 3: Job クラスの作成
+## Step 3 Job クラスの作成
 
 ### コマンドで生成
 
@@ -189,7 +185,7 @@ php artisan make:job SendEnrollmentConfirmation
 
 ### Job の実装
 
-`app/Jobs/SendEnrollmentConfirmation.php`:
+`app/Jobs/SendEnrollmentConfirmation.php` に以下のように実装します。
 
 ```php
 <?php
@@ -266,9 +262,8 @@ SendEnrollmentConfirmation::dispatch($enrollment)
 SendEnrollmentConfirmation::dispatchSync($enrollment);
 ```
 
----
 
-## Step 4: キューの設定
+## Step 4 キューの設定
 
 ### .env の設定
 
@@ -303,9 +298,8 @@ php artisan queue:work --memory=128 --timeout=60
 php artisan queue:work --once
 ```
 
----
 
-## Step 5: 失敗したジョブの管理
+## Step 5 失敗したジョブの管理
 
 ### 失敗ジョブテーブル
 
@@ -349,9 +343,8 @@ class SendEnrollmentConfirmation implements ShouldQueue
 }
 ```
 
----
 
-## Step 6: 実践 - 受講登録時のメール送信
+## Step 6 実践 - 受講登録時のメール送信
 
 ### EnrollmentService の修正
 
@@ -397,9 +390,8 @@ SendEnrollmentConfirmation::dispatch($enrollment)
     ->afterCommit();  // トランザクションがコミットされてから実行
 ```
 
----
 
-## Step 7: メールのプレビュー
+## Step 7 メールのプレビュー
 
 ### 開発環境でのプレビュー
 
@@ -417,7 +409,7 @@ if (app()->environment('local')) {
 
 ### Mailpit / Mailtrap の利用
 
-`.env`:
+`.env` に以下のように設定します。
 
 ```env
 MAIL_MAILER=smtp
@@ -425,9 +417,8 @@ MAIL_HOST=localhost
 MAIL_PORT=1025
 ```
 
----
 
-## Step 8: テスト
+## Step 8 テスト
 
 ### メール送信のテスト
 
@@ -473,33 +464,21 @@ test('受講登録時にジョブがキューに追加される', function () {
 });
 ```
 
----
 
 ## まとめ
 
-このレッスンで学んだこと：
+このレッスンで学んだことを振り返ります。
 
-1. **Mailable クラス**
-   - メールの件名、本文、送信先を定義
-   - Blade テンプレートで本文作成
+1. Mailable クラスではメールの件名、本文、送信先を定義し、Blade テンプレートで本文を作成します。
 
-2. **メール送信**
-   - `send()`: 同期送信
-   - `queue()`: 非同期送信
+2. メール送信では `send()` が同期送信、`queue()` が非同期送信です。
 
-3. **Job クラス**
-   - バックグラウンド処理を定義
-   - `dispatch()` でキューに追加
+3. Job クラスではバックグラウンド処理を定義し、`dispatch()` でキューに追加します。
 
-4. **キュー設定**
-   - `QUEUE_CONNECTION` で接続先を設定
-   - `queue:work` でワーカー起動
+4. キュー設定では `QUEUE_CONNECTION` で接続先を設定し、`queue:work` でワーカーを起動します。
 
-5. **失敗時の処理**
-   - リトライ設定
-   - `failed()` メソッドでエラーハンドリング
+5. 失敗時の処理としてリトライ設定や `failed()` メソッドでエラーハンドリングを行います。
 
----
 
 ## 練習問題
 
@@ -572,8 +551,7 @@ $schedule->command('courses:send-reminders')->daily();
 ```
 </details>
 
----
 
 ## 次のレッスン
 
-[Lesson 17: TDDで機能を追加する](./17-tdd.md) では、テスト駆動開発（TDD）のサイクルを体験します。
+[Lesson 17 TDDで機能を追加する](./17-tdd.md) では、テスト駆動開発（TDD）のサイクルを体験します。

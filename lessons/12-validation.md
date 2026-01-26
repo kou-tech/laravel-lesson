@@ -1,4 +1,4 @@
-# Lesson 12: FormRequestによるバリデーション
+# Lesson 12 FormRequestによるバリデーション
 
 ## 学習目標
 
@@ -10,7 +10,6 @@
 - カスタムバリデーションを作成できる
 - エラーメッセージをカスタマイズできる
 
----
 
 ## なぜFormRequestを使うか？
 
@@ -32,7 +31,7 @@ public function store(Request $request)
 }
 ```
 
-**問題点**:
+このコードには以下の問題点があります。
 - コントローラーが肥大化
 - 同じルールを複数箇所で使い回しにくい
 - 認可ロジックと混在
@@ -50,9 +49,8 @@ public function store(StoreCourseRequest $request)
 
 シンプルになり、関心の分離ができます。
 
----
 
-## Step 1: FormRequestの作成
+## Step 1 FormRequestの作成
 
 ### コマンドで生成
 
@@ -100,9 +98,8 @@ class StoreCourseRequest extends FormRequest
 }
 ```
 
----
 
-## Step 2: よく使うバリデーションルール
+## Step 2 よく使うバリデーションルール
 
 ### 文字列系
 
@@ -157,9 +154,8 @@ class StoreCourseRequest extends FormRequest
 'reason' => ['required_unless:status,active'],
 ```
 
----
 
-## Step 3: カスタムエラーメッセージ
+## Step 3 カスタムエラーメッセージ
 
 ### messages() メソッド
 
@@ -188,14 +184,13 @@ public function attributes(): array
 }
 ```
 
-これにより、エラーメッセージが:
+これにより、エラーメッセージが以下のように変わります。
 
-- Before: `The title field is required.`
-- After: `講座タイトルは必須です。`
+- Before → `The title field is required.`
+- After → `講座タイトルは必須です。`
 
----
 
-## Step 4: prepareForValidation()
+## Step 4 prepareForValidation()
 
 ### バリデーション前のデータ加工
 
@@ -215,9 +210,8 @@ protected function prepareForValidation(): void
 }
 ```
 
----
 
-## Step 5: カスタムバリデーションルール
+## Step 5 カスタムバリデーションルール
 
 ### クロージャを使う（シンプルなケース）
 
@@ -244,7 +238,7 @@ public function rules(): array
 php artisan make:rule ValidCouponCode
 ```
 
-`app/Rules/ValidCouponCode.php`:
+`app/Rules/ValidCouponCode.php` に以下のように実装します。
 
 ```php
 <?php
@@ -271,7 +265,7 @@ class ValidCouponCode implements ValidationRule
 }
 ```
 
-使用:
+使用方法は以下の通りです。
 
 ```php
 use App\Rules\ValidCouponCode;
@@ -284,9 +278,8 @@ public function rules(): array
 }
 ```
 
----
 
-## Step 6: 更新用のFormRequest
+## Step 6 更新用のFormRequest
 
 ### UpdateCourseRequest
 
@@ -309,7 +302,7 @@ class UpdateCourseRequest extends FormRequest
     public function rules(): array
     {
         return [
-            // sometimes: フィールドが存在する場合のみバリデーション
+            // sometimes はフィールドが存在する場合のみバリデーション
             'title' => ['sometimes', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'capacity' => ['sometimes', 'integer', 'min:1', 'max:100'],
@@ -336,9 +329,8 @@ public function rules(): array
 }
 ```
 
----
 
-## Step 7: 複雑なバリデーション
+## Step 7 複雑なバリデーション
 
 ### withValidator() でカスタムロジック
 
@@ -381,9 +373,8 @@ protected function failedValidation(Validator $validator): void
 }
 ```
 
----
 
-## Step 8: EnrollmentRequest の実装
+## Step 8 EnrollmentRequest の実装
 
 ```php
 <?php
@@ -448,9 +439,8 @@ class EnrollmentRequest extends FormRequest
 }
 ```
 
----
 
-## Step 9: バリデーションエラーのレスポンス
+## Step 9 バリデーションエラーのレスポンス
 
 ### デフォルトのレスポンス（API）
 
@@ -482,41 +472,13 @@ return (
 );
 ```
 
----
-
-## まとめ
-
-このレッスンで学んだこと：
-
-1. **FormRequest**
-   - コントローラーからバリデーションを分離
-   - `authorize()` で認可チェック
-
-2. **バリデーションルール**
-   - 文字列、数値、日付、配列など
-   - `exists`, `unique` でDB確認
-
-3. **カスタマイズ**
-   - `messages()` でエラーメッセージ
-   - `attributes()` でフィールド名
-
-4. **カスタムルール**
-   - クロージャ（シンプル）
-   - Ruleクラス（再利用可能）
-
-5. **高度な使い方**
-   - `prepareForValidation()` で前処理
-   - `withValidator()` で複雑なロジック
-
----
-
 ## 練習問題
 
 ### 問題1
-ユーザー登録用の `RegisterUserRequest` を作成してください。以下のルールを実装:
-- name: 必須、255文字以内
-- email: 必須、メール形式、ユニーク
-- password: 必須、8文字以上、確認用と一致
+ユーザー登録用の `RegisterUserRequest` を作成してください。以下のルールを実装してください。
+- name → 必須、255文字以内
+- email → 必須、メール形式、ユニーク
+- password → 必須、8文字以上、確認用と一致
 
 <details>
 <summary>解答例</summary>
@@ -594,15 +556,14 @@ class UniqueCourseTitle implements ValidationRule
 }
 ```
 
-使用:
+使用方法は以下の通りです。
 
 ```php
 'title' => ['required', 'string', new UniqueCourseTitle($this->user()->id)],
 ```
 </details>
 
----
 
 ## 次のレッスン
 
-[Lesson 13: サービスコンテナとDI](./13-di-container.md) では、Laravelのサービスコンテナと依存性注入を学びます。
+[Lesson 13 サービスコンテナとDI](./13-di-container.md) では、Laravelのサービスコンテナと依存性注入を学びます。
