@@ -1,4 +1,4 @@
-# Lesson 7: 良いコードを書く
+# Lesson 7 良いコードを書く
 
 ## 学習目標
 
@@ -10,22 +10,15 @@
 - 適切な変数名・メソッド名を付けられる
 - メソッドの責務を分割できる
 
----
-
 ## なぜ「良いコード」が重要か？
 
-コードは**書く時間より読む時間の方が長い**です。
+コードは書く時間より読む時間の方が長いです。
 
 - 自分が書いたコードを3ヶ月後に読み返す
 - チームメンバーがコードをレビューする
 - バグ修正のために調査する
 
-読みやすいコードは：
-- **バグが発見しやすい**
-- **変更が容易**
-- **引き継ぎが楽**
-
----
+読みやすいコードはバグが発見しやすく、変更が容易で、引き継ぎも楽になります。
 
 ## 1. 早期リターン（Early Return）
 
@@ -59,10 +52,7 @@ public function enroll(User $user, Course $course)
 }
 ```
 
-**問題点:**
-- ネストが深い（インデントが多い）
-- 正常系が奥深くにある
-- 条件の追跡が困難
+このコードには問題があります。ネストが深く、正常系が奥深くにあり、条件の追跡が困難です。
 
 ### 改善後のコード
 
@@ -94,16 +84,11 @@ public function enroll(User $user, Course $course)
 }
 ```
 
-**改善点:**
-- ネストが浅い
-- 異常系を先に処理して除外
-- 正常系が目立つ
+改善点として、ネストが浅くなり、異常系を先に処理して除外することで、正常系が目立つようになりました。
 
 ### 原則
 
 > 異常系を先に処理し、正常系を最後に残す
-
----
 
 ## 2. マジックナンバーの排除
 
@@ -126,10 +111,7 @@ public function calculateFee(Course $course, User $user)
 }
 ```
 
-**問題点:**
-- `0.8` や `1.2` が何を意味するか不明
-- 変更時に全ての箇所を探す必要がある
-- テストで意図が伝わらない
+このコードには問題があります。`0.8` や `1.2` が何を意味するか不明で、変更時に全ての箇所を探す必要があり、テストで意図が伝わりません。
 
 ### 改善後のコード（定数を使用）
 
@@ -177,8 +159,6 @@ enum DiscountType: string
 }
 ```
 
----
-
 ## 3. 意味のある名前
 
 ### 変数名
@@ -219,8 +199,6 @@ public function sendEnrollmentConfirmationEmail($enrollment) { ... }
 | 判定メソッド | is/has/can で始める | `isEnrolled()`, `hasPermission()` |
 | 変換メソッド | to で始める | `toArray()`, `toJson()` |
 
----
-
 ## 4. メソッドの責務を分割
 
 ### 問題のあるコード
@@ -260,10 +238,7 @@ public function createCourseAndNotify(Request $request)
 }
 ```
 
-**問題点:**
-- 1つのメソッドが多くのことをしている
-- テストしづらい
-- 再利用できない
+このコードには問題があります。1つのメソッドが多くのことをしており、テストしづらく、再利用できません。
 
 ### 改善後のコード
 
@@ -327,8 +302,6 @@ class NotificationService
 
 > 1つのクラス/メソッドは1つのことだけを行う
 
----
-
 ## 5. コメントよりコードで語る
 
 ### 不要なコメント
@@ -371,11 +344,9 @@ if ($user->isInstructor()) {
 }
 ```
 
----
-
 ## 6. 実践リファクタリング
 
-### Before: Lesson 6 のコードを改善
+### Before（Lesson 6 のコードを改善）
 
 ```php
 public function index(Request $request)
@@ -399,7 +370,7 @@ public function index(Request $request)
 }
 ```
 
-### After: 責務を分離
+### After（責務を分離）
 
 ```php
 class CourseController extends Controller
@@ -447,35 +418,6 @@ public function scopeFilter($query, array $filters)
 }
 ```
 
----
-
-## まとめ
-
-このレッスンで学んだこと：
-
-1. **早期リターン**
-   - ネストを浅く保つ
-   - 異常系を先に処理
-   - 正常系を目立たせる
-
-2. **マジックナンバー排除**
-   - 定数やEnumを使う
-   - 意味のある名前を付ける
-
-3. **意味のある名前**
-   - 変数・メソッドの目的を表す
-   - 命名規則に従う
-
-4. **責務の分割**
-   - 1メソッド1責務
-   - 再利用可能な単位に分ける
-
-5. **コメントよりコード**
-   - 「なぜ」を説明
-   - コードで意図を表現
-
----
-
 ## 練習問題
 
 ### 問題1
@@ -502,32 +444,6 @@ public function updateProfile(Request $request, User $user)
 }
 ```
 
-<details>
-<summary>解答例</summary>
-
-```php
-public function updateProfile(Request $request, User $user)
-{
-    if ($request->user()->id !== $user->id) {
-        return response()->json(['error' => '権限がありません'], 403);
-    }
-
-    if (!$request->has('name')) {
-        return response()->json(['error' => '名前は必須です'], 422);
-    }
-
-    if (strlen($request->name) > 255) {
-        return response()->json(['error' => '名前が長すぎます'], 422);
-    }
-
-    $user->name = $request->name;
-    $user->save();
-
-    return new UserResource($user);
-}
-```
-</details>
-
 ### 問題2
 以下のコードからマジックナンバーを排除してください。
 
@@ -541,26 +457,7 @@ if ($daysUntilStart <= 7) {
 }
 ```
 
-<details>
-<summary>解答例</summary>
-
-```php
-private const CAPACITY_WARNING_THRESHOLD = 0.9;
-private const DAYS_BEFORE_START_WARNING = 7;
-
-$capacityUsageRate = $course->enrollments->count() / $course->capacity;
-if ($capacityUsageRate >= self::CAPACITY_WARNING_THRESHOLD) {
-    // 残り10%になったら警告
-}
-
-if ($daysUntilStart <= self::DAYS_BEFORE_START_WARNING) {
-    // 開始1週間前
-}
-```
-</details>
-
----
 
 ## 次のレッスン
 
-[Lesson 8: データベース設計の基礎](./08-database-design.md) では、外部キー、インデックス、NULL制約など堅牢なDB設計の原則を学びます。
+[Lesson 8 データベース設計の基礎](./08-database-design.md) では、外部キー、インデックス、NULL制約など堅牢なDB設計の原則を学びます。
