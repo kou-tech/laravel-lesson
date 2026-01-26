@@ -1,4 +1,4 @@
-# Lesson 9: N+1問題を解決する
+# Lesson 9 N+1問題を解決する
 
 ## 学習目標
 
@@ -10,9 +10,7 @@
 - Telescope/ログでクエリを確認できる
 - 開発時にN+1問題を検出できる
 
----
-
-## N+1問題とは？
+## N+1問題とは
 
 ### 問題のあるコード
 
@@ -47,19 +45,13 @@ SELECT * FROM users WHERE id = 3;
 SELECT * FROM users WHERE id = N;
 ```
 
-**合計: 1 + N 回のクエリ**
+合計 1 + N 回のクエリが実行されます。100件の講座があれば101回のクエリが実行されます。
 
-100件の講座があれば101回のクエリが実行されます。
+### なぜ問題か
 
-### なぜ問題か？
+クエリ数が増えるほどパフォーマンスが低下し、DBへの接続・切断のオーバーヘッドも増加します。データが増えるほど悪化するため、スケールしません。
 
-- **パフォーマンス低下**: クエリ数が増えるほど遅くなる
-- **DBへの負荷**: 接続・切断のオーバーヘッド
-- **スケールしない**: データが増えるほど悪化
-
----
-
-## Step 1: Eager Loadingで解決
+## Step 1 Eager Loadingで解決
 
 ### with() を使う
 
@@ -83,13 +75,9 @@ SELECT * FROM courses;
 SELECT * FROM users WHERE id IN (1, 2, 3, ..., N);
 ```
 
-**合計: 2回のクエリ**
+合計2回のクエリで済みます。データ量に関係なく、常に2回のクエリで済みます。
 
-データ量に関係なく、常に2回のクエリで済みます。
-
----
-
-## Step 2: 様々なEager Loading
+## Step 2 様々なEager Loading
 
 ### 複数のリレーションをロード
 
@@ -125,28 +113,9 @@ $courses = Course::with(['enrollments' => function ($query) {
 }])->get();
 ```
 
-### 特定カラムのみロード
+## Step 3 遅延Eager Loading
 
-```php
-// 講師のid, nameのみ取得
-$courses = Course::with('instructor:id,name')->get();
-```
-
-**注意**: 必ず外部キーを含める
-
-```php
-// ❌ instructor_idがないとリレーションが解決できない
-$courses = Course::with('instructor:name')->get();
-
-// ✅ 正しい
-$courses = Course::with('instructor:id,name')->get();
-```
-
----
-
-## Step 3: 遅延Eager Loading
-
-### load() - 後からロード
+### load()（後からロード）
 
 ```php
 $courses = Course::all();
@@ -157,7 +126,7 @@ if ($includeInstructor) {
 }
 ```
 
-### loadMissing() - 未ロードのみロード
+### loadMissing()（未ロードのみロード）
 
 ```php
 $courses = Course::with('instructor')->get();
@@ -167,9 +136,7 @@ $courses = Course::with('instructor')->get();
 $courses->loadMissing(['instructor', 'enrollments']);
 ```
 
----
-
-## Step 4: N+1問題の検出
+## Step 4 N+1問題の検出
 
 ### Telescopeで確認
 
@@ -179,7 +146,7 @@ $courses->loadMissing(['instructor', 'enrollments']);
 
 ### preventLazyLoading() で検出
 
-`app/Providers/AppServiceProvider.php`:
+`app/Providers/AppServiceProvider.php` に以下を追加します。
 
 ```php
 use Illuminate\Database\Eloquent\Model;
@@ -200,7 +167,7 @@ but lazy loading is disabled.
 
 ### handleLazyLoadingViolationUsing() でログ出力
 
-例外ではなくログに出力したい場合：
+例外ではなくログに出力したい場合は以下のように設定します。
 
 ```php
 Model::handleLazyLoadingViolationUsing(function ($model, $relation) {
@@ -211,11 +178,9 @@ Model::handleLazyLoadingViolationUsing(function ($model, $relation) {
 });
 ```
 
----
+## Step 5 カウントの最適化
 
-## Step 5: カウントの最適化
-
-### 問題: 受講者数を取得
+### 問題（受講者数を取得）
 
 ```php
 @foreach($courses as $course)
@@ -225,7 +190,7 @@ Model::handleLazyLoadingViolationUsing(function ($model, $relation) {
 
 これは全ての受講データをロードしてからカウントします。
 
-### 解決: withCount() を使う
+### 解決（withCount() を使う）
 
 ```php
 $courses = Course::withCount('enrollments')->get();
@@ -257,11 +222,9 @@ $courses = Course::withCount([
 // $course->active_enrollments_count
 ```
 
----
+## Step 6 実践例
 
-## Step 6: 実践例
-
-### Before: N+1問題あり
+### Before（N+1問題あり）
 
 ```php
 class CourseController extends Controller
@@ -286,11 +249,9 @@ class CourseController extends Controller
 @endforeach
 ```
 
-**問題**:
-- `$course->instructor` でN回クエリ
-- `$course->enrollments->count()` でN回クエリ（さらに全データ取得）
+問題点として、`$course->instructor` でN回クエリ、`$course->enrollments->count()` でN回クエリ（さらに全データ取得）が発生しています。
 
-### After: 最適化
+### After（最適化）
 
 ```php
 class CourseController extends Controller
@@ -318,13 +279,9 @@ class CourseController extends Controller
 @endforeach
 ```
 
-**改善**:
-- 合計2回のクエリ
-- 受講データ自体は取得しない（カウントのみ）
+改善点として、合計2回のクエリで済み、受講データ自体は取得しない（カウントのみ）ようになりました。
 
----
-
-## Step 7: APIでのEager Loading
+## Step 7 APIでのEager Loading
 
 ### CourseResource での対応
 
@@ -355,33 +312,19 @@ class CourseResource extends JsonResource
 - 意図しないN+1を防止
 - レスポンスサイズの最適化
 
----
-
 ## まとめ
 
-このレッスンで学んだこと：
+このレッスンで学んだことを振り返ります。
 
-1. **N+1問題**
-   - 1 + N回のクエリが発生
-   - データ量に比例して悪化
+1. N+1問題では 1 + N回のクエリが発生し、データ量に比例して悪化します。
 
-2. **Eager Loading**
-   - `with()` で事前ロード
-   - ネスト・条件付きも可能
+2. Eager Loadingでは `with()` で事前ロードでき、ネスト・条件付きも可能です。
 
-3. **カウントの最適化**
-   - `withCount()` でサブクエリ
-   - データ自体は取得しない
+3. カウントの最適化では `withCount()` でサブクエリを使い、データ自体は取得しません。
 
-4. **検出方法**
-   - Telescopeで確認
-   - `preventLazyLoading()` で例外
+4. 検出方法としてTelescopeで確認したり、`preventLazyLoading()` で例外をスローできます。
 
-5. **ベストプラクティス**
-   - コントローラーで `with()` を明示
-   - `whenLoaded()` で安全にレスポンス
-
----
+5. ベストプラクティスとして、コントローラーで `with()` を明示し、`whenLoaded()` で安全にレスポンスを返しましょう。
 
 ## 練習問題
 
@@ -440,7 +383,7 @@ foreach ($instructors as $instructor) {
 }
 ```
 
-※ User モデルに `courses()` リレーションを追加する必要があります：
+※ User モデルに `courses()` リレーションを追加する必要があります。
 
 ```php
 public function courses(): HasMany
@@ -450,8 +393,6 @@ public function courses(): HasMany
 ```
 </details>
 
----
-
 ## 次のレッスン
 
-[Lesson 10: 安全なモデルの記述](./10-safe-model.md) では、Mass Assignmentなどのセキュリティ対策を学びます。
+[Lesson 10 安全なモデルの記述](./10-safe-model.md) では、Mass Assignmentなどのセキュリティ対策を学びます。
