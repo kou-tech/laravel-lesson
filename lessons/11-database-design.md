@@ -44,6 +44,8 @@ php artisan make:migration create_attendances_table
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use App\Models\User;
+use App\Models\Course;
 
 return new class extends Migration
 {
@@ -441,6 +443,126 @@ $table->dropColumn('old_column');
 // 3. アプリケーション更新
 // 4. 旧カラム削除
 ```
+
+## Step 8 受講登録APIで動作確認
+
+ここまでで設計したテーブル・モデル・制約が正しく機能するか、実際にAPIを1つ作って確認しましょう。
+
+### AttendanceResource の作成
+
+```bash
+php artisan make:resource AttendanceResource
+```
+
+```php
+<?php
+
+namespace App\Http\Resources;
+
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
+
+class AttendanceResource extends JsonResource
+{
+    /** @var \App\Models\Attendance */
+    public $resource;
+
+    public function toArray(Request $request): array
+    {
+        return [
+            'id' => $this->resource->id,
+            'user' => new UserResource($this->resource->user),
+            'course' => new CourseResource($this->resource->course),
+            'status' => $this->resource->status,
+            'status_label' => $this->resource->status->label(),
+            'attended_at' => $this->resource->attended_at->toISOString(),
+        ];
+    }
+}
+```
+
+### AttendanceController の作成
+
+```bash
+php artisan make:controller Api/AttendanceController
+```
+
+```php
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Http\Resources\AttendanceResource;
+use App\Models\Attendance;
+use App\Models\Course;
+use Illuminate\Database\QueryException;
+use Illuminate\Http\Request;
+
+class AttendanceController extends Controller
+{
+    /**
+     * 受講登録
+     */
+    public function store(Request $request, Course $course)
+    {
+        // 定員チェック
+        if (!$course->hasCapacity()) {
+            return response()->json([
+                'message' => 'この講座は定員に達しています。',
+            ], 422);
+        }
+
+        // 受講登録（重複時はDBの複合ユニーク制約でエラー）
+        try {
+            $attendance = Attendance::create([
+                'user_id' => $request->user()->id,
+                'course_id' => $course->id,
+                'status' => \App\Enums\AttendanceStatus::Attending,
+                'attended_at' => now(),
+            ]);
+        } catch (QueryException $e) {
+            if ($e->errorInfo[1] === 1062) {
+                return response()->json([
+                    'message' => 'すでにこの講座に登録済みです。',
+                ], 409);
+            }
+            throw $e;
+        }
+
+        $attendance->load(['user', 'course.instructor']);
+
+        return new AttendanceResource($attendance);
+    }
+}
+```
+
+**ポイント:**
+- `hasCapacity()` で定員チェック（Step 6 で定義したメソッド）
+- 複合ユニーク制約違反は `QueryException` をキャッチして 409 Conflict を返す
+- アプリ側チェックだけでなく、DB制約が最後の砦として機能する
+
+### ルート追加
+
+`routes/api.php` の `auth:sanctum` グループ内に追加します。
+
+```php
+Route::middleware('auth:sanctum')->group(function () {
+    // ...既存のルート...
+
+    // 受講登録
+    Route::post('/courses/{course}/attendances', [\App\Http\Controllers\Api\AttendanceController::class, 'store']);
+});
+```
+
+### 動作確認
+
+Postmanで確認してください。
+
+#### 1. 生徒でログイン
+#### 2. 受講登録（成功）
+#### 3. 同じ講座に再度登録（重複エラー）
+#### 4. 定員オーバー確認
 
 ## 練習問題
 
