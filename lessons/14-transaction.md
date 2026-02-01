@@ -18,22 +18,22 @@
 受講登録処理を考えます。
 
 ```php
-public function enroll(User $user, Course $course)
+public function attend(User $user, Course $course)
 {
     // 1. 受講レコードを作成
-    $enrollment = Enrollment::create([
+    $attendance = Attendance::create([
         'user_id' => $user->id,
         'course_id' => $course->id,
     ]);
 
     // 2. 講座の受講者数を更新
-    $course->increment('enrolled_count');
+    $course->increment('attendance_count');
 
     // 3. 通知メールを送信（ここで例外発生！）
-    Mail::to($user)->send(new EnrollmentConfirmation($enrollment));
+    Mail::to($user)->send(new AttendanceConfirmation($attendance));
     // ↑ メール送信に失敗すると例外がスローされる
 
-    return $enrollment;
+    return $attendance;
 }
 ```
 
@@ -53,22 +53,22 @@ public function enroll(User $user, Course $course)
 ```php
 use Illuminate\Support\Facades\DB;
 
-public function enroll(User $user, Course $course)
+public function attend(User $user, Course $course)
 {
     return DB::transaction(function () use ($user, $course) {
         // 1. 受講レコードを作成
-        $enrollment = Enrollment::create([
+        $attendance = Attendance::create([
             'user_id' => $user->id,
             'course_id' => $course->id,
         ]);
 
         // 2. 講座の受講者数を更新
-        $course->increment('enrolled_count');
+        $course->increment('attendance_count');
 
         // 3. メール送信（DB操作の外で行う）
         // ここでは行わない
 
-        return $enrollment;
+        return $attendance;
     });
 }
 ```
@@ -78,24 +78,24 @@ public function enroll(User $user, Course $course)
 ### メール送信はトランザクションの外で
 
 ```php
-public function enroll(User $user, Course $course)
+public function attend(User $user, Course $course)
 {
     // トランザクション内でDB操作
-    $enrollment = DB::transaction(function () use ($user, $course) {
-        $enrollment = Enrollment::create([
+    $attendance = DB::transaction(function () use ($user, $course) {
+        $attendance = Attendance::create([
             'user_id' => $user->id,
             'course_id' => $course->id,
         ]);
 
-        $course->increment('enrolled_count');
+        $course->increment('attendance_count');
 
-        return $enrollment;
+        return $attendance;
     });
 
     // トランザクションの外でメール送信
-    Mail::to($user)->send(new EnrollmentConfirmation($enrollment));
+    Mail::to($user)->send(new AttendanceConfirmation($attendance));
 
-    return $enrollment;
+    return $attendance;
 }
 ```
 
@@ -138,7 +138,7 @@ public function complexOperation()
 
         // 操作3（条件付き）
         if ($someCondition) {
-            Enrollment::create([...]);
+            Attendance::create([...]);
         }
 
         // 全て成功したらコミット
@@ -182,7 +182,7 @@ public function complexOperation()
 ### 悲観的ロック（lockForUpdate）
 
 ```php
-public function enroll(User $user, int $courseId)
+public function attend(User $user, int $courseId)
 {
     return DB::transaction(function () use ($user, $courseId) {
         // 行ロックを取得（他のトランザクションは待機）
@@ -192,14 +192,14 @@ public function enroll(User $user, int $courseId)
             throw new CapacityExceededException();
         }
 
-        $enrollment = Enrollment::create([
+        $attendance = Attendance::create([
             'user_id' => $user->id,
             'course_id' => $course->id,
         ]);
 
-        $course->increment('enrolled_count');
+        $course->increment('attendance_count');
 
-        return $enrollment;
+        return $attendance;
     });
 }
 ```
@@ -276,46 +276,46 @@ DB::transaction(function () {
 
 ## Step 5 実践 - 受講登録APIの実装
 
-### EnrollmentService
+### AttendanceService
 
 ```php
 <?php
 
 namespace App\Services;
 
-use App\Enums\EnrollmentStatus;
-use App\Exceptions\AlreadyEnrolledException;
+use App\Enums\AttendanceStatus;
+use App\Exceptions\AlreadyAttendingException;
 use App\Exceptions\CapacityExceededException;
 use App\Exceptions\CourseNotActiveException;
 use App\Models\Course;
-use App\Models\Enrollment;
+use App\Models\Attendance;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
-class EnrollmentService
+class AttendanceService
 {
-    public function enroll(User $user, int $courseId): Enrollment
+    public function attend(User $user, int $courseId): Attendance
     {
         return DB::transaction(function () use ($user, $courseId) {
             // 講座をロック付きで取得
             $course = Course::lockForUpdate()->findOrFail($courseId);
 
             // バリデーション
-            $this->validateEnrollment($user, $course);
+            $this->validateAttendance($user, $course);
 
             // 受講レコードを作成
-            $enrollment = Enrollment::create([
+            $attendance = Attendance::create([
                 'user_id' => $user->id,
                 'course_id' => $course->id,
-                'status' => EnrollmentStatus::Enrolled,
-                'enrolled_at' => now(),
+                'status' => AttendanceStatus::Attending,
+                'attended_at' => now(),
             ]);
 
-            return $enrollment;
+            return $attendance;
         }, 3);  // デッドロック時に3回リトライ
     }
 
-    private function validateEnrollment(User $user, Course $course): void
+    private function validateAttendance(User $user, Course $course): void
     {
         // 講座が公開中か確認
         if (!$course->isActive()) {
@@ -328,18 +328,18 @@ class EnrollmentService
         }
 
         // 重複登録確認
-        $exists = Enrollment::where('user_id', $user->id)
+        $exists = Attendance::where('user_id', $user->id)
             ->where('course_id', $course->id)
             ->exists();
 
         if ($exists) {
-            throw new AlreadyEnrolledException();
+            throw new AlreadyAttendingException();
         }
     }
 }
 ```
 
-### EnrollmentController
+### AttendanceController
 
 ```php
 <?php
@@ -347,35 +347,35 @@ class EnrollmentService
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\EnrollmentResource;
-use App\Mail\EnrollmentConfirmation;
+use App\Http\Resources\AttendanceResource;
+use App\Mail\AttendanceConfirmation;
 use App\Models\Course;
-use App\Services\EnrollmentService;
+use App\Services\AttendanceService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 
-class EnrollmentController extends Controller
+class AttendanceController extends Controller
 {
     public function __construct(
-        private EnrollmentService $enrollmentService
+        private AttendanceService $attendanceService
     ) {}
 
     public function store(Request $request, Course $course)
     {
-        $this->authorize('enroll', $course);
+        $this->authorize('attend', $course);
 
         // トランザクション内でDB操作
-        $enrollment = $this->enrollmentService->enroll(
+        $attendance = $this->attendanceService->attend(
             $request->user(),
             $course->id
         );
 
         // トランザクション外でメール送信
         Mail::to($request->user())->send(
-            new EnrollmentConfirmation($enrollment)
+            new AttendanceConfirmation($attendance)
         );
 
-        return new EnrollmentResource($enrollment);
+        return new AttendanceResource($attendance);
     }
 }
 ```
@@ -388,28 +388,28 @@ class EnrollmentController extends Controller
 ```php
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
-class EnrollmentTest extends TestCase
+class AttendanceTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_enrollment_is_rolled_back_on_error(): void
+    public function test_attendance_is_rolled_back_on_error(): void
     {
         $user = User::factory()->student()->create();
         $course = Course::factory()->active()->create(['capacity' => 1]);
 
         // 1人目は成功
         $this->actingAs($user)
-            ->postJson("/api/courses/{$course->id}/enroll")
+            ->postJson("/api/courses/{$course->id}/attend")
             ->assertStatus(201);
 
         // 2人目は失敗（定員オーバー）
         $anotherUser = User::factory()->student()->create();
         $this->actingAs($anotherUser)
-            ->postJson("/api/courses/{$course->id}/enroll")
+            ->postJson("/api/courses/{$course->id}/attend")
             ->assertStatus(422);
 
         // 受講レコードは1件のみ
-        $this->assertDatabaseCount('enrollments', 1);
+        $this->assertDatabaseCount('attendances', 1);
     }
 }
 ```
@@ -428,7 +428,7 @@ public function transfer(User $from, User $to, int $amount)
 ```
 
 ### 問題2
-受講キャンセル処理を実装してください。受講ステータスを `cancelled` に変更し、講座の `enrolled_count` を減らします。
+受講キャンセル処理を実装してください。受講ステータスを `cancelled` に変更し、講座の `attendance_count` を減らします。
 
 ## 次のレッスン
 
