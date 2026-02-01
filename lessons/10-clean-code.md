@@ -25,20 +25,20 @@
 ### 問題のあるコード
 
 ```php
-public function enroll(User $user, Course $course)
+public function attend(User $user, Course $course)
 {
     if ($user->isStudent()) {
         if ($course->status === CourseStatus::Active) {
             if ($course->hasCapacity()) {
-                if (!$user->isEnrolledIn($course)) {
-                    // 受講登録処理
-                    $enrollment = Enrollment::create([
+                if (!$user->hasAttendanceFor($course)) {
+                    // 出席登録処理
+                    $attendance = Attendance::create([
                         'user_id' => $user->id,
                         'course_id' => $course->id,
                     ]);
-                    return $enrollment;
+                    return $attendance;
                 } else {
-                    throw new AlreadyEnrolledException();
+                    throw new AlreadyAttendedException();
                 }
             } else {
                 throw new CapacityExceededException();
@@ -57,7 +57,7 @@ public function enroll(User $user, Course $course)
 ### 改善後のコード
 
 ```php
-public function enroll(User $user, Course $course)
+public function attend(User $user, Course $course)
 {
     // 条件チェック → 早期リターン
     if (!$user->isStudent()) {
@@ -72,12 +72,12 @@ public function enroll(User $user, Course $course)
         throw new CapacityExceededException();
     }
 
-    if ($user->isEnrolledIn($course)) {
-        throw new AlreadyEnrolledException();
+    if ($user->hasAttendanceFor($course)) {
+        throw new AlreadyAttendedException();
     }
 
     // 正常系（メインの処理）
-    return Enrollment::create([
+    return Attendance::create([
         'user_id' => $user->id,
         'course_id' => $course->id,
     ]);
@@ -167,12 +167,12 @@ enum DiscountType: string
 // ❌ 悪い例
 $d = 3;  // 何の日数？
 $u = $request->user();  // user なのか url なのか
-$temp = $course->capacity - $course->enrollments->count();
+$temp = $course->capacity - $course->attendances->count();
 
 // ✅ 良い例
 $daysUntilStart = 3;
 $currentUser = $request->user();
-$availableSeats = $course->capacity - $course->enrollments->count();
+$availableSeats = $course->capacity - $course->attendances->count();
 ```
 
 ### メソッド名
@@ -184,19 +184,19 @@ public function doStuff($user) { ... }  // 何をする？
 public function handle($course) { ... }  // 曖昧
 
 // ✅ 良い例
-public function enrollUserInCourse($user, $course) { ... }
-public function calculateEnrollmentFee($course) { ... }
-public function sendEnrollmentConfirmationEmail($enrollment) { ... }
+public function recordUserAttendance($user, $course) { ... }
+public function calculateAttendanceFee($course) { ... }
+public function sendAttendanceConfirmationEmail($attendance) { ... }
 ```
 
 ### 名前付けの原則
 
 | 種類 | 命名規則 | 例 |
 |------|---------|-----|
-| ブール値 | is/has/can で始める | `$isActive`, `$hasCapacity`, `$canEnroll` |
-| コレクション | 複数形 | `$courses`, `$enrollments` |
+| ブール値 | is/has/can で始める | `$isActive`, `$hasCapacity`, `$canAttend` |
+| コレクション | 複数形 | `$courses`, `$attendances` |
 | 取得メソッド | get で始める | `getActiveCourses()` |
-| 判定メソッド | is/has/can で始める | `isEnrolled()`, `hasPermission()` |
+| 判定メソッド | is/has/can で始める | `hasAttendance()`, `hasPermission()` |
 | 変換メソッド | to で始める | `toArray()`, `toJson()` |
 
 ## 4. メソッドの責務を分割
@@ -325,7 +325,7 @@ $availableSeats = (int) ($course->capacity * 0.9);
 // ✅ 複雑なビジネスロジックの説明
 // 講師は自分の講座を受講できない（利益相反防止）
 if ($user->id === $course->instructor_id) {
-    throw new CannotEnrollOwnCourseException();
+    throw new CannotAttendOwnCourseException();
 }
 ```
 
@@ -341,80 +341,6 @@ if ($user->role === 'instructor') {
 // ✅ メソッド名で意図が明確
 if ($user->isInstructor()) {
     // ...
-}
-```
-
-## 6. 実践リファクタリング
-
-### Before（Lesson 6 のコードを改善）
-
-```php
-public function index(Request $request)
-{
-    $query = Course::with('instructor');
-
-    if ($request->has('status')) {
-        $query->where('status', $request->input('status'));
-    }
-
-    if ($request->has('instructor_name')) {
-        $query->whereHas('instructor', function ($q) use ($request) {
-            $q->where('name', 'like', '%' . $request->input('instructor_name') . '%');
-        });
-    }
-
-    $perPage = $request->input('per_page', 15);
-    $courses = $query->latest()->paginate($perPage);
-
-    return new CourseCollection($courses);
-}
-```
-
-### After（責務を分離）
-
-```php
-class CourseController extends Controller
-{
-    public function index(CourseIndexRequest $request)
-    {
-        $courses = Course::query()
-            ->with('instructor')
-            ->filter($request->filters())
-            ->latest()
-            ->paginate($request->perPage());
-
-        return new CourseCollection($courses);
-    }
-}
-
-// app/Http/Requests/CourseIndexRequest.php
-class CourseIndexRequest extends FormRequest
-{
-    private const DEFAULT_PER_PAGE = 15;
-
-    public function filters(): array
-    {
-        return $this->only(['status', 'instructor_name']);
-    }
-
-    public function perPage(): int
-    {
-        return $this->input('per_page', self::DEFAULT_PER_PAGE);
-    }
-}
-
-// app/Models/Course.php にスコープを追加
-public function scopeFilter($query, array $filters)
-{
-    return $query
-        ->when($filters['status'] ?? null, fn ($q, $status) =>
-            $q->where('status', $status)
-        )
-        ->when($filters['instructor_name'] ?? null, fn ($q, $name) =>
-            $q->whereHas('instructor', fn ($q) =>
-                $q->where('name', 'like', "%{$name}%")
-            )
-        );
 }
 ```
 
@@ -448,7 +374,7 @@ public function updateProfile(Request $request, User $user)
 以下のコードからマジックナンバーを排除してください。
 
 ```php
-if ($course->enrollments->count() >= $course->capacity * 0.9) {
+if ($course->attendances->count() >= $course->capacity * 0.9) {
     // 残り10%になったら警告
 }
 
@@ -456,7 +382,6 @@ if ($daysUntilStart <= 7) {
     // 開始1週間前
 }
 ```
-
 
 ## 次のレッスン
 
