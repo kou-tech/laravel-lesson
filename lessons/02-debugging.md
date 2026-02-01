@@ -7,7 +7,8 @@
 
 ### 到達目標
 - `Log` ファサードを使ってログを出力できる
-- Laravel Telescope をインストールして活用できる
+- ログレベルを使い分けられる
+- ログを確認して問題の原因を特定できる
 
 
 ## なぜデバッグスキルが重要か？
@@ -25,7 +26,63 @@
 Laravelには複数のデバッグ手法があります。状況に応じて使い分けましょう。
 
 
-## Step 1 Log ファサードを使う
+## Step 1 準備 - UserControllerを作成する
+
+このレッスンでは、デバッグの題材として `UserController` を使います。
+まだ作成していない場合は、以下の手順で準備しましょう。
+
+> Controllerの詳しい説明は [Lesson 4](./04-user-api.md) で学びます。ここではデバッグの練習用として作成します。
+
+### 1. Controllerを生成する
+
+```bash
+php artisan make:controller Api/UserController
+```
+
+### 2. UserControllerを編集する
+
+`app/Http/Controllers/Api/UserController.php` を以下の内容に書き換えます。
+
+```php
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Models\User;
+
+class UserController extends Controller
+{
+    public function index()
+    {
+        return User::all();
+    }
+
+    public function show(User $user)
+    {
+        return $user;
+    }
+}
+```
+
+### 3. ルートを追加する
+
+`routes/api.php` に以下を追加します。
+
+```php
+Route::get('/users', [\App\Http\Controllers\Api\UserController::class, 'index']);
+Route::get('/users/{user}', [\App\Http\Controllers\Api\UserController::class, 'show']);
+```
+
+### 4. Postmanで動作確認
+
+- GET: users
+- GET: users_id
+
+ユーザーデータが返ってくれば準備完了です。
+
+
+## Step 2 Log ファサードを使う
 
 ### なぜログを使うのか？
 
@@ -38,7 +95,7 @@ Laravelには複数のデバッグ手法があります。状況に応じて使�
 
 ### 基本的な使い方
 
-`UserController` を修正して、ログを出力してみましょう。
+`UserController` にログ出力を追加してみましょう。
 
 ```php
 <?php
@@ -46,20 +103,19 @@ Laravelには複数のデバッグ手法があります。状況に応じて使�
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
 
 class UserController extends Controller
 {
-    public function show(User $user): UserResource
+    public function show(User $user)
     {
         Log::info('UserController@show が呼ばれました', [
             'user_id' => $user->id,
             'user_name' => $user->name,
         ]);
 
-        return new UserResource($user);
+        return $user;
     }
 }
 ```
@@ -82,7 +138,7 @@ APIを呼び出すと、以下のようなログが出力されます。
 
 Logファサードには複数のログレベルがあります。
 
-### 使い分けの目安
+#### 使い分けの目安
 
 | レベル | 用途例 |
 |--------|--------|
@@ -91,7 +147,7 @@ Logファサードには複数のログレベルがあります。
 | `info` | 処理の開始/終了、重要な操作のログ |
 | `debug` | 開発時のデバッグ情報（本番では出力しない） |
 
-### .env でログレベルを制御
+#### .env でログレベルを制御
 
 `.env` ファイルで `LOG_LEVEL` を設定すると、そのレベル以上のログのみが出力されます。
 
@@ -103,61 +159,6 @@ LOG_LEVEL=debug
 LOG_LEVEL=info
 ```
 
-## Step 2 Laravel Telescope のインストール
-
-### Telescope とは？
-
-Laravel Telescope は、Laravelアプリケーションのデバッグ用ダッシュボードです。
-
-以下の情報をブラウザで確認できます。
-- リクエスト/レスポンス
-- 実行されたクエリ（N+1問題の発見にも有用！）
-- 例外/エラー
-- ログ
-- キュー/ジョブ
-- メール
-- キャッシュ操作
-- など
-
-### インストール
-
-```bash
-composer require laravel/telescope --dev
-```
-
-`--dev` オプションで開発環境のみにインストールします（本番環境には不要）。
-
-### セットアップ
-
-```bash
-php artisan telescope:install
-php artisan migrate
-```
-
-### Telescopeダッシュボードにアクセス
-
-`http://localhost:8000/telescope` にアクセスすると、Telescopeのダッシュボードが表示されます。
-
-### 動作確認
-
-1. ブラウザで `http://localhost:8000/api/user/1` にアクセス
-2. Telescope の「Requests」タブを開く
-3. リクエストの詳細を確認
-
-以下の情報が見られます。
-- リクエストパラメータ
-- 実行されたクエリ
-- レスポンスの内容
-- 処理時間
-
-### Telescope を使ったデバッグの流れ
-
-1. 問題のある操作を行う
-2. Telescope でリクエストを確認
-3. 「Queries」タブでSQLを確認（N+1問題がないか）
-4. 「Logs」タブでログを確認
-5. 「Exceptions」タブで例外を確認
-
 ## Step 3 実践 - デバッグしてみよう
 
 ### 課題: 意図的にエラーを起こしてデバッグする
@@ -165,32 +166,27 @@ php artisan migrate
 以下のようなバグを仕込んだコードを作成してみましょう。
 
 ```php
-public function show(User $user): UserResource
+public function show(User $user)
 {
     // 意図的なバグ: 存在しないプロパティにアクセス
     $fullName = $user->full_name;
 
     Log::debug('取得したフルネーム', ['full_name' => $fullName]);
 
-    return new UserResource($user);
+    return $user;
 }
 ```
 
 ### デバッグの手順
 
 1. APIを呼び出す
-   ```bash
-   curl http://localhost:8000/api/user/1
-   ```
-
 2. ログを確認する
    ```bash
    tail -f storage/logs/laravel.log
    ```
-
-3. Telescopeで確認する
-   - Logs タブで出力されたログを確認
-   - Requests タブでリクエストの詳細を確認
+3. ログの内容から問題を特定する
+   - `full_name` の値が `null` になっていないか確認する
+   - User モデルに `full_name` プロパティが存在するか確認する
 
 4. 問題を特定して修正する
    - `full_name` は User モデルに存在しない
@@ -198,7 +194,7 @@ public function show(User $user): UserResource
 
 ## ベストプラクティス
 
-### 1. 本番環境に残すログは info 以上
+### 本番環境に残すログは info 以上
 
 ```php
 // NG: 本番環境でdebugログが大量に出る
@@ -208,7 +204,7 @@ Log::debug('ループの中で毎回ログ');
 Log::info('ユーザーがログインしました', ['user_id' => $user->id]);
 ```
 
-### 2. ログには必要な情報を含める
+### ログには必要な情報を含める
 
 ```php
 // NG: 何のログか分からない
@@ -221,23 +217,32 @@ Log::info('受講登録が完了しました', [
 ]);
 ```
 
-### 4. Telescopeは開発環境でのみ使う
-
-本番環境では無効化するか、認証で保護してください。
-
 ## 練習問題
 
 ### 問題1
 `UserController@index`（ユーザー一覧API）に、取得したユーザー数をログ出力する処理を追加してください。
 
 ### 問題2
-Telescopeで、`/api/user/1` へのリクエストで実行されたSQLクエリを確認してください。何件のクエリが実行されましたか？
+`UserController@show` で、存在しないユーザーIDが指定された場合に `warning` レベルのログを出力する処理を追加してください。ログには指定されたIDを含めてください。
+
+> ヒント: Route Model Bindingを使っている場合、存在しないIDでは自動的に404が返ります。`User::find()` を使う方法に変えると、自分でハンドリングできます。
+
+
+## 応用 Laravel Telescope
+
+> このセクションは応用です。スキップしても以降のレッスンに影響はありません。
+
+Laravel Telescope は、Laravelアプリケーションのデバッグ用ダッシュボードです。
+リクエスト/レスポンス、実行されたクエリ、例外、ログなどをブラウザ上で確認できます。
+
+`http://localhost:8000/telescope` にアクセスするとダッシュボードが開きます。
+
+詳しくは [Laravel 公式ドキュメント - Telescope](https://laravel.com/docs/telescope) を参照してください。
 
 
 ## 参考資料
 
 - [Laravel 公式ドキュメント - Logging](https://laravel.com/docs/logging)
-- [Laravel 公式ドキュメント - Telescope](https://laravel.com/docs/telescope)
 
 ## 次のレッスン
 
