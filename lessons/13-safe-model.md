@@ -357,14 +357,14 @@ class Course extends Model
     protected function availableSeats(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->capacity - $this->enrollments_count,
+            get: fn () => $this->capacity - $this->attendances_count,
         );
     }
 
     protected function isFull(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->enrollments_count >= $this->capacity,
+            get: fn () => $this->attendances_count >= $this->capacity,
         );
     }
 }
@@ -381,19 +381,19 @@ class Course extends Model
 ```
 
 
-## Step 7 Enrollmentモデルの完成
+## Step 7 Attendanceモデルの完成
 
 ```php
 <?php
 
 namespace App\Models;
 
-use App\Enums\EnrollmentStatus;
+use App\Enums\AttendanceStatus;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class Enrollment extends Model
+class Attendance extends Model
 {
     protected $fillable = [
         'user_id',
@@ -413,8 +413,8 @@ class Enrollment extends Model
     protected function casts(): array
     {
         return [
-            'status' => EnrollmentStatus::class,
-            'enrolled_at' => 'datetime',
+            'status' => AttendanceStatus::class,
+            'attended_at' => 'datetime',
         ];
     }
 
@@ -440,7 +440,7 @@ class Enrollment extends Model
     // スコープ
     public function scopeActive($query)
     {
-        return $query->where('status', EnrollmentStatus::Enrolled);
+        return $query->where('status', AttendanceStatus::Attending);
     }
 }
 ```
