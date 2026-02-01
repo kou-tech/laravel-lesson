@@ -7,7 +7,6 @@
 ### 到達目標
 - FormRequestクラスを作成できる
 - バリデーションルールを適切に設定できる
-- エラーメッセージをカスタマイズできる
 - 条件付きバリデーションを実装できる
 
 
@@ -210,43 +209,7 @@ public function rules(): array
 }
 ```
 
-
-## Step 4 カスタムエラーメッセージ
-
-### messages メソッド
-
-```php
-public function messages(): array
-{
-    return [
-        'name.required' => '名前を入力してください。',
-        'name.max' => '名前は255文字以内で入力してください。',
-        'email.required' => 'メールアドレスを入力してください。',
-        'email.email' => '有効なメールアドレスを入力してください。',
-        'email.unique' => 'このメールアドレスは既に登録されています。',
-    ];
-}
-```
-
-### attributes メソッド
-
-フィールド名を日本語化できます。
-
-```php
-public function attributes(): array
-{
-    return [
-        'name' => '名前',
-        'email' => 'メールアドレス',
-        'password' => 'パスワード',
-    ];
-}
-```
-
-これにより「The name field is required.」が「名前は必須です。」になります。
-
-
-## Step 5 条件付きバリデーション
+## Step 4 条件付きバリデーション
 
 ### sometimes ルール
 
@@ -297,7 +260,7 @@ public function withValidator($validator)
 ```
 
 
-## Step 6 実践例 - ユーザー更新API
+## Step 5 実践例 - ユーザー更新API
 
 ### UpdateUserRequestの作成
 
@@ -331,15 +294,6 @@ class UpdateUserRequest extends FormRequest
             ],
         ];
     }
-
-    public function messages(): array
-    {
-        return [
-            'name.max' => '名前は255文字以内で入力してください。',
-            'email.email' => '有効なメールアドレスを入力してください。',
-            'email.unique' => 'このメールアドレスは既に使用されています。',
-        ];
-    }
 }
 ```
 
@@ -358,28 +312,21 @@ public function update(UpdateUserRequest $request, User $user): UserResource
 
 ### 動作確認
 
-バリデーションエラーの場合
-
-```
-PATCH http://localhost:8000/api/users/1
-Content-Type: application/json
-
-{
-    "email": "invalid-email"
-}
-```
+- ユーサー更新
 
 ```json
 {
-    "message": "The given data was invalid.",
+    "message": "The email field must be a valid email address.",
     "errors": {
-        "email": ["有効なメールアドレスを入力してください。"]
+        "email": [
+            "The email field must be a valid email address."
+        ]
     }
 }
 ```
 
 
-## Step 7 バリデーションのベストプラクティス
+## Step 6 バリデーションのベストプラクティス
 
 ### 1. 命名規則
 
@@ -407,24 +354,6 @@ Update{Model}Request - 更新用
 // sometimes: フィールド自体がなくてもOK（あればバリデーション）
 'bio' => ['sometimes', 'string'],
 ```
-
-
-## まとめ
-
-このレッスンでは、FormRequestを使ったバリデーション設計を学びました。FormRequestを使うことでControllerをシンプルに保ち、バリデーションロジックを再利用できます。適切なルールとカスタムメッセージを設定することで、ユーザーにわかりやすいエラー表示が可能になります。
-
-
-## 練習問題
-
-### 問題1
-講座作成用の `StoreCourseRequest` を作成し、以下のルールを実装してください。
-- title: 必須、文字列、最大255文字
-- description: 任意、文字列
-- capacity: 必須、整数、1以上100以下
-
-### 問題2
-作成した `StoreCourseRequest` に日本語のエラーメッセージを追加してください。
-
 
 ## 参考資料
 
