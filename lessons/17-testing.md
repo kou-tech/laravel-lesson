@@ -52,7 +52,7 @@ public function test_can_get_course_list(): void
 public function test_calculate_available_seats(): void
 {
     $course = Course::factory()->make(['capacity' => 20]);
-    $course->setRelation('enrollments', collect(range(1, 15)));
+    $course->setRelation('attendances', collect(range(1, 15)));
 
     $service = new CourseService();
 
@@ -192,7 +192,7 @@ $course = Course::factory()
 
 // 受講者を持つ講座
 $course = Course::factory()
-    ->has(Enrollment::factory()->count(5))
+    ->has(Attendance::factory()->count(5))
     ->create();
 ```
 
@@ -332,19 +332,19 @@ test('講座作成時に通知が送信される', function () {
 
 ```php
 use Illuminate\Support\Facades\Mail;
-use App\Mail\EnrollmentConfirmation;
+use App\Mail\AttendanceConfirmation;
 
-test('受講登録時にメールが送信される', function () {
+test('受講時にメールが送信される', function () {
     Mail::fake();
 
     $user = User::factory()->student()->create();
     $course = Course::factory()->active()->create();
 
     $this->actingAs($user)
-        ->postJson("/api/courses/{$course->id}/enroll")
+        ->postJson("/api/courses/{$course->id}/attend")
         ->assertCreated();
 
-    Mail::assertSent(EnrollmentConfirmation::class, function ($mail) use ($user) {
+    Mail::assertSent(AttendanceConfirmation::class, function ($mail) use ($user) {
         return $mail->hasTo($user->email);
     });
 });
@@ -354,14 +354,14 @@ test('受講登録時にメールが送信される', function () {
 
 ```php
 use Illuminate\Support\Facades\Queue;
-use App\Jobs\SendEnrollmentNotification;
+use App\Jobs\SendAttendanceNotification;
 
-test('受講登録時にジョブがキューに追加される', function () {
+test('受講時にジョブがキューに追加される', function () {
     Queue::fake();
 
     // ... テスト処理 ...
 
-    Queue::assertPushed(SendEnrollmentNotification::class);
+    Queue::assertPushed(SendAttendanceNotification::class);
 });
 ```
 

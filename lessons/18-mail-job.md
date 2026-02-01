@@ -18,12 +18,12 @@
 ```php
 public function store(Request $request, Course $course)
 {
-    $enrollment = Enrollment::create([...]);
+    $attendance = Attendance::create([...]);
 
     // メール送信に3秒かかる...
-    Mail::to($user)->send(new EnrollmentConfirmation($enrollment));
+    Mail::to($user)->send(new AttendanceConfirmation($attendance));
 
-    return response()->json($enrollment);  // 合計3秒以上
+    return response()->json($attendance);  // 合計3秒以上
 }
 ```
 
@@ -34,12 +34,12 @@ public function store(Request $request, Course $course)
 ```php
 public function store(Request $request, Course $course)
 {
-    $enrollment = Enrollment::create([...]);
+    $attendance = Attendance::create([...]);
 
     // キューに入れてすぐ戻る
-    Mail::to($user)->queue(new EnrollmentConfirmation($enrollment));
+    Mail::to($user)->queue(new AttendanceConfirmation($attendance));
 
-    return response()->json($enrollment);  // すぐに返却
+    return response()->json($attendance);  // すぐに返却
 }
 ```
 
@@ -51,31 +51,31 @@ public function store(Request $request, Course $course)
 ### コマンドで生成
 
 ```bash
-php artisan make:mail EnrollmentConfirmation
+php artisan make:mail AttendanceConfirmation
 ```
 
 ### Mailable の実装
 
-`app/Mail/EnrollmentConfirmation.php` に以下のように実装します。
+`app/Mail/AttendanceConfirmation.php` に以下のように実装します。
 
 ```php
 <?php
 
 namespace App\Mail;
 
-use App\Models\Enrollment;
+use App\Models\Attendance;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class EnrollmentConfirmation extends Mailable
+class AttendanceConfirmation extends Mailable
 {
     use Queueable, SerializesModels;
 
     public function __construct(
-        public Enrollment $enrollment
+        public Attendance $attendance
     ) {}
 
     /**
@@ -84,7 +84,7 @@ class EnrollmentConfirmation extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: '【受講登録完了】' . $this->enrollment->course->title,
+            subject: '【受講確認】' . $this->attendance->course->title,
         );
     }
 
@@ -94,11 +94,11 @@ class EnrollmentConfirmation extends Mailable
     public function content(): Content
     {
         return new Content(
-            view: 'emails.enrollment-confirmation',
+            view: 'emails.attendance-confirmation',
             with: [
-                'userName' => $this->enrollment->user->name,
-                'courseName' => $this->enrollment->course->title,
-                'enrolledAt' => $this->enrollment->enrolled_at->format('Y年m月d日'),
+                'userName' => $this->attendance->user->name,
+                'courseName' => $this->attendance->course->title,
+                'attendedAt' => $this->attendance->attended_at->format('Y年m月d日'),
             ],
         );
     }
@@ -107,7 +107,7 @@ class EnrollmentConfirmation extends Mailable
 
 ### メールテンプレート
 
-`resources/views/emails/enrollment-confirmation.blade.php` に以下のように記述します。
+`resources/views/emails/attendance-confirmation.blade.php` に以下のように記述します。
 
 ```blade
 <!DOCTYPE html>
@@ -116,12 +116,12 @@ class EnrollmentConfirmation extends Mailable
     <meta charset="utf-8">
 </head>
 <body>
-    <h1>受講登録が完了しました</h1>
+    <h1>受講が確認されました</h1>
 
     <p>{{ $userName }} 様</p>
 
     <p>
-        以下の講座への受講登録が完了しました。
+        以下の講座への受講が確認されました。
     </p>
 
     <table>
@@ -131,7 +131,7 @@ class EnrollmentConfirmation extends Mailable
         </tr>
         <tr>
             <th>登録日</th>
-            <td>{{ $enrolledAt }}</td>
+            <td>{{ $attendedAt }}</td>
         </tr>
     </table>
 
@@ -148,29 +148,29 @@ class EnrollmentConfirmation extends Mailable
 ### 同期送信
 
 ```php
-use App\Mail\EnrollmentConfirmation;
+use App\Mail\AttendanceConfirmation;
 use Illuminate\Support\Facades\Mail;
 
 // 即座に送信（レスポンスを待つ）
-Mail::to($user)->send(new EnrollmentConfirmation($enrollment));
+Mail::to($user)->send(new AttendanceConfirmation($attendance));
 
 // CCやBCCを追加
 Mail::to($user)
     ->cc('admin@example.com')
     ->bcc('log@example.com')
-    ->send(new EnrollmentConfirmation($enrollment));
+    ->send(new AttendanceConfirmation($attendance));
 ```
 
 ### 非同期送信（キュー）
 
 ```php
 // キューに追加（すぐに返却）
-Mail::to($user)->queue(new EnrollmentConfirmation($enrollment));
+Mail::to($user)->queue(new AttendanceConfirmation($attendance));
 
 // 遅延送信（5分後）
 Mail::to($user)->later(
     now()->addMinutes(5),
-    new EnrollmentConfirmation($enrollment)
+    new AttendanceConfirmation($attendance)
 );
 ```
 
@@ -180,20 +180,20 @@ Mail::to($user)->later(
 ### コマンドで生成
 
 ```bash
-php artisan make:job SendEnrollmentConfirmation
+php artisan make:job SendAttendanceConfirmation
 ```
 
 ### Job の実装
 
-`app/Jobs/SendEnrollmentConfirmation.php` に以下のように実装します。
+`app/Jobs/SendAttendanceConfirmation.php` に以下のように実装します。
 
 ```php
 <?php
 
 namespace App\Jobs;
 
-use App\Mail\EnrollmentConfirmation;
-use App\Models\Enrollment;
+use App\Mail\AttendanceConfirmation;
+use App\Models\Attendance;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -201,7 +201,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Mail;
 
-class SendEnrollmentConfirmation implements ShouldQueue
+class SendAttendanceConfirmation implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -216,7 +216,7 @@ class SendEnrollmentConfirmation implements ShouldQueue
     public int $timeout = 60;
 
     public function __construct(
-        public Enrollment $enrollment
+        public Attendance $attendance
     ) {}
 
     /**
@@ -224,8 +224,8 @@ class SendEnrollmentConfirmation implements ShouldQueue
      */
     public function handle(): void
     {
-        Mail::to($this->enrollment->user)
-            ->send(new EnrollmentConfirmation($this->enrollment));
+        Mail::to($this->attendance->user)
+            ->send(new AttendanceConfirmation($this->attendance));
     }
 
     /**
@@ -235,7 +235,7 @@ class SendEnrollmentConfirmation implements ShouldQueue
     {
         // 失敗をログに記録
         \Log::error('メール送信失敗', [
-            'enrollment_id' => $this->enrollment->id,
+            'attendance_id' => $this->attendance->id,
             'error' => $exception->getMessage(),
         ]);
     }
@@ -245,21 +245,21 @@ class SendEnrollmentConfirmation implements ShouldQueue
 ### Job のディスパッチ
 
 ```php
-use App\Jobs\SendEnrollmentConfirmation;
+use App\Jobs\SendAttendanceConfirmation;
 
 // キューに追加
-SendEnrollmentConfirmation::dispatch($enrollment);
+SendAttendanceConfirmation::dispatch($attendance);
 
 // 遅延実行
-SendEnrollmentConfirmation::dispatch($enrollment)
+SendAttendanceConfirmation::dispatch($attendance)
     ->delay(now()->addMinutes(5));
 
 // 特定のキューに追加
-SendEnrollmentConfirmation::dispatch($enrollment)
+SendAttendanceConfirmation::dispatch($attendance)
     ->onQueue('emails');
 
 // 同期実行（テスト用）
-SendEnrollmentConfirmation::dispatchSync($enrollment);
+SendAttendanceConfirmation::dispatchSync($attendance);
 ```
 
 
@@ -330,7 +330,7 @@ php artisan queue:flush
 ### リトライ設定
 
 ```php
-class SendEnrollmentConfirmation implements ShouldQueue
+class SendAttendanceConfirmation implements ShouldQueue
 {
     // 最大3回試行
     public int $tries = 3;
@@ -344,41 +344,41 @@ class SendEnrollmentConfirmation implements ShouldQueue
 ```
 
 
-## Step 6 実践 - 受講登録時のメール送信
+## Step 6 実践 - 受講時のメール送信
 
-### EnrollmentService の修正
+### AttendanceService の修正
 
 ```php
 <?php
 
 namespace App\Services;
 
-use App\Jobs\SendEnrollmentConfirmation;
+use App\Jobs\SendAttendanceConfirmation;
 use App\Models\Course;
-use App\Models\Enrollment;
+use App\Models\Attendance;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
-class EnrollmentService
+class AttendanceService
 {
-    public function enroll(User $user, Course $course): Enrollment
+    public function attend(User $user, Course $course): Attendance
     {
-        $enrollment = DB::transaction(function () use ($user, $course) {
+        $attendance = DB::transaction(function () use ($user, $course) {
             // バリデーション
-            $this->validateEnrollment($user, $course);
+            $this->validateAttendance($user, $course);
 
             // 受講レコード作成
-            return Enrollment::create([
+            return Attendance::create([
                 'user_id' => $user->id,
                 'course_id' => $course->id,
-                'enrolled_at' => now(),
+                'attended_at' => now(),
             ]);
         });
 
         // トランザクション外でジョブをディスパッチ
-        SendEnrollmentConfirmation::dispatch($enrollment);
+        SendAttendanceConfirmation::dispatch($attendance);
 
-        return $enrollment;
+        return $attendance;
     }
 }
 ```
@@ -386,7 +386,7 @@ class EnrollmentService
 ### afterCommit でトランザクション完了後に実行
 
 ```php
-SendEnrollmentConfirmation::dispatch($enrollment)
+SendAttendanceConfirmation::dispatch($attendance)
     ->afterCommit();  // トランザクションがコミットされてから実行
 ```
 
@@ -398,14 +398,14 @@ SendEnrollmentConfirmation::dispatch($enrollment)
 ```php
 // routes/web.php（開発環境のみ）
 if (app()->environment('local')) {
-    Route::get('/mail-preview/enrollment', function () {
-        $enrollment = \App\Models\Enrollment::with(['user', 'course'])->first();
-        return new \App\Mail\EnrollmentConfirmation($enrollment);
+    Route::get('/mail-preview/attendance', function () {
+        $attendance = \App\Models\Attendance::with(['user', 'course'])->first();
+        return new \App\Mail\AttendanceConfirmation($attendance);
     });
 }
 ```
 
-ブラウザで `/mail-preview/enrollment` にアクセスするとメールをプレビューできます。
+ブラウザで `/mail-preview/attendance` にアクセスするとメールをプレビューできます。
 
 ### Mailpit / Mailtrap の利用
 
@@ -423,20 +423,20 @@ MAIL_PORT=1025
 ### メール送信のテスト
 
 ```php
-use App\Mail\EnrollmentConfirmation;
+use App\Mail\AttendanceConfirmation;
 use Illuminate\Support\Facades\Mail;
 
-test('受講登録時にメールが送信される', function () {
+test('受講時にメールが送信される', function () {
     Mail::fake();
 
     $user = User::factory()->student()->create();
     $course = Course::factory()->active()->create();
 
     $this->actingAs($user)
-        ->postJson("/api/courses/{$course->id}/enroll")
+        ->postJson("/api/courses/{$course->id}/attend")
         ->assertCreated();
 
-    Mail::assertQueued(EnrollmentConfirmation::class, function ($mail) use ($user) {
+    Mail::assertQueued(AttendanceConfirmation::class, function ($mail) use ($user) {
         return $mail->hasTo($user->email);
     });
 });
@@ -445,21 +445,21 @@ test('受講登録時にメールが送信される', function () {
 ### ジョブのテスト
 
 ```php
-use App\Jobs\SendEnrollmentConfirmation;
+use App\Jobs\SendAttendanceConfirmation;
 use Illuminate\Support\Facades\Queue;
 
-test('受講登録時にジョブがキューに追加される', function () {
+test('受講時にジョブがキューに追加される', function () {
     Queue::fake();
 
     $user = User::factory()->student()->create();
     $course = Course::factory()->active()->create();
 
     $this->actingAs($user)
-        ->postJson("/api/courses/{$course->id}/enroll")
+        ->postJson("/api/courses/{$course->id}/attend")
         ->assertCreated();
 
-    Queue::assertPushed(SendEnrollmentConfirmation::class, function ($job) use ($course) {
-        return $job->enrollment->course_id === $course->id;
+    Queue::assertPushed(SendAttendanceConfirmation::class, function ($job) use ($course) {
+        return $job->attendance->course_id === $course->id;
     });
 });
 ```
@@ -467,7 +467,7 @@ test('受講登録時にジョブがキューに追加される', function () {
 ## 練習問題
 
 ### 問題1
-講座キャンセル時に送信する `EnrollmentCancellation` メールを作成してください。
+講座キャンセル時に送信する `AttendanceCancellation` メールを作成してください。
 
 ### 問題2
 講座の開始1日前にリマインドメールを送信するジョブを作成してください。

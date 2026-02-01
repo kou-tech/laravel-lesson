@@ -58,8 +58,6 @@
 | # | タイトル | 学習目標 |
 |---|---------|---------|
 | 19 | [TDDで機能を追加する](./19-tdd.md) | テスト駆動開発の実践 |
-| 20 | [フロントエンドとの統合](./20-frontend-integration.md) | Inertia連携でシステム完成 |
-
 
 ## 各Partで完成するもの
 
@@ -102,7 +100,4 @@ Part 4: 応用・仕上げ編
 
 ## 補足資料
 
-- [ER図](./references/er-diagram.md)
-- [API仕様書](./references/api-spec.md)
-- [artisanコマンドチートシート](./references/artisan-cheatsheet.md)
-- [トラブルシューティング](./references/troubleshooting.md)
+- [ER図](./er.md)

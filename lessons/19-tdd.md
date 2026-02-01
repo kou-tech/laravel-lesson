@@ -44,52 +44,52 @@
 ### テストファイルの作成
 
 ```bash
-php artisan make:test Api/EnrollmentCancelTest
+php artisan make:test Api/AttendanceCancelTest
 ```
 
 ### 最初のテスト
 
 ```php
-// tests/Feature/Api/EnrollmentCancelTest.php
+// tests/Feature/Api/AttendanceCancelTest.php
 
 <?php
 
 namespace Tests\Feature\Api;
 
-use App\Enums\EnrollmentStatus;
+use App\Enums\AttendanceStatus;
 use App\Models\Course;
-use App\Models\Enrollment;
+use App\Models\Attendance;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
-class EnrollmentCancelTest extends TestCase
+class AttendanceCancelTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_student_can_cancel_enrollment(): void
+    public function test_student_can_cancel_attendance(): void
     {
         // Arrange: テストデータ準備
         $student = User::factory()->student()->create();
         $course = Course::factory()->create([
             'starts_at' => now()->addDays(7),  // 7日後開始
         ]);
-        $enrollment = Enrollment::factory()->create([
+        $attendance = Attendance::factory()->create([
             'user_id' => $student->id,
             'course_id' => $course->id,
-            'status' => EnrollmentStatus::Enrolled,
+            'status' => AttendanceStatus::Attending,
         ]);
 
         // Act: APIを呼び出す
         $response = $this->actingAs($student)
-            ->deleteJson("/api/courses/{$course->id}/enroll");
+            ->deleteJson("/api/courses/{$course->id}/attend");
 
         // Assert: 結果を検証
         $response->assertOk();
 
-        $this->assertDatabaseHas('enrollments', [
-            'id' => $enrollment->id,
-            'status' => EnrollmentStatus::Cancelled->value,
+        $this->assertDatabaseHas('attendances', [
+            'id' => $attendance->id,
+            'status' => AttendanceStatus::Cancelled->value,
         ]);
     }
 }
@@ -98,11 +98,11 @@ class EnrollmentCancelTest extends TestCase
 ### テストを実行（失敗する）
 
 ```bash
-php artisan test --filter=test_student_can_cancel_enrollment
+php artisan test --filter=test_student_can_cancel_attendance
 ```
 
 ```
-FAILED  Tests\Feature\Api\EnrollmentCancelTest > student can cancel enrollment
+FAILED  Tests\Feature\Api\AttendanceCancelTest > student can cancel attendance
 404 Not Found
 ```
 
@@ -119,24 +119,24 @@ FAILED  Tests\Feature\Api\EnrollmentCancelTest > student can cancel enrollment
 Route::middleware('auth:sanctum')->group(function () {
     // ... 既存のルート
 
-    Route::delete('/courses/{course}/enroll', [EnrollmentController::class, 'destroy']);
+    Route::delete('/courses/{course}/attend', [AttendanceController::class, 'destroy']);
 });
 ```
 
 ### コントローラーにメソッドを追加
 
 ```php
-// app/Http/Controllers/Api/EnrollmentController.php
+// app/Http/Controllers/Api/AttendanceController.php
 
 public function destroy(Request $request, Course $course)
 {
-    $enrollment = Enrollment::where('user_id', $request->user()->id)
+    $attendance = Attendance::where('user_id', $request->user()->id)
         ->where('course_id', $course->id)
-        ->where('status', EnrollmentStatus::Enrolled)
+        ->where('status', AttendanceStatus::Attending)
         ->firstOrFail();
 
-    $enrollment->update([
-        'status' => EnrollmentStatus::Cancelled,
+    $attendance->update([
+        'status' => AttendanceStatus::Cancelled,
     ]);
 
     return response()->json(['message' => 'キャンセルしました']);
@@ -146,11 +146,11 @@ public function destroy(Request $request, Course $course)
 ### テストを実行（成功する）
 
 ```bash
-php artisan test --filter=test_student_can_cancel_enrollment
+php artisan test --filter=test_student_can_cancel_attendance
 ```
 
 ```
-PASS  Tests\Feature\Api\EnrollmentCancelTest > student can cancel enrollment
+PASS  Tests\Feature\Api\AttendanceCancelTest > student can cancel attendance
 ```
 
 Green状態になりました。
@@ -167,22 +167,22 @@ public function test_cannot_cancel_within_3_days_before_start(): void
     $course = Course::factory()->create([
         'starts_at' => now()->addDays(2),  // 2日後開始（3日を切っている）
     ]);
-    $enrollment = Enrollment::factory()->create([
+    $attendance = Attendance::factory()->create([
         'user_id' => $student->id,
         'course_id' => $course->id,
-        'status' => EnrollmentStatus::Enrolled,
+        'status' => AttendanceStatus::Attending,
     ]);
 
     $response = $this->actingAs($student)
-        ->deleteJson("/api/courses/{$course->id}/enroll");
+        ->deleteJson("/api/courses/{$course->id}/attend");
 
     $response->assertUnprocessable()
         ->assertJsonPath('message', '講座開始3日前以降はキャンセルできません');
 
     // ステータスが変わっていないことを確認
-    $this->assertDatabaseHas('enrollments', [
-        'id' => $enrollment->id,
-        'status' => EnrollmentStatus::Enrolled->value,
+    $this->assertDatabaseHas('attendances', [
+        'id' => $attendance->id,
+        'status' => AttendanceStatus::Attending->value,
     ]);
 }
 ```
@@ -205,9 +205,9 @@ FAILED  Expected status code 422 but received 200.
 ```php
 public function destroy(Request $request, Course $course)
 {
-    $enrollment = Enrollment::where('user_id', $request->user()->id)
+    $attendance = Attendance::where('user_id', $request->user()->id)
         ->where('course_id', $course->id)
-        ->where('status', EnrollmentStatus::Enrolled)
+        ->where('status', AttendanceStatus::Attending)
         ->firstOrFail();
 
     // 3日前チェックを追加
@@ -217,8 +217,8 @@ public function destroy(Request $request, Course $course)
         ], 422);
     }
 
-    $enrollment->update([
-        'status' => EnrollmentStatus::Cancelled,
+    $attendance->update([
+        'status' => AttendanceStatus::Cancelled,
     ]);
 
     return response()->json(['message' => 'キャンセルしました']);
@@ -228,12 +228,12 @@ public function destroy(Request $request, Course $course)
 ### テスト実行（成功）
 
 ```bash
-php artisan test tests/Feature/Api/EnrollmentCancelTest.php
+php artisan test tests/Feature/Api/AttendanceCancelTest.php
 ```
 
 ```
-PASS  Tests\Feature\Api\EnrollmentCancelTest > student can cancel enrollment
-PASS  Tests\Feature\Api\EnrollmentCancelTest > cannot cancel within 3 days before start
+PASS  Tests\Feature\Api\AttendanceCancelTest > student can cancel attendance
+PASS  Tests\Feature\Api\AttendanceCancelTest > cannot cancel within 3 days before start
 ```
 
 
@@ -246,14 +246,14 @@ public function test_cannot_cancel_already_cancelled(): void
 {
     $student = User::factory()->student()->create();
     $course = Course::factory()->create(['starts_at' => now()->addDays(7)]);
-    Enrollment::factory()->create([
+    Attendance::factory()->create([
         'user_id' => $student->id,
         'course_id' => $course->id,
-        'status' => EnrollmentStatus::Cancelled,  // 既にキャンセル済み
+        'status' => AttendanceStatus::Cancelled,  // 既にキャンセル済み
     ]);
 
     $response = $this->actingAs($student)
-        ->deleteJson("/api/courses/{$course->id}/enroll");
+        ->deleteJson("/api/courses/{$course->id}/attend");
 
     $response->assertNotFound();
 }
@@ -262,20 +262,20 @@ public function test_cannot_cancel_already_cancelled(): void
 ### 他人の受講はキャンセル不可
 
 ```php
-public function test_cannot_cancel_others_enrollment(): void
+public function test_cannot_cancel_others_attendance(): void
 {
     $student1 = User::factory()->student()->create();
     $student2 = User::factory()->student()->create();
     $course = Course::factory()->create(['starts_at' => now()->addDays(7)]);
-    Enrollment::factory()->create([
+    Attendance::factory()->create([
         'user_id' => $student1->id,
         'course_id' => $course->id,
-        'status' => EnrollmentStatus::Enrolled,
+        'status' => AttendanceStatus::Attending,
     ]);
 
     // student2 が student1 の受講をキャンセルしようとする
     $response = $this->actingAs($student2)
-        ->deleteJson("/api/courses/{$course->id}/enroll");
+        ->deleteJson("/api/courses/{$course->id}/attend");
 
     $response->assertNotFound();
 }
@@ -289,26 +289,26 @@ public function test_cannot_cancel_others_enrollment(): void
 ### サービスクラスに抽出
 
 ```php
-// app/Services/EnrollmentService.php
+// app/Services/AttendanceService.php
 
 public function cancel(User $user, Course $course): void
 {
-    $enrollment = $this->findActiveEnrollment($user, $course);
+    $attendance = $this->findActiveAttendance($user, $course);
 
     $this->validateCancellation($course);
 
-    DB::transaction(function () use ($enrollment) {
-        $enrollment->update([
-            'status' => EnrollmentStatus::Cancelled,
+    DB::transaction(function () use ($attendance) {
+        $attendance->update([
+            'status' => AttendanceStatus::Cancelled,
         ]);
     });
 }
 
-private function findActiveEnrollment(User $user, Course $course): Enrollment
+private function findActiveAttendance(User $user, Course $course): Attendance
 {
-    return Enrollment::where('user_id', $user->id)
+    return Attendance::where('user_id', $user->id)
         ->where('course_id', $course->id)
-        ->where('status', EnrollmentStatus::Enrolled)
+        ->where('status', AttendanceStatus::Attending)
         ->firstOrFail();
 }
 
@@ -325,7 +325,7 @@ private function validateCancellation(Course $course): void
 ```php
 public function destroy(Request $request, Course $course)
 {
-    $this->enrollmentService->cancel($request->user(), $course);
+    $this->attendanceService->cancel($request->user(), $course);
 
     return response()->json(['message' => 'キャンセルしました']);
 }
@@ -334,7 +334,7 @@ public function destroy(Request $request, Course $course)
 ### テストを再実行して確認
 
 ```bash
-php artisan test tests/Feature/Api/EnrollmentCancelTest.php
+php artisan test tests/Feature/Api/AttendanceCancelTest.php
 ```
 
 全てのテストがパスすれば、リファクタリング成功です。
@@ -344,7 +344,7 @@ php artisan test tests/Feature/Api/EnrollmentCancelTest.php
 
 ```php
 use Illuminate\Support\Facades\Mail;
-use App\Mail\EnrollmentCancellation;
+use App\Mail\AttendanceCancellation;
 
 public function test_sends_cancellation_email(): void
 {
@@ -352,17 +352,17 @@ public function test_sends_cancellation_email(): void
 
     $student = User::factory()->student()->create();
     $course = Course::factory()->create(['starts_at' => now()->addDays(7)]);
-    Enrollment::factory()->create([
+    Attendance::factory()->create([
         'user_id' => $student->id,
         'course_id' => $course->id,
-        'status' => EnrollmentStatus::Enrolled,
+        'status' => AttendanceStatus::Attending,
     ]);
 
     $this->actingAs($student)
-        ->deleteJson("/api/courses/{$course->id}/enroll")
+        ->deleteJson("/api/courses/{$course->id}/attend")
         ->assertOk();
 
-    Mail::assertQueued(EnrollmentCancellation::class, function ($mail) use ($student) {
+    Mail::assertQueued(AttendanceCancellation::class, function ($mail) use ($student) {
         return $mail->hasTo($student->email);
     });
 }
@@ -373,18 +373,18 @@ public function test_sends_cancellation_email(): void
 ```php
 public function cancel(User $user, Course $course): void
 {
-    $enrollment = $this->findActiveEnrollment($user, $course);
+    $attendance = $this->findActiveAttendance($user, $course);
 
     $this->validateCancellation($course);
 
-    DB::transaction(function () use ($enrollment) {
-        $enrollment->update([
-            'status' => EnrollmentStatus::Cancelled,
+    DB::transaction(function () use ($attendance) {
+        $attendance->update([
+            'status' => AttendanceStatus::Cancelled,
         ]);
     });
 
     // メール送信を追加
-    Mail::to($user)->queue(new EnrollmentCancellation($enrollment));
+    Mail::to($user)->queue(new AttendanceCancellation($attendance));
 }
 ```
 
@@ -399,12 +399,12 @@ public function cancel(User $user, Course $course): void
 // ❌ テストしにくい（依存が隠れている）
 public function cancel()
 {
-    $service = new EnrollmentService();
+    $service = new AttendanceService();
     $service->cancel(...);
 }
 
 // ✅ テストしやすい（依存が明示的）
-public function cancel(EnrollmentService $service)
+public function cancel(AttendanceService $service)
 {
     $service->cancel(...);
 }
