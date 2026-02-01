@@ -162,24 +162,15 @@ class StoreCourseRequest extends FormRequest
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'capacity' => ['required', 'integer', 'min:1', 'max:100'],
-            'status' => ['sometimes', Rule::enum(CourseStatus::class)],
-        ];
-    }
-
-    public function messages(): array
-    {
-        return [
-            'title.required' => 'タイトルを入力してください。',
-            'title.max' => 'タイトルは255文字以内で入力してください。',
-            'capacity.required' => '定員を入力してください。',
-            'capacity.min' => '定員は1以上を指定してください。',
-            'capacity.max' => '定員は100以下を指定してください。',
+            'status' => ['required', Rule::enum(CourseStatus::class)],
         ];
     }
 }
 ```
 
 ### UpdateCourseRequest
+
+同様に `UpdateCourseRequest` も作成します。
 
 ```php
 <?php
@@ -484,58 +475,13 @@ php artisan db:seed --class=CourseSeeder
 
 
 ## Step 8 動作確認
+Post万で動作確認してください。
 
-### 講座一覧
-
-Postmanで確認してください。
-
-```
-GET http://localhost:8000/api/courses
-```
-
-### 講座詳細
-
-```
-GET http://localhost:8000/api/courses/1
-```
-
-### 講座作成（認証必要）
-
-ログイン後、以下のリクエストを送信してください。
-
-```
-POST http://localhost:8000/api/courses
-Content-Type: application/json
-
-{
-    "title": "テスト講座",
-    "description": "テストの説明",
-    "capacity": 20
-}
-```
-
-### 講座更新
-
-```
-PATCH http://localhost:8000/api/courses/1
-Content-Type: application/json
-
-{
-    "title": "更新されたタイトル"
-}
-```
-
-### 講座削除
-
-```
-DELETE http://localhost:8000/api/courses/1
-```
-
-
-## まとめ
-
-このレッスンでは、これまで学んだ知識を総動員してCourse APIを実装しました。Model、Controller、FormRequest、Resource、Policyを組み合わせることで、認証・認可・バリデーションを備えた本格的なAPIが構築できます。
-
+- 講座一覧
+- 講座詳細
+- 講座作成（認証必要）
+- 講座更新（認証必要）
+- 講座削除 （認証必要）
 
 ## 練習問題
 
@@ -544,7 +490,6 @@ DELETE http://localhost:8000/api/courses/1
 
 ### 問題2
 コレクションメソッドを使って、講座を status ごとにグループ化し、各ステータスの件数を取得するAPIエンドポイントを作成してください。
-
 
 ## 参考資料
 
