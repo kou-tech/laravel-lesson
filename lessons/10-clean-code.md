@@ -370,6 +370,32 @@ public function updateProfile(Request $request, User $user)
 }
 ```
 
+<details>
+<summary>解答例</summary>
+
+```php
+public function updateProfile(Request $request, User $user)
+{
+    if ($request->user()->id !== $user->id) {
+        return response()->json(['error' => '権限がありません'], 403);
+    }
+
+    if (!$request->has('name')) {
+        return response()->json(['error' => '名前は必須です'], 422);
+    }
+
+    if (strlen($request->name) > 255) {
+        return response()->json(['error' => '名前が長すぎます'], 422);
+    }
+
+    $user->name = $request->name;
+    $user->save();
+
+    return new UserResource($user);
+}
+```
+</details>
+
 ### 問題2
 以下のコードからマジックナンバーを排除してください。
 
@@ -382,6 +408,23 @@ if ($daysUntilStart <= 7) {
     // 開始1週間前
 }
 ```
+
+<details>
+<summary>解答例</summary>
+
+```php
+private const CAPACITY_WARNING_THRESHOLD = 0.9;
+private const DAYS_BEFORE_START_REMINDER = 7;
+
+if ($course->attendances->count() >= $course->capacity * self::CAPACITY_WARNING_THRESHOLD) {
+    // 残り10%になったら警告
+}
+
+if ($daysUntilStart <= self::DAYS_BEFORE_START_REMINDER) {
+    // 開始1週間前
+}
+```
+</details>
 
 ## 参考資料
 

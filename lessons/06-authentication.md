@@ -241,8 +241,52 @@ Provider: ユーザー情報の取得方法を決める
 ### 問題1
 認証済みユーザーの `name` を更新する `PATCH /api/me` エンドポイントを作成してください。
 
+<details>
+<summary>解答例</summary>
+
+ルート定義（`routes/api.php`）
+
+```php
+Route::middleware('auth:sanctum')->group(function () {
+    Route::patch('/me', [UserController::class, 'updateMe']);
+});
+```
+
+コントローラー
+
+```php
+public function updateMe(Request $request): UserResource
+{
+    $validated = $request->validate([
+        'name' => ['required', 'string', 'max:255'],
+    ]);
+
+    $request->user()->update($validated);
+
+    return new UserResource($request->user());
+}
+```
+</details>
+
 ### 問題2
 `me` メソッドにログ出力を追加し、認証済みユーザーが自身の情報を取得したことを記録してください。
+
+<details>
+<summary>解答例</summary>
+
+```php
+use Illuminate\Support\Facades\Log;
+
+public function me(Request $request): UserResource
+{
+    Log::info('認証済みユーザーが自身の情報を取得しました', [
+        'user_id' => $request->user()->id,
+    ]);
+
+    return new UserResource($request->user());
+}
+```
+</details>
 
 
 ## 参考資料

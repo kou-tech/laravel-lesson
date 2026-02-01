@@ -410,6 +410,35 @@ class UserController extends Controller
 ### 問題1
 UserPolicyに `updateRole` メソッドを追加し、「講師のみ生徒の役割を変更できる」という認可を実装してください。
 
+<details>
+<summary>解答例</summary>
+
+```php
+public function updateRole(User $user, User $model): bool
+{
+    // 講師のみが生徒の役割を変更できる
+    return $user->isInstructor() && $model->isStudent();
+}
+```
+
+コントローラーでの使用例
+
+```php
+public function updateRole(Request $request, User $user)
+{
+    $this->authorize('updateRole', $user);
+
+    $validated = $request->validate([
+        'role' => ['required', Rule::enum(UserRole::class)],
+    ]);
+
+    $user->update($validated);
+
+    return new UserResource($user);
+}
+```
+</details>
+
 ## 参考資料
 
 - [Laravel 公式ドキュメント - Authorization](https://laravel.com/docs/authorization)

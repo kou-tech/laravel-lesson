@@ -460,8 +460,100 @@ class AttendanceControllerTest extends TestCase
 ### 問題1
 `NotificationServiceInterface` とその実装 `EmailNotificationService` を作成し、AppServiceProviderでバインドしてください。
 
+<details>
+<summary>解答例</summary>
+
+```php
+// app/Contracts/NotificationServiceInterface.php
+<?php
+
+namespace App\Contracts;
+
+use App\Models\Attendance;
+
+interface NotificationServiceInterface
+{
+    public function sendAttendanceConfirmation(Attendance $attendance): void;
+}
+```
+
+```php
+// app/Services/EmailNotificationService.php
+<?php
+
+namespace App\Services;
+
+use App\Contracts\NotificationServiceInterface;
+use App\Mail\AttendanceConfirmation;
+use App\Models\Attendance;
+use Illuminate\Support\Facades\Mail;
+
+class EmailNotificationService implements NotificationServiceInterface
+{
+    public function sendAttendanceConfirmation(Attendance $attendance): void
+    {
+        Mail::to($attendance->user)->send(new AttendanceConfirmation($attendance));
+    }
+}
+```
+
+```php
+// app/Providers/AppServiceProvider.php
+use App\Contracts\NotificationServiceInterface;
+use App\Services\EmailNotificationService;
+
+public function register(): void
+{
+    $this->app->bind(
+        NotificationServiceInterface::class,
+        EmailNotificationService::class
+    );
+}
+```
+</details>
+
 ### 問題2
 テスト環境では通知を送信しない `FakeNotificationService` を作成し、テスト時はこちらが使われるように設定してください。
+
+<details>
+<summary>解答例</summary>
+
+```php
+// app/Services/FakeNotificationService.php
+<?php
+
+namespace App\Services;
+
+use App\Contracts\NotificationServiceInterface;
+use App\Models\Attendance;
+
+class FakeNotificationService implements NotificationServiceInterface
+{
+    public function sendAttendanceConfirmation(Attendance $attendance): void
+    {
+        // 何もしない
+    }
+}
+```
+
+```php
+// app/Providers/AppServiceProvider.php
+public function register(): void
+{
+    if (app()->environment('testing')) {
+        $this->app->bind(
+            NotificationServiceInterface::class,
+            FakeNotificationService::class
+        );
+    } else {
+        $this->app->bind(
+            NotificationServiceInterface::class,
+            EmailNotificationService::class
+        );
+    }
+}
+```
+</details>
 
 ## 参考資料
 

@@ -322,6 +322,18 @@ $products = collect([
 ]);
 ```
 
+<details>
+<summary>解答例</summary>
+
+```php
+$names = $products
+    ->filter(fn($product) => $product['price'] >= 1000)
+    ->pluck('name')
+    ->values();
+// ['パソコン', 'キーボード']
+```
+</details>
+
 ## 参考資料
 
 - [Laravel 公式ドキュメント - Collections](https://laravel.com/docs/collections)

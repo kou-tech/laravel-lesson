@@ -479,6 +479,64 @@ php artisan test --coverage
 - 定員オーバー時は登録できない
 - 既に登録済みの場合はエラー
 
+<details>
+<summary>解答例</summary>
+
+```php
+use App\Enums\AttendanceStatus;
+use App\Models\Attendance;
+use App\Models\Course;
+use App\Models\User;
+
+test('生徒は受講登録できる', function () {
+    $student = User::factory()->student()->create();
+    $course = Course::factory()->active()->create(['capacity' => 20]);
+
+    $response = $this->actingAs($student)
+        ->postJson("/api/courses/{$course->id}/attendances");
+
+    $response->assertCreated();
+
+    $this->assertDatabaseHas('attendances', [
+        'user_id' => $student->id,
+        'course_id' => $course->id,
+    ]);
+});
+
+test('定員オーバー時は登録できない', function () {
+    $student = User::factory()->student()->create();
+    $course = Course::factory()->active()->create(['capacity' => 1]);
+
+    // 先に1人登録して定員を埋める
+    Attendance::factory()->create([
+        'course_id' => $course->id,
+        'status' => AttendanceStatus::Attending,
+    ]);
+
+    $response = $this->actingAs($student)
+        ->postJson("/api/courses/{$course->id}/attendances");
+
+    $response->assertUnprocessable();
+});
+
+test('既に登録済みの場合はエラー', function () {
+    $student = User::factory()->student()->create();
+    $course = Course::factory()->active()->create(['capacity' => 20]);
+
+    Attendance::factory()->create([
+        'user_id' => $student->id,
+        'course_id' => $course->id,
+        'status' => AttendanceStatus::Attending,
+    ]);
+
+    $response = $this->actingAs($student)
+        ->postJson("/api/courses/{$course->id}/attendances");
+
+    $response->assertStatus(409);
+});
+```
+</details>
+
 
 ## 参考資料
 

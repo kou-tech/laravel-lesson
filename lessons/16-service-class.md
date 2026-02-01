@@ -566,6 +566,40 @@ class CreateCourseTest extends TestCase
 - ステータスを `cancelled` に変更
 - キャンセルのログを記録
 
+<details>
+<summary>解答例</summary>
+
+```php
+<?php
+
+namespace App\Services\Attendance;
+
+use App\Enums\AttendanceStatus;
+use App\Models\Attendance;
+use Illuminate\Support\Facades\Log;
+
+class CancelAttendance
+{
+    public function __invoke(Attendance $attendance): void
+    {
+        if ($attendance->status === AttendanceStatus::Cancelled) {
+            throw new \DomainException('既にキャンセル済みです');
+        }
+
+        $attendance->update([
+            'status' => AttendanceStatus::Cancelled,
+        ]);
+
+        Log::info('受講がキャンセルされました', [
+            'attendance_id' => $attendance->id,
+            'user_id' => $attendance->user_id,
+            'course_id' => $attendance->course_id,
+        ]);
+    }
+}
+```
+</details>
+
 ### 問題2
 以下のFat Controllerのコードを、`__invoke` を使ったサービスクラスに分離してください。
 
@@ -595,6 +629,62 @@ public function store(Request $request, Course $course)
     return new AttendanceResource($attendance);
 }
 ```
+
+<details>
+<summary>解答例</summary>
+
+```php
+// app/Services/Attendance/AttendCourse.php
+<?php
+
+namespace App\Services\Attendance;
+
+use App\Enums\AttendanceStatus;
+use App\Models\Attendance;
+use App\Models\Course;
+use App\Models\User;
+use Illuminate\Support\Facades\DB;
+
+class AttendCourse
+{
+    public function __invoke(User $user, Course $course): Attendance
+    {
+        if (!$course->hasCapacity()) {
+            throw new \DomainException('定員に達しています');
+        }
+
+        $exists = Attendance::where('user_id', $user->id)
+            ->where('course_id', $course->id)
+            ->exists();
+
+        if ($exists) {
+            throw new \DomainException('既に受講登録済みです');
+        }
+
+        return Attendance::create([
+            'user_id' => $user->id,
+            'course_id' => $course->id,
+            'status' => AttendanceStatus::Attending,
+            'attended_at' => now(),
+        ]);
+    }
+}
+```
+
+```php
+// コントローラー
+public function __construct(
+    private AttendCourse $attendCourse,
+) {}
+
+public function store(Request $request, Course $course)
+{
+    $attendance = ($this->attendCourse)($request->user(), $course);
+
+    return new AttendanceResource($attendance);
+}
+```
+</details>
 
 ## 参考資料
 

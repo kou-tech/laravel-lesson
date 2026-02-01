@@ -306,6 +306,17 @@ HTTP/1.1 422 Unprocessable Entity
 ### 問題1
 「生徒が自分の受講履歴を取得する」エンドポイントを設計してください。
 
+<details>
+<summary>解答例</summary>
+
+```
+GET /api/me/attendances
+```
+
+認証済みユーザー自身の受講履歴を返すエンドポイントです。`/api/me` で「自分自身」を表し、そのサブリソースとして `attendances` を取得します。
+
+</details>
+
 ### 問題2
 以下のエンドポイント設計の問題点を指摘し、正しいエンドポイントを提案してください。
 
@@ -314,6 +325,19 @@ GET /api/getCourseById/1
 POST /api/createNewCourse
 DELETE /api/course/1/delete
 ```
+
+<details>
+<summary>解答例</summary>
+
+| 修正前 | 問題点 | 修正後 |
+|--------|--------|--------|
+| `GET /api/getCourseById/1` | 動詞を使っている | `GET /api/courses/1` |
+| `POST /api/createNewCourse` | 動詞を使っている、単数形 | `POST /api/courses` |
+| `DELETE /api/course/1/delete` | 単数形、URLに動詞が含まれている | `DELETE /api/courses/1` |
+
+HTTPメソッドが操作を表すため、URLには名詞（リソース名）のみを使います。リソース名は複数形にします。
+
+</details>
 
 
 ## 参考資料

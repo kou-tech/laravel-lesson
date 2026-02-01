@@ -488,8 +488,48 @@ Postmanで動作確認してください。
 ### 問題1
 講座一覧APIに「講師名で検索」機能を追加してください。クエリパラメータ `instructor` で講師名を部分一致検索できるようにしてください。
 
+<details>
+<summary>解答例</summary>
+
+```php
+public function index(Request $request)
+{
+    $query = Course::with('instructor');
+
+    if ($request->has('instructor')) {
+        $query->whereHas('instructor', function ($q) use ($request) {
+            $q->where('name', 'like', '%' . $request->input('instructor') . '%');
+        });
+    }
+
+    $courses = $query->latest()->paginate();
+
+    return CourseResource::collection($courses);
+}
+```
+</details>
+
 ### 問題2
 コレクションメソッドを使って、講座を status ごとにグループ化し、各ステータスの件数を取得するAPIエンドポイントを作成してください。
+
+<details>
+<summary>解答例</summary>
+
+```php
+// routes/api.php
+Route::get('/courses/stats', [CourseController::class, 'stats']);
+
+// CourseController.php
+public function stats()
+{
+    $counts = Course::all()
+        ->groupBy('status')
+        ->map(fn($courses) => $courses->count());
+
+    return response()->json(['data' => $counts]);
+}
+```
+</details>
 
 ## 参考資料
 

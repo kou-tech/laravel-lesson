@@ -433,6 +433,104 @@ public function cancel(AttendanceService $service)
 - 公開済みの講座は再公開不可
 - 他の講師の講座は公開不可
 
+<details>
+<summary>解答例</summary>
+
+Step 1 テストを書く
+
+```php
+// tests/Feature/Api/CoursePublishTest.php
+<?php
+
+namespace Tests\Feature\Api;
+
+use App\Enums\CourseStatus;
+use App\Models\Course;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
+
+class CoursePublishTest extends TestCase
+{
+    use RefreshDatabase;
+
+    public function test_instructor_can_publish_own_draft_course(): void
+    {
+        $instructor = User::factory()->instructor()->create();
+        $course = Course::factory()->create([
+            'instructor_id' => $instructor->id,
+            'status' => CourseStatus::Draft,
+        ]);
+
+        $response = $this->actingAs($instructor)
+            ->patchJson("/api/courses/{$course->id}/publish");
+
+        $response->assertOk();
+        $this->assertDatabaseHas('courses', [
+            'id' => $course->id,
+            'status' => CourseStatus::Active->value,
+        ]);
+    }
+
+    public function test_cannot_publish_already_active_course(): void
+    {
+        $instructor = User::factory()->instructor()->create();
+        $course = Course::factory()->create([
+            'instructor_id' => $instructor->id,
+            'status' => CourseStatus::Active,
+        ]);
+
+        $response = $this->actingAs($instructor)
+            ->patchJson("/api/courses/{$course->id}/publish");
+
+        $response->assertUnprocessable();
+    }
+
+    public function test_cannot_publish_other_instructors_course(): void
+    {
+        $instructor1 = User::factory()->instructor()->create();
+        $instructor2 = User::factory()->instructor()->create();
+        $course = Course::factory()->create([
+            'instructor_id' => $instructor1->id,
+            'status' => CourseStatus::Draft,
+        ]);
+
+        $response = $this->actingAs($instructor2)
+            ->patchJson("/api/courses/{$course->id}/publish");
+
+        $response->assertForbidden();
+    }
+}
+```
+
+Step 2 実装する
+
+```php
+// routes/api.php
+Route::middleware('auth:sanctum')->group(function () {
+    Route::patch('/courses/{course}/publish', [CourseController::class, 'publish']);
+});
+```
+
+```php
+// CourseController.php
+public function publish(Course $course)
+{
+    $this->authorize('update', $course);
+
+    if ($course->status !== CourseStatus::Draft) {
+        return response()->json([
+            'message' => 'ドラフト状態の講座のみ公開できます',
+        ], 422);
+    }
+
+    $course->update(['status' => CourseStatus::Active]);
+
+    return new CourseResource($course);
+}
+```
+</details>
+
 
 ## 参考資料
 

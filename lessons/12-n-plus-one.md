@@ -335,8 +335,43 @@ public function index()
 }
 ```
 
+<details>
+<summary>解答例</summary>
+
+```php
+public function index()
+{
+    $attendances = Attendance::with(['user', 'course'])
+        ->where('status', 'attending')
+        ->get();
+
+    return $attendances->map(function ($attendance) {
+        return [
+            'user_name' => $attendance->user->name,
+            'course_title' => $attendance->course->title,
+            'attended_at' => $attendance->attended_at,
+        ];
+    });
+}
+```
+
+`with(['user', 'course'])` を追加することで、クエリが N+1 回から 3 回（attendances, users, courses）に削減されます。
+</details>
+
 ### 問題2
 講師ごとに担当講座数を取得するクエリを書いてください。
+
+<details>
+<summary>解答例</summary>
+
+```php
+$instructors = User::withCount('courses')
+    ->whereHas('courses')
+    ->get();
+
+// $instructor->courses_count で講座数を参照
+```
+</details>
 
 ## 参考資料
 

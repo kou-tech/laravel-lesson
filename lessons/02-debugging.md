@@ -222,10 +222,48 @@ Log::info('受講登録が完了しました', [
 ### 問題1
 `UserController@index`（ユーザー一覧API）に、取得したユーザー数をログ出力する処理を追加してください。
 
+<details>
+<summary>解答例</summary>
+
+```php
+public function index()
+{
+    $users = User::all();
+
+    Log::info('ユーザー一覧を取得しました', [
+        'count' => $users->count(),
+    ]);
+
+    return $users;
+}
+```
+</details>
+
 ### 問題2
 `UserController@show` で、存在しないユーザーIDが指定された場合に `warning` レベルのログを出力する処理を追加してください。ログには指定されたIDを含めてください。
 
 > ヒント: Route Model Bindingを使っている場合、存在しないIDでは自動的に404が返ります。`User::find()` を使う方法に変えると、自分でハンドリングできます。
+
+<details>
+<summary>解答例</summary>
+
+```php
+public function show(int $id)
+{
+    $user = User::find($id);
+
+    if ($user === null) {
+        Log::warning('存在しないユーザーIDが指定されました', [
+            'user_id' => $id,
+        ]);
+
+        return response()->json(['message' => 'ユーザーが見つかりません'], 404);
+    }
+
+    return $user;
+}
+```
+</details>
 
 
 ## 応用 Laravel Telescope

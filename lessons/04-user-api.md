@@ -326,8 +326,37 @@ public function index()
 ### 問題1
 UserResourceに `full_name` フィールドを追加してください。値は `{name}さん` という形式で返してください。
 
+<details>
+<summary>解答例</summary>
+
+```php
+public function toArray(Request $request): array
+{
+    return [
+        'id' => $this->resource->id,
+        'name' => $this->resource->name,
+        'full_name' => $this->resource->name . 'さん',
+        'email' => $this->resource->email,
+        'created_at' => $this->resource->created_at->toISOString(),
+    ];
+}
+```
+</details>
+
 ### 問題2
 ユーザー一覧APIにページネーションを追加し、1ページあたり10件を返すようにしてください。
+
+<details>
+<summary>解答例</summary>
+
+```php
+public function index()
+{
+    $users = User::paginate(10);
+    return UserResource::collection($users);
+}
+```
+</details>
 
 
 ## 参考資料

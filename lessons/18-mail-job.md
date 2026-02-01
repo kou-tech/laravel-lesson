@@ -469,8 +469,109 @@ test('受講時にジョブがキューに追加される', function () {
 ### 問題1
 講座キャンセル時に送信する `AttendanceCancellation` メールを作成してください。
 
+<details>
+<summary>解答例</summary>
+
+```php
+<?php
+
+namespace App\Mail;
+
+use App\Models\Attendance;
+use Illuminate\Bus\Queueable;
+use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Content;
+use Illuminate\Mail\Mailables\Envelope;
+use Illuminate\Queue\SerializesModels;
+
+class AttendanceCancellation extends Mailable
+{
+    use Queueable, SerializesModels;
+
+    public function __construct(
+        public Attendance $attendance
+    ) {}
+
+    public function envelope(): Envelope
+    {
+        return new Envelope(
+            subject: '【キャンセル完了】' . $this->attendance->course->title,
+        );
+    }
+
+    public function content(): Content
+    {
+        return new Content(
+            view: 'emails.attendance-cancellation',
+            with: [
+                'userName' => $this->attendance->user->name,
+                'courseName' => $this->attendance->course->title,
+            ],
+        );
+    }
+}
+```
+</details>
+
 ### 問題2
 講座の開始1日前にリマインドメールを送信するジョブを作成してください。
+
+<details>
+<summary>解答例</summary>
+
+```php
+<?php
+
+namespace App\Jobs;
+
+use App\Mail\CourseReminder;
+use App\Models\Course;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Mail;
+
+class SendCourseReminder implements ShouldQueue
+{
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
+    public int $tries = 3;
+
+    public function __construct(
+        public Course $course
+    ) {}
+
+    public function handle(): void
+    {
+        $attendees = $this->course->students()
+            ->wherePivot('status', 'attending')
+            ->get();
+
+        foreach ($attendees as $student) {
+            Mail::to($student)->send(new CourseReminder($this->course));
+        }
+    }
+}
+```
+
+スケジューラーからの呼び出し例（`routes/console.php`）
+
+```php
+use App\Jobs\SendCourseReminder;
+use App\Models\Course;
+use Illuminate\Support\Facades\Schedule;
+
+Schedule::call(function () {
+    $courses = Course::where('starts_at', now()->addDay()->toDateString())->get();
+
+    foreach ($courses as $course) {
+        SendCourseReminder::dispatch($course);
+    }
+})->dailyAt('09:00');
+```
+</details>
 
 ## 参考資料
 

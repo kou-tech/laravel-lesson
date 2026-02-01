@@ -427,8 +427,48 @@ public function transfer(User $from, User $to, int $amount)
 }
 ```
 
+<details>
+<summary>解答例</summary>
+
+```php
+use Illuminate\Support\Facades\DB;
+
+public function transfer(User $from, User $to, int $amount)
+{
+    DB::transaction(function () use ($from, $to, $amount) {
+        $from->decrement('balance', $amount);
+        $to->increment('balance', $amount);
+    });
+}
+```
+</details>
+
 ### 問題2
 受講キャンセル処理を実装してください。受講ステータスを `cancelled` に変更し、講座の `attendance_count` を減らします。
+
+<details>
+<summary>解答例</summary>
+
+```php
+use Illuminate\Support\Facades\DB;
+
+public function cancel(User $user, Course $course): void
+{
+    DB::transaction(function () use ($user, $course) {
+        $attendance = Attendance::where('user_id', $user->id)
+            ->where('course_id', $course->id)
+            ->where('status', AttendanceStatus::Attending)
+            ->firstOrFail();
+
+        $attendance->update([
+            'status' => AttendanceStatus::Cancelled,
+        ]);
+
+        $course->decrement('attendance_count');
+    });
+}
+```
+</details>
 
 ## 参考資料
 

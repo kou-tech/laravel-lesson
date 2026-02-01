@@ -450,8 +450,48 @@ class Attendance extends Model
 ### 問題1
 User モデルに「登録からの日数」を返す `days_since_registration` アクセサを追加してください。
 
+<details>
+<summary>解答例</summary>
+
+```php
+use Illuminate\Database\Eloquent\Casts\Attribute;
+
+protected function daysSinceRegistration(): Attribute
+{
+    return Attribute::make(
+        get: fn () => (int) $this->created_at->diffInDays(now()),
+    );
+}
+```
+
+```php
+$user->days_since_registration; // 例: 30
+```
+</details>
+
 ### 問題2
 Course モデルに、タイトルを保存時に前後の空白を除去するミューテタを追加してください。
+
+<details>
+<summary>解答例</summary>
+
+```php
+use Illuminate\Database\Eloquent\Casts\Attribute;
+
+protected function title(): Attribute
+{
+    return Attribute::make(
+        set: fn (string $value) => trim($value),
+    );
+}
+```
+
+```php
+$course->title = '  Laravel入門  ';
+$course->save();
+// DB には 'Laravel入門' が保存される
+```
+</details>
 
 ## 参考資料
 

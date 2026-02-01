@@ -355,6 +355,56 @@ Update{Model}Request - 更新用
 'bio' => ['sometimes', 'string'],
 ```
 
+## 練習問題
+
+### 問題1
+講座作成用の `StoreCourseRequest` を作成してください。以下のルールを設定してください。
+- `title` は必須、文字列、最大255文字
+- `description` は任意、文字列
+- `capacity` は必須、整数、1以上100以下
+
+<details>
+<summary>解答例</summary>
+
+```php
+<?php
+
+namespace App\Http\Requests;
+
+use Illuminate\Foundation\Http\FormRequest;
+
+class StoreCourseRequest extends FormRequest
+{
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    public function rules(): array
+    {
+        return [
+            'title' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string'],
+            'capacity' => ['required', 'integer', 'min:1', 'max:100'],
+        ];
+    }
+}
+```
+</details>
+
+### 問題2
+`sometimes` ルールと `required` ルールの違いを説明してください。PATCHリクエストではどちらが適切ですか。
+
+<details>
+<summary>解答例</summary>
+
+- `required` はリクエストにそのフィールドが必ず含まれている必要がある
+- `sometimes` はフィールドが存在する場合のみバリデーションを実行する（フィールド自体がなくてもエラーにならない）
+
+PATCHリクエストでは `sometimes` が適切です。PATCHは部分更新のため、変更したいフィールドのみ送信します。`required` にすると全フィールドの送信が必要になり、PUTと同じ動作になってしまいます。
+
+</details>
+
 ## 参考資料
 
 - [Laravel 公式ドキュメント - Validation](https://laravel.com/docs/validation)

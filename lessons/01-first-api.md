@@ -248,8 +248,35 @@ GET|HEAD   api/hello .........
 ### 問題1
 `/api/status` にアクセスすると、現在の日時とアプリケーション名を返すAPIを作成してください。
 
+<details>
+<summary>解答例</summary>
+
+```php
+Route::get('/status', function () {
+    return [
+        'app_name' => config('app.name'),
+        'datetime' => now()->toISOString(),
+    ];
+});
+```
+</details>
+
 ### 問題2
 `/api/users` にアクセスすると、3人分のユーザー情報（id, name, email）を返すAPIを作成してください。
+
+<details>
+<summary>解答例</summary>
+
+```php
+Route::get('/users', function () {
+    return [
+        ['id' => 1, 'name' => '田中太郎', 'email' => 'tanaka@example.com'],
+        ['id' => 2, 'name' => '山田花子', 'email' => 'yamada@example.com'],
+        ['id' => 3, 'name' => '佐藤一郎', 'email' => 'sato@example.com'],
+    ];
+});
+```
+</details>
 
 
 ## 参考資料
