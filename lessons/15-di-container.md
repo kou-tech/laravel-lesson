@@ -463,6 +463,11 @@ class AttendanceControllerTest extends TestCase
 ### 問題2
 テスト環境では通知を送信しない `FakeNotificationService` を作成し、テスト時はこちらが使われるように設定してください。
 
+## 参考資料
+
+- [Laravel 公式ドキュメント - Service Container](https://laravel.com/docs/container)
+- [Laravel 公式ドキュメント - Service Providers](https://laravel.com/docs/providers)
+
 ## 次のレッスン
 
 [Lesson 16 サービスクラスの設計](./16-service-class.md) では、ビジネスロジックをサービスクラスに分離する設計を学びます。

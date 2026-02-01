@@ -537,7 +537,7 @@ class AttendanceController extends Controller
 }
 ```
 
-**ポイント:**
+ポイント
 - `hasCapacity()` で定員チェック（Step 6 で定義したメソッド）
 - 複合ユニーク制約違反は `QueryException` をキャッチして 409 Conflict を返す
 - アプリ側チェックだけでなく、DB制約が最後の砦として機能する

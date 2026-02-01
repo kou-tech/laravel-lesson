@@ -480,6 +480,13 @@ php artisan test --coverage
 - 既に登録済みの場合はエラー
 
 
+## 参考資料
+
+- [Laravel 公式ドキュメント - Testing](https://laravel.com/docs/testing)
+- [Laravel 公式ドキュメント - HTTP Tests](https://laravel.com/docs/http-tests)
+- [Laravel 公式ドキュメント - Database Testing](https://laravel.com/docs/database-testing)
+- [Pest 公式ドキュメント](https://pestphp.com/docs/installation)
+
 ## 次のレッスン
 
 [Lesson 18 メールとジョブ機能](./18-mail-job.md) では、メール送信とキュー処理を実装し、非同期処理の基本を学びます。

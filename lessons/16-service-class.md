@@ -596,6 +596,11 @@ public function store(Request $request, Course $course)
 }
 ```
 
+## 参考資料
+
+- [Laravel 公式ドキュメント - Service Container](https://laravel.com/docs/container)
+- [PHP 公式ドキュメント - マジックメソッド __invoke](https://www.php.net/manual/ja/language.oop5.magic.php#object.invoke)
+
 ## 次のレッスン
 
 [Lesson 17 自動テストの書き方](./17-testing.md) では、PHPUnit/Pestを使った自動テストを書き、品質を担保する方法を学びます。

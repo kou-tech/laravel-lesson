@@ -472,6 +472,11 @@ test('受講時にジョブがキューに追加される', function () {
 ### 問題2
 講座の開始1日前にリマインドメールを送信するジョブを作成してください。
 
+## 参考資料
+
+- [Laravel 公式ドキュメント - Mail](https://laravel.com/docs/mail)
+- [Laravel 公式ドキュメント - Queues](https://laravel.com/docs/queues)
+
 ## 次のレッスン
 
 [Lesson 19 TDDで機能を追加する](./19-tdd.md) では、テスト駆動開発（TDD）のサイクルを体験します。

@@ -475,7 +475,7 @@ php artisan db:seed --class=CourseSeeder
 
 
 ## Step 8 動作確認
-Post万で動作確認してください。
+Postmanで動作確認してください。
 
 - 講座一覧
 - 講座詳細

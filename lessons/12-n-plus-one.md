@@ -338,6 +338,10 @@ public function index()
 ### 問題2
 講師ごとに担当講座数を取得するクエリを書いてください。
 
+## 参考資料
+
+- [Laravel 公式ドキュメント - Eager Loading](https://laravel.com/docs/eloquent-relationships#eager-loading)
+
 ## 次のレッスン
 
 [Lesson 13 安全なモデルの記述](./13-safe-model.md) では、Mass Assignmentなどのセキュリティ対策を学びます。

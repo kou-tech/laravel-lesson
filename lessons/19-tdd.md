@@ -434,6 +434,7 @@ public function cancel(AttendanceService $service)
 - 他の講師の講座は公開不可
 
 
-## 次のレッスン
+## 参考資料
 
-[Lesson 20 フロントエンドとの統合](./20-frontend-integration.md) では、Inertiaを使ってフロントエンドと統合し、受講管理システムを完成させます。
+- [Laravel 公式ドキュメント - Testing](https://laravel.com/docs/testing)
+- [Test-Driven Development by Example（Kent Beck）](https://www.amazon.co.jp/dp/4274217884)

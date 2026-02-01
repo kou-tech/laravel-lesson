@@ -453,6 +453,12 @@ User モデルに「登録からの日数」を返す `days_since_registration` 
 ### 問題2
 Course モデルに、タイトルを保存時に前後の空白を除去するミューテタを追加してください。
 
+## 参考資料
+
+- [Laravel 公式ドキュメント - Mass Assignment](https://laravel.com/docs/eloquent#mass-assignment)
+- [Laravel 公式ドキュメント - Attribute Casting](https://laravel.com/docs/eloquent-mutators#attribute-casting)
+- [Laravel 公式ドキュメント - Accessors & Mutators](https://laravel.com/docs/eloquent-mutators#accessors-and-mutators)
+
 ## 次のレッスン
 
 [Lesson 14 トランザクション処理](./14-transaction.md) では、データの整合性を保つためのトランザクション処理を学びます。

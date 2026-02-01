@@ -430,6 +430,11 @@ public function transfer(User $from, User $to, int $amount)
 ### 問題2
 受講キャンセル処理を実装してください。受講ステータスを `cancelled` に変更し、講座の `attendance_count` を減らします。
 
+## 参考資料
+
+- [Laravel 公式ドキュメント - Database Transactions](https://laravel.com/docs/database#database-transactions)
+- [Laravel 公式ドキュメント - Pessimistic Locking](https://laravel.com/docs/queries#pessimistic-locking)
+
 ## 次のレッスン
 
 [Lesson 15 サービスコンテナとDIによるバリデーション](./15-di-container.md) では、堅牢なバリデーション設計を学びます。

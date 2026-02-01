@@ -246,4 +246,4 @@ Laravel Telescope は、Laravelアプリケーションのデバッグ用ダッ�
 
 ## 次のレッスン
 
-[Lesson 3: API設計の基本](./03-api-design.md) では、RESTful APIの設計原則について学びます。
+[Lesson 3 API設計の基本](./03-api-design.md) では、RESTful APIの設計原則について学びます。

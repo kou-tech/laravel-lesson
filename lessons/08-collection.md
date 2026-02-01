@@ -283,7 +283,7 @@ $result = Course::with('instructor')
     ->values();
 ```
 
-## Step 8 パフォーマンスの注意点
+## Step 7 パフォーマンスの注意点
 
 ### DBクエリ vs コレクション操作
 

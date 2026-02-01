@@ -312,7 +312,7 @@ public function update(UpdateUserRequest $request, User $user): UserResource
 
 ### 動作確認
 
-- ユーサー更新
+- ユーザー更新
 
 ```json
 {
