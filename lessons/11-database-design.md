@@ -8,7 +8,7 @@
 - 外部キー制約を正しく設定できる
 - インデックスの役割と追加タイミングを理解する
 - NULL許可のデメリットを理解し適切に設計できる
-- enrollments（受講）テーブルを設計できる
+- attendances（受講）テーブルを設計できる
 
 ## データベース設計の重要性
 
@@ -16,16 +16,16 @@
 
 設計を間違えると、データの整合性が崩れたり、パフォーマンスが悪化したり、後からの修正が困難になります。
 
-## Step 1 Enrollmentsテーブルの設計
+## Step 1 Attendancesテーブルの設計
 
 ### エンティティ分析
 
-受講（Enrollment）は、ユーザーと講座の多対多の関係を表します。
+受講（Attendance）は、ユーザーと講座の多対多の関係を表します。
 
 ```mermaid
 erDiagram
-    User ||--o{ Enrollment : "受講する"
-    Course ||--o{ Enrollment : "受講される"
+    User ||--o{ Attendance : "受講する"
+    Course ||--o{ Attendance : "受講される"
 ```
 
 1人のユーザーは複数の講座を受講でき、1つの講座には複数の受講者がいます。
@@ -33,7 +33,7 @@ erDiagram
 ### マイグレーションの作成
 
 ```bash
-php artisan make:migration create_enrollments_table
+php artisan make:migration create_attendances_table
 ```
 
 ### マイグレーションの実装
@@ -49,23 +49,23 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('enrollments', function (Blueprint $table) {
+        Schema::create('attendances', function (Blueprint $table) {
             $table->id();
 
             // 外部キー
-            $table->foreignId('user_id')
+            $table->foreignIdFor(User::class)
                 ->constrained()
                 ->onDelete('cascade');
 
-            $table->foreignId('course_id')
+            $table->foreignIdFor(Course::class)
                 ->constrained()
                 ->onDelete('cascade');
 
             // 受講状態
-            $table->string('status')->default('enrolled');
+            $table->string('status')->default('attending');
 
             // 受講日時
-            $table->timestamp('enrolled_at')->useCurrent();
+            $table->timestamp('attended_at')->useCurrent();
 
             $table->timestamps();
 
@@ -76,7 +76,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('enrollments');
+        Schema::dropIfExists('attendances');
     }
 };
 ```
@@ -88,7 +88,7 @@ return new class extends Migration
 外部キー制約は、テーブル間の参照整合性を保証する仕組みです。
 
 ```php
-$table->foreignId('user_id')->constrained();
+$table->foreignIdFor(User::class)->constrained();
 ```
 
 これにより、`user_id` に存在しないユーザーIDを入れようとするとエラーになり、データの整合性が保証されます。
@@ -99,18 +99,18 @@ $table->foreignId('user_id')->constrained();
 
 ```php
 // CASCADE: 親が削除されたら子も削除
-$table->foreignId('user_id')
+$table->foreignIdFor(User::class)
     ->constrained()
     ->onDelete('cascade');
 
 // SET NULL: 親が削除されたらNULLに
-$table->foreignId('instructor_id')
+$table->foreignIdFor(User::class, 'instructor_id')
     ->nullable()
     ->constrained('users')
     ->onDelete('set null');
 
 // RESTRICT: 子がいる場合は削除を拒否（デフォルト）
-$table->foreignId('category_id')
+$table->foreignIdFor(Category::class)
     ->constrained()
     ->onDelete('restrict');
 ```
@@ -138,10 +138,10 @@ $table->foreignId('category_id')
 $table->string('status')->index();
 
 // 検索・ソートに使うカラム
-$table->timestamp('enrolled_at')->index();
+$table->timestamp('attended_at')->index();
 
 // 外部キー（自動的にインデックスが作成される）
-$table->foreignId('user_id')->constrained();
+$table->foreignIdFor(User::class)->constrained();
 ```
 
 ### 複合インデックス
@@ -219,7 +219,7 @@ $table->integer('login_count')->default(0);
 
 ```php
 // 講師が退職した場合 → NULLにする（履歴は残す）
-$table->foreignId('instructor_id')
+$table->foreignIdFor(User::class, 'instructor_id')
     ->nullable()
     ->constrained('users')
     ->onDelete('set null');
@@ -235,10 +235,10 @@ $table->foreignId('instructor_id')
 
 ```php
 // ❌ 不十分（競合状態で漏れる可能性）
-if (Enrollment::where('user_id', $userId)->where('course_id', $courseId)->exists()) {
-    throw new AlreadyEnrolledException();
+if (Attendance::where('user_id', $userId)->where('course_id', $courseId)->exists()) {
+    throw new AlreadyAttendedException();
 }
-Enrollment::create([...]);
+Attendance::create([...]);
 ```
 
 ### データベースレベルでの対策
@@ -256,51 +256,51 @@ $table->unique(['user_id', 'course_id']);
 use Illuminate\Database\QueryException;
 
 try {
-    Enrollment::create([
+    Attendance::create([
         'user_id' => $userId,
         'course_id' => $courseId,
     ]);
 } catch (QueryException $e) {
     if ($e->errorInfo[1] === 1062) {  // Duplicate entry
-        throw new AlreadyEnrolledException();
+        throw new AlreadyAttendedException();
     }
     throw $e;
 }
 ```
 
-## Step 6 Enrollmentモデルの作成
+## Step 6 Attendanceモデルの作成
 
 ### モデルの作成
 
 ```bash
-php artisan make:model Enrollment
+php artisan make:model Attendance
 ```
 
-### Enrollmentモデルの実装
+### Attendanceモデルの実装
 
 ```php
 <?php
 
 namespace App\Models;
 
-use App\Enums\EnrollmentStatus;
+use App\Enums\AttendanceStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class Enrollment extends Model
+class Attendance extends Model
 {
     protected $fillable = [
         'user_id',
         'course_id',
         'status',
-        'enrolled_at',
+        'attended_at',
     ];
 
     protected function casts(): array
     {
         return [
-            'status' => EnrollmentStatus::class,
-            'enrolled_at' => 'datetime',
+            'status' => AttendanceStatus::class,
+            'attended_at' => 'datetime',
         ];
     }
 
@@ -316,23 +316,23 @@ class Enrollment extends Model
 }
 ```
 
-### EnrollmentStatus Enum
+### AttendanceStatus Enum
 
 ```php
 <?php
 
 namespace App\Enums;
 
-enum EnrollmentStatus: string
+enum AttendanceStatus: string
 {
-    case Enrolled = 'enrolled';
+    case Attending = 'attending';
     case Completed = 'completed';
     case Cancelled = 'cancelled';
 
     public function label(): string
     {
         return match($this) {
-            self::Enrolled => '受講中',
+            self::Attending => '受講中',
             self::Completed => '修了',
             self::Cancelled => 'キャンセル',
         };
@@ -344,34 +344,34 @@ enum EnrollmentStatus: string
 
 ```php
 // User.php
-public function enrollments(): HasMany
+public function attendances(): HasMany
 {
-    return $this->hasMany(Enrollment::class);
+    return $this->hasMany(Attendance::class);
 }
 
-public function enrolledCourses(): BelongsToMany
+public function attendedCourses(): BelongsToMany
 {
-    return $this->belongsToMany(Course::class, 'enrollments')
-        ->withPivot('status', 'enrolled_at')
+    return $this->belongsToMany(Course::class, 'attendances')
+        ->withPivot('status', 'attended_at')
         ->withTimestamps();
 }
 
 // Course.php
-public function enrollments(): HasMany
+public function attendances(): HasMany
 {
-    return $this->hasMany(Enrollment::class);
+    return $this->hasMany(Attendance::class);
 }
 
 public function students(): BelongsToMany
 {
-    return $this->belongsToMany(User::class, 'enrollments')
-        ->withPivot('status', 'enrolled_at')
+    return $this->belongsToMany(User::class, 'attendances')
+        ->withPivot('status', 'attended_at')
         ->withTimestamps();
 }
 
 public function hasCapacity(): bool
 {
-    return $this->enrollments()->count() < $this->capacity;
+    return $this->attendances()->count() < $this->capacity;
 }
 ```
 
@@ -382,7 +382,7 @@ public function hasCapacity(): bool
 ```bash
 # ✅ 1つの変更 = 1つのマイグレーション
 php artisan make:migration add_phone_to_users_table
-php artisan make:migration add_index_to_enrollments_status
+php artisan make:migration add_index_to_attendances_status
 
 # ❌ 複数の無関係な変更を1つに
 php artisan make:migration update_multiple_tables
@@ -458,8 +458,8 @@ $table->dropColumn('old_column');
 ```php
 Schema::create('course_reviews', function (Blueprint $table) {
     $table->id();
-    $table->foreignId('user_id')->constrained()->onDelete('cascade');
-    $table->foreignId('course_id')->constrained()->onDelete('cascade');
+    $table->foreignIdFor(User::class)->constrained()->onDelete('cascade');
+    $table->foreignIdFor(Course::class)->constrained()->onDelete('cascade');
     $table->unsignedTinyInteger('rating');  // 1-5
     $table->text('comment')->nullable();
     $table->timestamps();
