@@ -20,6 +20,8 @@ erDiagram
         string description
         int instructor_id FK
         int capacity
+        string status
+        datetime starts_at
         datetime created_at
     }
 

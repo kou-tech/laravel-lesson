@@ -593,7 +593,7 @@ Schema::create('course_reviews', function (Blueprint $table) {
 </details>
 
 ### 問題2
-既存の `courses` テーブルに `start_date` カラム（NOT NULL）を追加するマイグレーションを作成してください。既存データには今日の日付を設定します。
+既存の `courses` テーブルに `starts_at` カラム（NOT NULL）を追加するマイグレーションを作成してください。既存データには今日の日付を設定します。
 
 <details>
 <summary>解答例</summary>
@@ -602,24 +602,24 @@ Schema::create('course_reviews', function (Blueprint $table) {
 public function up(): void
 {
     Schema::table('courses', function (Blueprint $table) {
-        $table->date('start_date')->nullable()->after('status');
+        $table->datetime('starts_at')->nullable()->after('status');
     });
 
     // 既存データにデフォルト値を設定
     DB::table('courses')
-        ->whereNull('start_date')
-        ->update(['start_date' => now()->toDateString()]);
+        ->whereNull('starts_at')
+        ->update(['starts_at' => now()]);
 
     // NOT NULLに変更
     Schema::table('courses', function (Blueprint $table) {
-        $table->date('start_date')->nullable(false)->change();
+        $table->datetime('starts_at')->nullable(false)->change();
     });
 }
 
 public function down(): void
 {
     Schema::table('courses', function (Blueprint $table) {
-        $table->dropColumn('start_date');
+        $table->dropColumn('starts_at');
     });
 }
 ```
