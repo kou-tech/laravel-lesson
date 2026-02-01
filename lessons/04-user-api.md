@@ -12,17 +12,9 @@
 
 ## Step 1 Controllerの作成
 
-### artisanコマンドでControllerを生成
-
-```bash
-php artisan make:controller Api/UserController
-```
-
-`app/Http/Controllers/Api/UserController.php` が作成されます。
-
 ### なぜControllerを使うのか
 
-Lesson 1では `routes/api.php` に直接ロジックを書きました。
+`routes/api.php` に直接ロジックを書くこともできます。
 
 ```php
 // api.phpに直接書く（小規模なら問題ない）
@@ -119,31 +111,19 @@ public function show(User $user)
 
 ```php
 <?php
-
-use App\Http\Controllers\Api\UserController;
-use Illuminate\Support\Facades\Route;
-
-Route::get('/users', [UserController::class, 'index']);
-Route::get('/users/{user}', [UserController::class, 'show']);
-Route::patch('/users/{user}', [UserController::class, 'update']);
+...
+Route::get('/users', [\App\Http\Controllers\Api\UserController::class, 'index']);
+Route::get('/users/{user}', [\App\Http\Controllers\Api\UserController::class, 'show']);
+Route::patch('/users/{user}', [\App\Http\Controllers\Api\UserController::class, 'update']);
 ```
 
 ### 動作確認
 
 Postmanで確認してください。
 
-ユーザー一覧
-
-```
-GET http://localhost:8000/api/users
-```
-
-ユーザー詳細
-
-```
-GET http://localhost:8000/api/users/1
-```
-
+- ユーザー一覧
+- ユーザー詳細
+- ユーザー更新
 
 ## Step 3 API Resourceの作成
 
@@ -258,10 +238,7 @@ class UserController extends Controller
 ### 動作確認
 
 Postmanで確認してください。
-
-```
-GET http://localhost:8000/api/users/1
-```
+- ユーザー詳細
 
 レスポンス
 
@@ -282,65 +259,7 @@ GET http://localhost:8000/api/users/1
 - `password` は含まれていない
 
 
-## Step 4 Resourceのカスタマイズ
-
-### 条件付きフィールド
-
-認証済みユーザーにだけ追加情報を返す場合
-
-```php
-public function toArray(Request $request): array
-{
-    return [
-        'id' => $this->resource->id,
-        'name' => $this->resource->name,
-        'email' => $this->resource->email,
-        'created_at' => $this->resource->created_at->toISOString(),
-
-        // 認証済みの場合のみ role を含める
-        'role' => $this->when(
-            $request->user() !== null,
-            $this->resource->role
-        ),
-    ];
-}
-```
-
-### リレーションを含める
-
-```php
-public function toArray(Request $request): array
-{
-    return [
-        'id' => $this->resource->id,
-        'name' => $this->resource->name,
-        'email' => $this->resource->email,
-
-        // リレーションがロードされている場合のみ含める
-        'courses' => CourseResource::collection(
-            $this->whenLoaded('courses')
-        ),
-    ];
-}
-```
-
-### 計算フィールド
-
-```php
-public function toArray(Request $request): array
-{
-    return [
-        'id' => $this->resource->id,
-        'name' => $this->resource->name,
-        'full_name' => $this->resource->name . 'さん',
-        'email' => $this->resource->email,
-        'created_at' => $this->resource->created_at->toISOString(),
-    ];
-}
-```
-
-
-## Step 5 Collectionのラップ
+## Step 4 Collectionのラップ
 
 ### UserResource::collection
 
@@ -401,12 +320,6 @@ public function index()
 ```
 
 ページネーション情報が自動的に追加されます。
-
-
-## まとめ
-
-このレッスンでは、ControllerとAPI Resourceを使ってUser APIを実装しました。Controllerでルーティングとロジックを分離し、Route Model Bindingでコードを簡潔にできます。API Resourceを使うことで、レスポンスの形式を統一し、不要な情報を除外できます。
-
 
 ## 練習問題
 
