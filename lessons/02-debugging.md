@@ -246,4 +246,4 @@ Laravel Telescope は、Laravelアプリケーションのデバッグ用ダッ�
 
 ## 次のレッスン
 
-[Lesson 3: 認証の仕組みを理解する](./03-authentication.md) では、既に導入されているFortifyの認証機能の仕組みを学びます。
+[Lesson 3: API設計の基本](./03-api-design.md) では、RESTful APIの設計原則について学びます。

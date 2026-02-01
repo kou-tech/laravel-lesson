@@ -128,49 +128,7 @@ PATCH /users/1
 
 ## 受講管理システムのAPI設計
 
-### エンティティ関係図（ER図）
-
-```mermaid
-erDiagram
-    users ||--o{ enrollments : "受講する"
-    courses ||--o{ enrollments : "受講される"
-    users ||--o{ courses : "講師として担当"
-
-    users {
-        int id PK
-        string name
-        string email
-        string password
-        string role
-    }
-
-    courses {
-        int id PK
-        string title
-        string description
-        int instructor_id FK
-        int capacity
-        datetime created_at
-    }
-
-    enrollments {
-        int id PK
-        int user_id FK
-        int course_id FK
-        datetime enrolled_at
-        string status
-    }
-```
-
-講師（instructor）もUserテーブルの一員です。
-
-### 関係性
-
-| 親エンティティ | 子エンティティ | 関係 | 説明 |
-|---------------|----------------|------|------|
-| User | Enrollment | 1 : N | 1人のユーザーは複数の講座を受講できる |
-| Course | Enrollment | 1 : N | 1つの講座には複数の受講者がいる |
-| User | Course | 1 : N | 1人の講師は複数の講座を担当できる |
+ER図と関係性の詳細は [エンティティ関係図（ER図）](./er.md) を参照してください。
 
 
 ## API仕様一覧
@@ -206,10 +164,10 @@ erDiagram
 
 | メソッド | エンドポイント | 説明 | 認証 | 認可 |
 |---------|---------------|------|------|------|
-| GET | /api/courses/{id}/enrollments | 講座の受講者一覧 | 必要 | 担当講師のみ |
-| POST | /api/courses/{id}/enroll | 講座に申し込む | 必要 | 生徒のみ |
-| DELETE | /api/courses/{id}/enroll | 受講をキャンセル | 必要 | 自分のみ |
-| GET | /api/me/enrollments | 自分の受講一覧 | 必要 | - |
+| GET | /api/courses/{id}/attendances | 講座の受講者一覧 | 必要 | 担当講師のみ |
+| POST | /api/courses/{id}/attend | 講座に申し込む | 必要 | 生徒のみ |
+| DELETE | /api/courses/{id}/attend | 受講をキャンセル | 必要 | 自分のみ |
+| GET | /api/me/attendances | 自分の受講一覧 | 必要 | - |
 
 
 ## リクエスト/レスポンス設計
@@ -236,7 +194,7 @@ GET /api/courses?page=1&per_page=10&status=active
                 "name": "山田先生"
             },
             "capacity": 20,
-            "enrollments_count": 15,
+            "attendances_count": 15,
             "status": "active",
             "created_at": "2025-01-01T00:00:00Z"
         }
@@ -280,7 +238,7 @@ HTTP/1.1 201 Created
             "name": "山田先生"
         },
         "capacity": 20,
-        "enrollments_count": 0,
+        "attendances_count": 0,
         "status": "draft",
         "created_at": "2025-01-01T00:00:00Z"
     }
@@ -342,12 +300,6 @@ HTTP/1.1 422 Unprocessable Entity
     }
 }
 ```
-
-
-## まとめ
-
-このレッスンでは、RESTful APIの設計原則を学びました。リソース指向でURLを設計すること、HTTPメソッドで操作の種類を表現すること、適切なステータスコードを返すことが重要です。一貫性のあるAPI設計により、フロントエンド開発者にとって使いやすいAPIになります。
-
 
 ## 練習問題
 
