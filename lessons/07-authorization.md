@@ -322,28 +322,6 @@ Gate::authorize('manage-courses');
 $this->authorize('view', $user);  // UserPolicyのviewメソッド
 ```
 
-### リソースコントローラーとの統合
-
-リソースコントローラーを使う場合、`authorizeResource` で一括設定できます。
-
-```php
-class UserController extends Controller
-{
-    public function __construct()
-    {
-        $this->authorizeResource(User::class, 'user');
-    }
-
-    // 各メソッドに自動的にPolicyが適用される
-    public function index() { /* viewAny */ }
-    public function show(User $user) { /* view */ }
-    public function store(Request $request) { /* create */ }
-    public function update(Request $request, User $user) { /* update */ }
-    public function destroy(User $user) { /* delete */ }
-}
-```
-
-
 ## Step 5 認可エラーのレスポンス
 
 このStepでは、認可エラー時のレスポンスについて学びます。
@@ -422,24 +400,15 @@ class UserController extends Controller
 ### 動作確認
 
 自分自身を更新（成功）
-
-
+- /api/users/1 (PATCH)
 他人を更新しようとする（失敗）
-
-
-## まとめ
-
-このレッスンでは、認可の仕組みを学びました。Gateは汎用的なアクションの認可に、Policyはモデルに紐づくアクションの認可に使います。認証（誰か）と認可（何ができるか）を組み合わせることで、セキュアなAPIを構築できます。
+- /api/users/2 (PATCH)
 
 
 ## 練習問題
 
 ### 問題1
 UserPolicyに `updateRole` メソッドを追加し、「講師のみ生徒の役割を変更できる」という認可を実装してください。
-
-### 問題2
-Gateを使って「講師のみが講座を作成できる」という認可 `create-course` を `AppServiceProvider` に追加してください。
-
 
 ## 参考資料
 
