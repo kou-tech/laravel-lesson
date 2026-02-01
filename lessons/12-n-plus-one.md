@@ -87,34 +87,34 @@ SELECT * FROM users WHERE id IN (1, 2, 3, ..., N);
 ### 複数のリレーションをロード
 
 ```php
-$courses = Course::with(['instructor', 'enrollments'])->get();
+$courses = Course::with(['instructor', 'attendances'])->get();
 ```
 
 ```sql
 SELECT * FROM courses;
 SELECT * FROM users WHERE id IN (...);
-SELECT * FROM enrollments WHERE course_id IN (...);
+SELECT * FROM attendances WHERE course_id IN (...);
 ```
 
 ### ネストしたリレーション
 
 ```php
 // 講座 → 受講 → ユーザー（受講生）
-$courses = Course::with('enrollments.user')->get();
+$courses = Course::with('attendances.user')->get();
 ```
 
 ```sql
 SELECT * FROM courses;
-SELECT * FROM enrollments WHERE course_id IN (...);
+SELECT * FROM attendances WHERE course_id IN (...);
 SELECT * FROM users WHERE id IN (...);
 ```
 
 ### 条件付きロード
 
 ```php
-// アクティブな受講のみロード
-$courses = Course::with(['enrollments' => function ($query) {
-    $query->where('status', 'enrolled');
+// 受講中のもののみロード
+$courses = Course::with(['attendances' => function ($query) {
+    $query->where('status', 'attending');
 }])->get();
 ```
 
@@ -137,8 +137,8 @@ if ($includeInstructor) {
 $courses = Course::with('instructor')->get();
 
 // instructor は既にロード済みなのでスキップ
-// enrollments のみロード
-$courses->loadMissing(['instructor', 'enrollments']);
+// attendances のみロード
+$courses->loadMissing(['instructor', 'attendances']);
 ```
 
 ## Step 4 N+1問題の検出
@@ -193,7 +193,7 @@ $courses = Course::all();
 $courses->map(function ($course) {
     return [
         'title' => $course->title,
-        'count' => $course->enrollments->count() . '人',  // 全データをロードしてからカウント
+        'count' => $course->attendances->count() . '人',  // 全データをロードしてからカウント
     ];
 });
 ```
@@ -203,19 +203,19 @@ $courses->map(function ($course) {
 ### 解決（withCount() を使う）
 
 ```php
-$courses = Course::withCount('enrollments')->get();
+$courses = Course::withCount('attendances')->get();
 
 $courses->map(function ($course) {
     return [
         'title' => $course->title,
-        'count' => $course->enrollments_count . '人',  // カウント値を直接参照
+        'count' => $course->attendances_count . '人',  // カウント値を直接参照
     ];
 });
 ```
 
 ```sql
 SELECT courses.*,
-       (SELECT COUNT(*) FROM enrollments WHERE course_id = courses.id) as enrollments_count
+       (SELECT COUNT(*) FROM attendances WHERE course_id = courses.id) as attendances_count
 FROM courses;
 ```
 
@@ -223,14 +223,14 @@ FROM courses;
 
 ```php
 $courses = Course::withCount([
-    'enrollments',
-    'enrollments as active_enrollments_count' => function ($query) {
-        $query->where('status', 'enrolled');
+    'attendances',
+    'attendances as attending_count' => function ($query) {
+        $query->where('status', 'attending');
     },
 ])->get();
 
-// $course->enrollments_count
-// $course->active_enrollments_count
+// $course->attendances_count
+// $course->attending_count
 ```
 
 ## Step 6 実践例
@@ -248,15 +248,15 @@ class CourseController extends Controller
             return [
                 'title' => $course->title,
                 'instructor' => $course->instructor->name,                    // N回クエリ
-                'capacity' => $course->enrollments->count() . ' / ' . $course->capacity . '人',  // N回クエリ（全データ取得）
-                'remaining' => $course->capacity - $course->enrollments->count() . '席',
+                'capacity' => $course->attendances->count() . ' / ' . $course->capacity . '人',  // N回クエリ（全データ取得）
+                'remaining' => $course->capacity - $course->attendances->count() . '席',
             ];
         });
     }
 }
 ```
 
-問題点として、`$course->instructor` でN回クエリ、`$course->enrollments->count()` でN回クエリ（さらに全データ取得）が発生しています。
+問題点として、`$course->instructor` でN回クエリ、`$course->attendances->count()` でN回クエリ（さらに全データ取得）が発生しています。
 
 ### After（最適化）
 
@@ -267,15 +267,15 @@ class CourseController extends Controller
     {
         $courses = Course::active()
             ->with('instructor:id,name')
-            ->withCount('enrollments')
+            ->withCount('attendances')
             ->get();
 
         return $courses->map(function ($course) {
             return [
                 'title' => $course->title,
                 'instructor' => $course->instructor->name,
-                'capacity' => $course->enrollments_count . ' / ' . $course->capacity . '人',
-                'remaining' => $course->capacity - $course->enrollments_count . '席',
+                'capacity' => $course->attendances_count . ' / ' . $course->capacity . '人',
+                'remaining' => $course->capacity - $course->attendances_count . '席',
             ];
         });
     }
@@ -303,7 +303,7 @@ class CourseResource extends JsonResource
                     'name' => $this->instructor->name,
                 ];
             }),
-            'enrollments_count' => $this->whenCounted('enrollments'),
+            'attendances_count' => $this->whenCounted('attendances'),
         ];
     }
 }
@@ -323,13 +323,13 @@ class CourseResource extends JsonResource
 ```php
 public function index()
 {
-    $enrollments = Enrollment::where('status', 'enrolled')->get();
+    $attendances = Attendance::where('status', 'attending')->get();
 
-    return $enrollments->map(function ($enrollment) {
+    return $attendances->map(function ($attendance) {
         return [
-            'user_name' => $enrollment->user->name,
-            'course_title' => $enrollment->course->title,
-            'enrolled_at' => $enrollment->enrolled_at,
+            'user_name' => $attendance->user->name,
+            'course_title' => $attendance->course->title,
+            'attended_at' => $attendance->attended_at,
         ];
     });
 }
