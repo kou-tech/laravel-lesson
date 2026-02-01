@@ -16,23 +16,23 @@
 ### あるクラスが別のクラスを「使う」こと
 
 ```php
-class EnrollmentController extends Controller
+class AttendanceController extends Controller
 {
     public function store(Request $request, Course $course)
     {
-        // EnrollmentService に「依存」している
-        $service = new EnrollmentService();
-        $enrollment = $service->enroll($request->user(), $course);
+        // AttendanceService に「依存」している
+        $service = new AttendanceService();
+        $attendance = $service->attend($request->user(), $course);
 
-        return new EnrollmentResource($enrollment);
+        return new AttendanceResource($attendance);
     }
 }
 ```
 
 このコードには以下の問題点があります。
-- `EnrollmentService` を直接 new している
+- `AttendanceService` を直接 new している
 - テスト時にモックに差し替えられない
-- `EnrollmentService` のコンストラクタが変わると、このコードも変更が必要
+- `AttendanceService` のコンストラクタが変わると、このコードも変更が必要
 
 
 ## 依存性注入（DI）とは？
@@ -40,19 +40,19 @@ class EnrollmentController extends Controller
 ### 依存するオブジェクトを「外から渡す」
 
 ```php
-class EnrollmentController extends Controller
+class AttendanceController extends Controller
 {
     // コンストラクタで受け取る（注入される）
     public function __construct(
-        private EnrollmentService $enrollmentService
+        private AttendanceService $attendanceService
     ) {}
 
     public function store(Request $request, Course $course)
     {
         // 注入されたサービスを使う
-        $enrollment = $this->enrollmentService->enroll($request->user(), $course);
+        $attendance = $this->attendanceService->attend($request->user(), $course);
 
-        return new EnrollmentResource($enrollment);
+        return new AttendanceResource($attendance);
     }
 }
 ```
@@ -70,19 +70,19 @@ class EnrollmentController extends Controller
 サービスコンテナは、クラスのインスタンス化と依存関係の解決を自動で行います。
 
 ```php
-// サービスコンテナに「EnrollmentService が欲しい」と伝える
-$service = app(EnrollmentService::class);
+// サービスコンテナに「AttendanceService が欲しい」と伝える
+$service = app(AttendanceService::class);
 
 // コントローラーのコンストラクタに型宣言すると自動で注入
 public function __construct(
-    private EnrollmentService $enrollmentService
+    private AttendanceService $attendanceService
 ) {}
 ```
 
 ### 自動解決の仕組み
 
 ```php
-class EnrollmentService
+class AttendanceService
 {
     // NotificationService に依存
     public function __construct(
@@ -99,9 +99,9 @@ class NotificationService
 }
 ```
 
-`EnrollmentService` を要求すると、以下の順序で解決されます。
+`AttendanceService` を要求すると、以下の順序で解決されます。
 
-1. `EnrollmentService` のコンストラクタを解析
+1. `AttendanceService` のコンストラクタを解析
 2. `NotificationService` が必要 → 再帰的に解決
 3. `NotificationService` のコンストラクタを解析
 4. `MailService` が必要 → 再帰的に解決
@@ -156,14 +156,14 @@ public function store(
 `app/Providers/AppServiceProvider.php` に以下のように記述します。
 
 ```php
-use App\Services\EnrollmentService;
+use App\Services\AttendanceService;
 
 public function register(): void
 {
-    $this->app->bind(EnrollmentService::class, function ($app) {
-        return new EnrollmentService(
+    $this->app->bind(AttendanceService::class, function ($app) {
+        return new AttendanceService(
             $app->make(NotificationService::class),
-            config('enrollment.max_capacity')
+            config('attendance.max_capacity')
         );
     });
 }
@@ -197,7 +197,7 @@ $this->app->singleton(CacheService::class, function ($app) {
 
 ```php
 // ❌ 具象クラスに依存
-class EnrollmentService
+class AttendanceService
 {
     public function __construct(
         private SmtpMailer $mailer  // SMTPに固定
@@ -205,7 +205,7 @@ class EnrollmentService
 }
 
 // ✅ インターフェースに依存
-class EnrollmentService
+class AttendanceService
 {
     public function __construct(
         private MailerInterface $mailer  // 実装は後から決める
@@ -276,12 +276,12 @@ public function register(): void
 ```
 
 
-## Step 5 実践 - EnrollmentService のリファクタリング
+## Step 5 実践 - AttendanceService のリファクタリング
 
 ### Before（密結合）
 
 ```php
-class EnrollmentController extends Controller
+class AttendanceController extends Controller
 {
     public function store(Request $request, Course $course)
     {
@@ -292,15 +292,15 @@ class EnrollmentController extends Controller
             throw new CapacityExceededException();
         }
 
-        $enrollment = Enrollment::create([
+        $attendance = Attendance::create([
             'user_id' => $user->id,
             'course_id' => $course->id,
         ]);
 
         // 直接メール送信
-        Mail::to($user)->send(new EnrollmentConfirmation($enrollment));
+        Mail::to($user)->send(new AttendanceConfirmation($attendance));
 
-        return new EnrollmentResource($enrollment);
+        return new AttendanceResource($attendance);
     }
 }
 ```
@@ -310,18 +310,18 @@ class EnrollmentController extends Controller
 #### インターフェース
 
 ```php
-// app/Contracts/EnrollmentServiceInterface.php
+// app/Contracts/AttendanceServiceInterface.php
 <?php
 
 namespace App\Contracts;
 
 use App\Models\Course;
-use App\Models\Enrollment;
+use App\Models\Attendance;
 use App\Models\User;
 
-interface EnrollmentServiceInterface
+interface AttendanceServiceInterface
 {
-    public function enroll(User $user, Course $course): Enrollment;
+    public function attend(User $user, Course $course): Attendance;
     public function cancel(User $user, Course $course): void;
 }
 ```
@@ -329,37 +329,37 @@ interface EnrollmentServiceInterface
 #### サービス実装
 
 ```php
-// app/Services/EnrollmentService.php
+// app/Services/AttendanceService.php
 <?php
 
 namespace App\Services;
 
-use App\Contracts\EnrollmentServiceInterface;
+use App\Contracts\AttendanceServiceInterface;
 use App\Contracts\NotificationServiceInterface;
 use App\Models\Course;
-use App\Models\Enrollment;
+use App\Models\Attendance;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
-class EnrollmentService implements EnrollmentServiceInterface
+class AttendanceService implements AttendanceServiceInterface
 {
     public function __construct(
         private NotificationServiceInterface $notificationService
     ) {}
 
-    public function enroll(User $user, Course $course): Enrollment
+    public function attend(User $user, Course $course): Attendance
     {
         return DB::transaction(function () use ($user, $course) {
-            $this->validateEnrollment($user, $course);
+            $this->validateAttendance($user, $course);
 
-            $enrollment = Enrollment::create([
+            $attendance = Attendance::create([
                 'user_id' => $user->id,
                 'course_id' => $course->id,
             ]);
 
-            $this->notificationService->sendEnrollmentConfirmation($enrollment);
+            $this->notificationService->sendAttendanceConfirmation($attendance);
 
-            return $enrollment;
+            return $attendance;
         });
     }
 
@@ -368,7 +368,7 @@ class EnrollmentService implements EnrollmentServiceInterface
         // キャンセル処理
     }
 
-    private function validateEnrollment(User $user, Course $course): void
+    private function validateAttendance(User $user, Course $course): void
     {
         // バリデーションロジック
     }
@@ -378,31 +378,31 @@ class EnrollmentService implements EnrollmentServiceInterface
 #### コントローラー
 
 ```php
-// app/Http/Controllers/Api/EnrollmentController.php
+// app/Http/Controllers/Api/AttendanceController.php
 <?php
 
 namespace App\Http\Controllers\Api;
 
-use App\Contracts\EnrollmentServiceInterface;
+use App\Contracts\AttendanceServiceInterface;
 use App\Http\Controllers\Controller;
-use App\Http\Resources\EnrollmentResource;
+use App\Http\Resources\AttendanceResource;
 use App\Models\Course;
 use Illuminate\Http\Request;
 
-class EnrollmentController extends Controller
+class AttendanceController extends Controller
 {
     public function __construct(
-        private EnrollmentServiceInterface $enrollmentService
+        private AttendanceServiceInterface $attendanceService
     ) {}
 
     public function store(Request $request, Course $course)
     {
-        $enrollment = $this->enrollmentService->enroll(
+        $attendance = $this->attendanceService->attend(
             $request->user(),
             $course
         );
 
-        return new EnrollmentResource($enrollment);
+        return new AttendanceResource($attendance);
     }
 }
 ```
@@ -412,14 +412,14 @@ class EnrollmentController extends Controller
 ```php
 // app/Providers/AppServiceProvider.php
 
-use App\Contracts\EnrollmentServiceInterface;
-use App\Services\EnrollmentService;
+use App\Contracts\AttendanceServiceInterface;
+use App\Services\AttendanceService;
 
 public function register(): void
 {
     $this->app->bind(
-        EnrollmentServiceInterface::class,
-        EnrollmentService::class
+        AttendanceServiceInterface::class,
+        AttendanceService::class
     );
 }
 ```
@@ -430,25 +430,25 @@ public function register(): void
 ### DIのメリット（テスト容易性）
 
 ```php
-use App\Contracts\EnrollmentServiceInterface;
+use App\Contracts\AttendanceServiceInterface;
 use Mockery;
 
-class EnrollmentControllerTest extends TestCase
+class AttendanceControllerTest extends TestCase
 {
-    public function test_enrollment_success(): void
+    public function test_attendance_success(): void
     {
         // モックを作成
-        $mockService = Mockery::mock(EnrollmentServiceInterface::class);
-        $mockService->shouldReceive('enroll')
+        $mockService = Mockery::mock(AttendanceServiceInterface::class);
+        $mockService->shouldReceive('attend')
             ->once()
-            ->andReturn(Enrollment::factory()->make());
+            ->andReturn(Attendance::factory()->make());
 
         // サービスコンテナにモックをバインド
-        $this->app->instance(EnrollmentServiceInterface::class, $mockService);
+        $this->app->instance(AttendanceServiceInterface::class, $mockService);
 
         // テスト実行
         $response = $this->actingAs($user)
-            ->postJson("/api/courses/{$course->id}/enroll");
+            ->postJson("/api/courses/{$course->id}/attend");
 
         $response->assertStatus(201);
     }
