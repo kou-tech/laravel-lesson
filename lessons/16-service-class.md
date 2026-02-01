@@ -6,7 +6,7 @@
 
 ### 到達目標
 - Fat Controller の問題を理解する
-- サービスクラスの責務を設計できる
+- `__invoke` を使った単一責任のサービスクラスを設計できる
 - カスタム例外クラスを作成できる
 - コントローラーを薄く保てる
 
@@ -72,30 +72,31 @@ class CourseController extends Controller
 
 ### 責務の分離
 
-```
-┌─────────────────────────────────────────────────────┐
-│ Controller                                          │
-│ - HTTPリクエストの受付                              │
-│ - バリデーション（FormRequest経由）                 │
-│ - レスポンスの返却                                  │
-└─────────────────────────────────────────────────────┘
-                          ↓
-┌─────────────────────────────────────────────────────┐
-│ Service                                             │
-│ - ビジネスロジック                                  │
-│ - トランザクション管理                              │
-│ - 複数のリポジトリ/モデルの調整                     │
-└─────────────────────────────────────────────────────┘
-                          ↓
-┌─────────────────────────────────────────────────────┐
-│ Model / Repository                                  │
-│ - データアクセス                                    │
-│ - リレーション                                      │
-└─────────────────────────────────────────────────────┘
+```mermaid
+graph TD
+    A["Controller<br/>HTTPリクエストの受付<br/>バリデーション（FormRequest経由）<br/>レスポンスの返却"]
+    B["Service<br/>ビジネスロジック<br/>トランザクション管理<br/>複数モデルの調整"]
+    C["Model<br/>データアクセス<br/>リレーション"]
+
+    A --> B --> C
 ```
 
+### `__invoke` による単一責任の設計
 
-## Step 1 CourseService の作成
+本レッスンでは、1つのサービスクラスに1つの操作だけを持たせます。PHPのマジックメソッド `__invoke` を使うことで、クラス自体を関数のように呼び出せます。
+
+```php
+// 1クラス = 1操作
+$course = ($this->createCourse)($data, $instructor);
+```
+
+メリットは以下の通りです。
+- クラスの責務が明確（クラス名 = やること）
+- テストが書きやすい（1クラスに1つのパブリックメソッド）
+- 依存関係が最小限になる
+
+
+## Step 1 講座作成サービスの作成
 
 ### ディレクトリ構成
 
@@ -106,18 +107,24 @@ app/
 │       └── Api/
 │           └── CourseController.php
 ├── Services/
-│   └── CourseService.php
+│   └── Course/
+│       ├── CreateCourse.php
+│       ├── UpdateCourse.php
+│       └── DeleteCourse.php
 └── Exceptions/
+    ├── BusinessException.php
     ├── DuplicateCourseTitleException.php
     └── CourseLimitExceededException.php
 ```
 
-### CourseService
+操作ごとにファイルを分けることで、どのファイルに何が書いてあるか一目でわかります。
+
+### CreateCourse
 
 ```php
 <?php
 
-namespace App\Services;
+namespace App\Services\Course;
 
 use App\Exceptions\CourseLimitExceededException;
 use App\Exceptions\DuplicateCourseTitleException;
@@ -126,17 +133,13 @@ use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
-class CourseService
+class CreateCourse
 {
     private const MAX_COURSES_PER_INSTRUCTOR = 10;
 
-    public function __construct(
-        private NotificationService $notificationService
-    ) {}
-
-    public function create(array $data, User $instructor): Course
+    public function __invoke(array $data, User $instructor): Course
     {
-        $this->validateCreation($data, $instructor);
+        $this->validate($data, $instructor);
 
         return DB::transaction(function () use ($data, $instructor) {
             $course = Course::create([
@@ -145,76 +148,89 @@ class CourseService
                 'status' => 'draft',
             ]);
 
-            $this->notificationService->notifyAdminsOfNewCourse($course);
-            $this->logCourseCreation($course);
+            Log::info('講座が作成されました', [
+                'course_id' => $course->id,
+                'instructor_id' => $instructor->id,
+            ]);
 
             return $course;
         });
     }
 
-    public function update(Course $course, array $data): Course
+    private function validate(array $data, User $instructor): void
     {
-        if (isset($data['title'])) {
-            $this->validateTitleUniqueness(
-                $data['title'],
-                $course->instructor_id,
-                $course->id
-            );
-        }
+        $exists = Course::where('instructor_id', $instructor->id)
+            ->where('title', $data['title'])
+            ->exists();
 
-        $course->update($data);
-
-        return $course->fresh();
-    }
-
-    public function delete(Course $course): void
-    {
-        if ($course->enrollments()->exists()) {
-            throw new \DomainException('受講者がいる講座は削除できません');
-        }
-
-        $course->delete();
-    }
-
-    private function validateCreation(array $data, User $instructor): void
-    {
-        $this->validateTitleUniqueness($data['title'], $instructor->id);
-        $this->validateCourseLimit($instructor);
-    }
-
-    private function validateTitleUniqueness(
-        string $title,
-        int $instructorId,
-        ?int $excludeId = null
-    ): void {
-        $query = Course::where('instructor_id', $instructorId)
-            ->where('title', $title);
-
-        if ($excludeId) {
-            $query->where('id', '!=', $excludeId);
-        }
-
-        if ($query->exists()) {
+        if ($exists) {
             throw new DuplicateCourseTitleException();
         }
-    }
 
-    private function validateCourseLimit(User $instructor): void
-    {
         $count = Course::where('instructor_id', $instructor->id)->count();
 
         if ($count >= self::MAX_COURSES_PER_INSTRUCTOR) {
             throw new CourseLimitExceededException();
         }
     }
+}
+```
 
-    private function logCourseCreation(Course $course): void
+ポイントは以下の通りです。
+- `__invoke` がこのクラスの唯一のパブリックメソッド
+- バリデーションはプライベートメソッドで整理
+- 他のサービスへの依存がなく、このクラスだけで完結している
+
+### UpdateCourse
+
+```php
+<?php
+
+namespace App\Services\Course;
+
+use App\Exceptions\DuplicateCourseTitleException;
+use App\Models\Course;
+
+class UpdateCourse
+{
+    public function __invoke(Course $course, array $data): Course
     {
-        Log::info('講座が作成されました', [
-            'course_id' => $course->id,
-            'instructor_id' => $course->instructor_id,
-            'title' => $course->title,
-        ]);
+        if (isset($data['title'])) {
+            $exists = Course::where('instructor_id', $course->instructor_id)
+                ->where('title', $data['title'])
+                ->where('id', '!=', $course->id)
+                ->exists();
+
+            if ($exists) {
+                throw new DuplicateCourseTitleException();
+            }
+        }
+
+        $course->update($data);
+
+        return $course->fresh();
+    }
+}
+```
+
+### DeleteCourse
+
+```php
+<?php
+
+namespace App\Services\Course;
+
+use App\Models\Course;
+
+class DeleteCourse
+{
+    public function __invoke(Course $course): void
+    {
+        if ($course->attendances()->exists()) {
+            throw new \DomainException('受講者がいる講座は削除できません');
+        }
+
+        $course->delete();
     }
 }
 ```
@@ -222,51 +238,7 @@ class CourseService
 
 ## Step 2 カスタム例外クラス
 
-### 例外クラスの作成
-
-```php
-// app/Exceptions/DuplicateCourseTitleException.php
-<?php
-
-namespace App\Exceptions;
-
-use Exception;
-
-class DuplicateCourseTitleException extends Exception
-{
-    protected $message = '同じタイトルの講座が既に存在します。';
-
-    public function render()
-    {
-        return response()->json([
-            'message' => $this->message,
-        ], 422);
-    }
-}
-```
-
-```php
-// app/Exceptions/CourseLimitExceededException.php
-<?php
-
-namespace App\Exceptions;
-
-use Exception;
-
-class CourseLimitExceededException extends Exception
-{
-    protected $message = '講座数の上限（10講座）に達しています。';
-
-    public function render()
-    {
-        return response()->json([
-            'message' => $this->message,
-        ], 422);
-    }
-}
-```
-
-### 例外の階層構造
+### 基底クラス
 
 ```php
 // app/Exceptions/BusinessException.php
@@ -291,8 +263,16 @@ abstract class BusinessException extends Exception
 
     abstract public function getErrorCode(): string;
 }
+```
 
+### 具象クラス
+
+```php
 // app/Exceptions/DuplicateCourseTitleException.php
+<?php
+
+namespace App\Exceptions;
+
 class DuplicateCourseTitleException extends BusinessException
 {
     protected $message = '同じタイトルの講座が既に存在します。';
@@ -303,6 +283,51 @@ class DuplicateCourseTitleException extends BusinessException
     }
 }
 ```
+
+```php
+// app/Exceptions/CourseLimitExceededException.php
+<?php
+
+namespace App\Exceptions;
+
+class CourseLimitExceededException extends BusinessException
+{
+    protected $message = '講座数の上限（10講座）に達しています。';
+
+    public function getErrorCode(): string
+    {
+        return 'COURSE_LIMIT_EXCEEDED';
+    }
+}
+```
+
+### 例外の階層構造
+
+```mermaid
+classDiagram
+    Exception <|-- BusinessException
+    BusinessException <|-- DuplicateCourseTitleException
+    BusinessException <|-- CourseLimitExceededException
+    BusinessException <|-- CapacityExceededException
+
+    class BusinessException {
+        <<abstract>>
+        #int statusCode
+        +render() JsonResponse
+        +getErrorCode() string*
+    }
+    class DuplicateCourseTitleException {
+        +getErrorCode() string
+    }
+    class CourseLimitExceededException {
+        +getErrorCode() string
+    }
+    class CapacityExceededException {
+        +getErrorCode() string
+    }
+```
+
+`BusinessException` を継承することで、全てのビジネス例外が統一されたJSON形式でレスポンスを返します。
 
 
 ## Step 3 シンプルなコントローラー
@@ -317,18 +342,22 @@ use App\Http\Requests\StoreCourseRequest;
 use App\Http\Requests\UpdateCourseRequest;
 use App\Http\Resources\CourseResource;
 use App\Models\Course;
-use App\Services\CourseService;
+use App\Services\Course\CreateCourse;
+use App\Services\Course\DeleteCourse;
+use App\Services\Course\UpdateCourse;
 
 class CourseController extends Controller
 {
     public function __construct(
-        private CourseService $courseService
+        private CreateCourse $createCourse,
+        private UpdateCourse $updateCourse,
+        private DeleteCourse $deleteCourse,
     ) {}
 
     public function index()
     {
         $courses = Course::with('instructor')
-            ->withCount('enrollments')
+            ->withCount('attendances')
             ->paginate();
 
         return CourseResource::collection($courses);
@@ -336,7 +365,7 @@ class CourseController extends Controller
 
     public function store(StoreCourseRequest $request)
     {
-        $course = $this->courseService->create(
+        $course = ($this->createCourse)(
             $request->validated(),
             $request->user()
         );
@@ -353,7 +382,7 @@ class CourseController extends Controller
     {
         $this->authorize('update', $course);
 
-        $course = $this->courseService->update($course, $request->validated());
+        $course = ($this->updateCourse)($course, $request->validated());
 
         return new CourseResource($course);
     }
@@ -362,74 +391,66 @@ class CourseController extends Controller
     {
         $this->authorize('delete', $course);
 
-        $this->courseService->delete($course);
+        ($this->deleteCourse)($course);
 
         return response()->noContent();
     }
 }
 ```
 
+コントローラーの各メソッドは「リクエストを受けてサービスを呼び、レスポンスを返す」だけになりました。
 
-## Step 4 NotificationService
+### Before / After の比較
+
+```mermaid
+graph LR
+    subgraph Before
+        A[CourseController] -->|"store() 60行<br/>バリデーション<br/>重複チェック<br/>制限チェック<br/>作成<br/>通知<br/>ログ"| B[(DB)]
+    end
+
+    subgraph After
+        C[CourseController] -->|"store() 5行"| D[CreateCourse]
+        D -->|"__invoke()"| E[(DB)]
+    end
+```
+
+
+## Step 4 サービス設計のガイドライン
+
+### 1. 1サービス = 1操作
+
+```
+app/Services/
+├── Course/
+│   ├── CreateCourse.php
+│   ├── UpdateCourse.php
+│   └── DeleteCourse.php
+└── Attendance/
+    ├── AttendCourse.php
+    └── CancelAttendance.php
+```
+
+クラス名が操作内容を表すため、ファイル一覧がそのまま機能一覧になります。
+
+### 2. 依存が必要ならコンストラクタで注入
 
 ```php
-<?php
-
-namespace App\Services;
-
-use App\Mail\NewCourseNotification;
-use App\Mail\EnrollmentConfirmation;
-use App\Models\Course;
-use App\Models\Enrollment;
-use App\Models\User;
-use Illuminate\Support\Facades\Mail;
-
-class NotificationService
-{
-    public function notifyAdminsOfNewCourse(Course $course): void
-    {
-        $admins = User::where('role', 'admin')->get();
-
-        foreach ($admins as $admin) {
-            Mail::to($admin)->queue(new NewCourseNotification($course));
-        }
-    }
-
-    public function sendEnrollmentConfirmation(Enrollment $enrollment): void
-    {
-        Mail::to($enrollment->user)->queue(
-            new EnrollmentConfirmation($enrollment)
-        );
-    }
-
-    public function sendEnrollmentCancellation(Enrollment $enrollment): void
-    {
-        // キャンセル通知
-    }
-}
-```
-
-
-## Step 5 サービス設計のガイドライン
-
-### 1. 1サービス = 1ドメイン
-
-```
-CourseService      - 講座に関するビジネスロジック
-EnrollmentService  - 受講に関するビジネスロジック
-UserService        - ユーザーに関するビジネスロジック
-NotificationService - 通知に関するロジック
-```
-
-### 2. サービスはサービスを呼べる
-
-```php
-class EnrollmentService
+class AttendCourse
 {
     public function __construct(
-        private NotificationService $notificationService,
-        private CourseService $courseService
+        private NotifyCourseAttendance $notifyCourseAttendance
     ) {}
+
+    public function __invoke(User $user, Course $course): Attendance
+    {
+        return DB::transaction(function () use ($user, $course) {
+            // 受講登録処理...
+
+            ($this->notifyCourseAttendance)($attendance);
+
+            return $attendance;
+        });
+    }
 }
 ```
 
@@ -437,11 +458,11 @@ class EnrollmentService
 
 ```php
 // ❌ サービスでやりすぎ
-class CourseService
+class CheckCourseCapacity
 {
-    public function hasCapacity(Course $course): bool
+    public function __invoke(Course $course): bool
     {
-        return $course->enrollments()->count() < $course->capacity;
+        return $course->attendances()->count() < $course->capacity;
     }
 }
 
@@ -450,9 +471,20 @@ class Course extends Model
 {
     public function hasCapacity(): bool
     {
-        return $this->enrollments()->count() < $this->capacity;
+        return $this->attendances()->count() < $this->capacity;
     }
 }
+```
+
+サービスクラスにするかモデルに書くかの判断基準は以下の通りです。
+
+```mermaid
+flowchart TD
+    A{複数のモデルや<br/>外部サービスに<br/>またがる処理?}
+    A -->|Yes| B[サービスクラス]
+    A -->|No| C{そのモデル自身の<br/>データだけで<br/>完結する?}
+    C -->|Yes| D[モデルのメソッド]
+    C -->|No| B
 ```
 
 ### 4. 単純なCRUDはサービス不要
@@ -467,38 +499,35 @@ public function show(Course $course)
 // 複雑なロジックはサービスへ
 public function store(StoreCourseRequest $request)
 {
-    $course = $this->courseService->create(...);
+    $course = ($this->createCourse)($request->validated(), $request->user());
 }
 ```
 
 
-## Step 6 テストしやすい設計
+## Step 5 テストしやすい設計
+
+`__invoke` を使ったサービスはテストが簡潔になります。
 
 ### サービスの単体テスト
 
 ```php
-class CourseServiceTest extends TestCase
+class CreateCourseTest extends TestCase
 {
     use RefreshDatabase;
 
-    private CourseService $service;
-    private NotificationService $mockNotification;
+    private CreateCourse $service;
 
     protected function setUp(): void
     {
         parent::setUp();
-
-        $this->mockNotification = Mockery::mock(NotificationService::class);
-        $this->mockNotification->shouldReceive('notifyAdminsOfNewCourse');
-
-        $this->service = new CourseService($this->mockNotification);
+        $this->service = app(CreateCourse::class);
     }
 
     public function test_create_course_successfully(): void
     {
         $instructor = User::factory()->instructor()->create();
 
-        $course = $this->service->create([
+        $course = ($this->service)([
             'title' => 'テスト講座',
             'capacity' => 20,
         ], $instructor);
@@ -519,7 +548,7 @@ class CourseServiceTest extends TestCase
 
         $this->expectException(DuplicateCourseTitleException::class);
 
-        $this->service->create([
+        ($this->service)([
             'title' => '既存講座',
             'capacity' => 20,
         ], $instructor);
@@ -527,13 +556,45 @@ class CourseServiceTest extends TestCase
 }
 ```
 
+テスト対象が1メソッドだけなので、何をテストしているかが明確です。
+
 ## 練習問題
 
 ### 問題1
-`EnrollmentService` の `cancel` メソッドを実装してください。以下の要件を満たしてください。
+`App\Services\Attendance\CancelAttendance` を `__invoke` を使って実装してください。以下の要件を満たしてください。
 - 既にキャンセル済みの場合は例外
 - ステータスを `cancelled` に変更
-- キャンセル通知を送信
+- キャンセルのログを記録
+
+### 問題2
+以下のFat Controllerのコードを、`__invoke` を使ったサービスクラスに分離してください。
+
+```php
+public function store(Request $request, Course $course)
+{
+    $user = $request->user();
+
+    if (!$course->hasCapacity()) {
+        return response()->json(['error' => '定員に達しています'], 422);
+    }
+
+    $exists = Attendance::where('user_id', $user->id)
+        ->where('course_id', $course->id)
+        ->exists();
+    if ($exists) {
+        return response()->json(['error' => '既に受講登録済みです'], 422);
+    }
+
+    $attendance = Attendance::create([
+        'user_id' => $user->id,
+        'course_id' => $course->id,
+        'status' => 'attending',
+        'attended_at' => now(),
+    ]);
+
+    return new AttendanceResource($attendance);
+}
+```
 
 ## 次のレッスン
 
