@@ -108,11 +108,11 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\UserController;
 
 // 認証不要（公開API）
-Route::get('/users/{user}', [UserController::class, 'show']);
+Route::get('/users/{user}', [\App\Http\Controllers\Api\UserController::class, 'show']);
 
 // 認証必要（要ログイン）
 Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/me', [UserController::class, 'me']);
+    Route::get('/me', [\App\Http\Controllers\Api\UserController::class, 'me']);
 });
 ```
 
@@ -153,11 +153,7 @@ class UserController extends Controller
 未認証でアクセスした場合
 
 Postmanで確認してください。
-
-```
-GET http://localhost:8000/api/me
-Accept: application/json
-```
+- 認証済みユーザー取得
 
 ```json
 {
@@ -173,9 +169,9 @@ Accept: application/json
 
 Postmanでログイン/ログアウトの動作を確認してみましょう。
 
-1. ログインAPI
-2. 認証済みAPIにアクセス
-3. ログアウトAPI
+1. ログイン
+2. 認証済みユーザー取得
+3. ログアウト
 
 
 ## Step 4 Sanctumについて
@@ -238,11 +234,6 @@ Provider: ユーザー情報の取得方法を決める
 ```
 
 通常、この設定を変更する必要はありません。
-
-
-## まとめ
-
-このレッスンでは、認証の仕組みを学びました。Fortifyがログイン/ログアウトのバックエンド処理を提供し、authミドルウェアで認証済みユーザーのみにアクセスを制限できます。Sanctumを使うことで、SPAとAPIの両方に対応した認証が実現できます。
 
 
 ## 練習問題
