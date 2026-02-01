@@ -21,14 +21,14 @@ public function index()
 {
     $courses = Course::all();  // 1回のクエリ
 
-    return view('courses.index', compact('courses'));
+    // 各講座の講師名にアクセス
+    return $courses->map(function ($course) {
+        return [
+            'title' => $course->title,
+            'instructor' => $course->instructor->name,  // ここでクエリが発生
+        ];
+    });
 }
-```
-
-```blade
-@foreach($courses as $course)
-    <p>{{ $course->title }} - {{ $course->instructor->name }}</p>
-@endforeach
 ```
 
 ### 実行されるクエリ
@@ -61,7 +61,12 @@ public function index()
     // instructor を事前に読み込む
     $courses = Course::with('instructor')->get();
 
-    return view('courses.index', compact('courses'));
+    return $courses->map(function ($course) {
+        return [
+            'title' => $course->title,
+            'instructor' => $course->instructor->name,  // クエリは発生しない
+        ];
+    });
 }
 ```
 
@@ -183,9 +188,14 @@ Model::handleLazyLoadingViolationUsing(function ($model, $relation) {
 ### 問題（受講者数を取得）
 
 ```php
-@foreach($courses as $course)
-    <p>{{ $course->title }} - {{ $course->enrollments->count() }}人</p>
-@endforeach
+$courses = Course::all();
+
+$courses->map(function ($course) {
+    return [
+        'title' => $course->title,
+        'count' => $course->enrollments->count() . '人',  // 全データをロードしてからカウント
+    ];
+});
 ```
 
 これは全ての受講データをロードしてからカウントします。
@@ -194,12 +204,13 @@ Model::handleLazyLoadingViolationUsing(function ($model, $relation) {
 
 ```php
 $courses = Course::withCount('enrollments')->get();
-```
 
-```blade
-@foreach($courses as $course)
-    <p>{{ $course->title }} - {{ $course->enrollments_count }}人</p>
-@endforeach
+$courses->map(function ($course) {
+    return [
+        'title' => $course->title,
+        'count' => $course->enrollments_count . '人',  // カウント値を直接参照
+    ];
+});
 ```
 
 ```sql
@@ -233,20 +244,16 @@ class CourseController extends Controller
     {
         $courses = Course::active()->get();
 
-        return view('courses.index', compact('courses'));
+        return $courses->map(function ($course) {
+            return [
+                'title' => $course->title,
+                'instructor' => $course->instructor->name,                    // N回クエリ
+                'capacity' => $course->enrollments->count() . ' / ' . $course->capacity . '人',  // N回クエリ（全データ取得）
+                'remaining' => $course->capacity - $course->enrollments->count() . '席',
+            ];
+        });
     }
 }
-```
-
-```blade
-@foreach($courses as $course)
-<div class="course-card">
-    <h3>{{ $course->title }}</h3>
-    <p>講師: {{ $course->instructor->name }}</p>
-    <p>受講者数: {{ $course->enrollments->count() }} / {{ $course->capacity }}人</p>
-    <p>残り: {{ $course->capacity - $course->enrollments->count() }}席</p>
-</div>
-@endforeach
 ```
 
 問題点として、`$course->instructor` でN回クエリ、`$course->enrollments->count()` でN回クエリ（さらに全データ取得）が発生しています。
@@ -263,20 +270,16 @@ class CourseController extends Controller
             ->withCount('enrollments')
             ->get();
 
-        return view('courses.index', compact('courses'));
+        return $courses->map(function ($course) {
+            return [
+                'title' => $course->title,
+                'instructor' => $course->instructor->name,
+                'capacity' => $course->enrollments_count . ' / ' . $course->capacity . '人',
+                'remaining' => $course->capacity - $course->enrollments_count . '席',
+            ];
+        });
     }
 }
-```
-
-```blade
-@foreach($courses as $course)
-<div class="course-card">
-    <h3>{{ $course->title }}</h3>
-    <p>講師: {{ $course->instructor->name }}</p>
-    <p>受講者数: {{ $course->enrollments_count }} / {{ $course->capacity }}人</p>
-    <p>残り: {{ $course->capacity - $course->enrollments_count }}席</p>
-</div>
-@endforeach
 ```
 
 改善点として、合計2回のクエリで済み、受講データ自体は取得しない（カウントのみ）ようになりました。
