@@ -1,4 +1,4 @@
-# Lesson 11 トランザクション処理
+# Lesson 14 トランザクション処理
 
 ## 学習目標
 
@@ -432,4 +432,4 @@ public function transfer(User $from, User $to, int $amount)
 
 ## 次のレッスン
 
-[Lesson 12 FormRequestによるバリデーション](./12-validation.md) では、堅牢なバリデーション設計を学びます。
+[Lesson 15 サービスコンテナとDIによるバリデーション](./15-di-container.md) では、堅牢なバリデーション設計を学びます。

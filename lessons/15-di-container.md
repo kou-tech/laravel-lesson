@@ -1,4 +1,4 @@
-# Lesson 13 サービスコンテナとDI
+# Lesson 15 サービスコンテナとDI
 
 ## 学習目標
 
@@ -465,4 +465,4 @@ class EnrollmentControllerTest extends TestCase
 
 ## 次のレッスン
 
-[Lesson 14 サービスクラスの設計](./14-service-class.md) では、ビジネスロジックをサービスクラスに分離する設計を学びます。
+[Lesson 16 サービスクラスの設計](./16-service-class.md) では、ビジネスロジックをサービスクラスに分離する設計を学びます。

@@ -1,23 +1,20 @@
-# Lesson 5 API設計の基本
+# Lesson 3 API設計の基本
 
 ## 学習目標
 
-このレッスンでは、RESTful APIの設計原則を学び、受講管理システム全体のAPI設計を行います。
+このレッスンでは、RESTful APIの設計原則を学び、一貫性のあるAPI設計ができるようになります。
 
 ### 到達目標
 - RESTful APIの基本原則を理解する
 - 適切なエンドポイント設計ができる
 - HTTPメソッドとステータスコードを正しく使える
-- 受講管理システムのAPI仕様を設計できる
 
 
-## RESTful APIとは？
+## RESTful APIとは
 
 REST（Representational State Transfer）は、Web APIを設計するためのアーキテクチャスタイルです。
 
 ### RESTの基本的な考え方
-
-RESTful APIで意識すべきポイント。
 
 | 観点 | 内容 |
 |------|------|
@@ -135,8 +132,8 @@ PATCH /users/1
 
 ```mermaid
 erDiagram
-    users ||--o{ attendances : "受講する"
-    courses ||--o{ attendances : "受講される"
+    users ||--o{ enrollments : "受講する"
+    courses ||--o{ enrollments : "受講される"
     users ||--o{ courses : "講師として担当"
 
     users {
@@ -156,23 +153,23 @@ erDiagram
         datetime created_at
     }
 
-    attendances {
+    enrollments {
         int id PK
         int user_id FK
         int course_id FK
-        datetime attended_at
+        datetime enrolled_at
         string status
     }
 ```
 
-> 講師（instructor）もUserテーブルの一員です。
+講師（instructor）もUserテーブルの一員です。
 
 ### 関係性
 
 | 親エンティティ | 子エンティティ | 関係 | 説明 |
 |---------------|----------------|------|------|
-| User | Attendance | 1 : N | 1人のユーザーは複数の講座を受講できる |
-| Course | Attendance | 1 : N | 1つの講座には複数の受講者がいる |
+| User | Enrollment | 1 : N | 1人のユーザーは複数の講座を受講できる |
+| Course | Enrollment | 1 : N | 1つの講座には複数の受講者がいる |
 | User | Course | 1 : N | 1人の講師は複数の講座を担当できる |
 
 
@@ -209,10 +206,10 @@ erDiagram
 
 | メソッド | エンドポイント | 説明 | 認証 | 認可 |
 |---------|---------------|------|------|------|
-| GET | /api/courses/{id}/attendances | 講座の受講者一覧 | 必要 | 担当講師のみ |
-| POST | /api/courses/{id}/attend | 講座に申し込む | 必要 | 生徒のみ |
-| DELETE | /api/courses/{id}/attend | 受講をキャンセル | 必要 | 自分のみ |
-| GET | /api/me/attendances | 自分の受講一覧 | 必要 | - |
+| GET | /api/courses/{id}/enrollments | 講座の受講者一覧 | 必要 | 担当講師のみ |
+| POST | /api/courses/{id}/enroll | 講座に申し込む | 必要 | 生徒のみ |
+| DELETE | /api/courses/{id}/enroll | 受講をキャンセル | 必要 | 自分のみ |
+| GET | /api/me/enrollments | 自分の受講一覧 | 必要 | - |
 
 
 ## リクエスト/レスポンス設計
@@ -239,7 +236,7 @@ GET /api/courses?page=1&per_page=10&status=active
                 "name": "山田先生"
             },
             "capacity": 20,
-            "attended_count": 15,
+            "enrollments_count": 15,
             "status": "active",
             "created_at": "2025-01-01T00:00:00Z"
         }
@@ -283,7 +280,7 @@ HTTP/1.1 201 Created
             "name": "山田先生"
         },
         "capacity": 20,
-        "attended_count": 0,
+        "enrollments_count": 0,
         "status": "draft",
         "created_at": "2025-01-01T00:00:00Z"
     }
@@ -301,43 +298,6 @@ HTTP/1.1 422 Unprocessable Entity
         "title": ["タイトルは必須です。"],
         "capacity": ["定員は1以上の数値を指定してください。"]
     }
-}
-```
-
-### 受講申し込み POST /api/courses/{id}/attend
-
-リクエスト
-
-```http
-POST /api/courses/1/attend
-```
-
-レスポンス（成功）
-
-```http
-HTTP/1.1 201 Created
-
-{
-    "data": {
-        "id": 1,
-        "course": {
-            "id": 1,
-            "title": "Laravel入門"
-        },
-        "attended_at": "2025-01-01T10:00:00Z",
-        "status": "attended"
-    },
-    "message": "受講登録が完了しました。"
-}
-```
-
-レスポンス（定員オーバー）
-
-```http
-HTTP/1.1 422 Unprocessable Entity
-
-{
-    "message": "この講座は定員に達しています。"
 }
 ```
 
@@ -383,6 +343,12 @@ HTTP/1.1 422 Unprocessable Entity
 }
 ```
 
+
+## まとめ
+
+このレッスンでは、RESTful APIの設計原則を学びました。リソース指向でURLを設計すること、HTTPメソッドで操作の種類を表現すること、適切なステータスコードを返すことが重要です。一貫性のあるAPI設計により、フロントエンド開発者にとって使いやすいAPIになります。
+
+
 ## 練習問題
 
 ### 問題1
@@ -397,11 +363,13 @@ POST /api/createNewCourse
 DELETE /api/course/1/delete
 ```
 
+
 ## 参考資料
 
-- [Laravel 公式ドキュメント - Controllers](https://laravel.com/docs/controllers)
 - [REST API Tutorial](https://restfulapi.net/)
+- [HTTP Status Codes](https://developer.mozilla.org/ja/docs/Web/HTTP/Status)
+
 
 ## 次のレッスン
 
-[Lesson 6: Course APIの実装](./06-course-api.md) では、今回設計した講座APIを実装し、Eloquentコレクションの活用を学びます。
+[Lesson 4 User APIの実装](./04-user-api.md) では、ControllerとAPI Resourceを使って本格的なUser APIを実装します。

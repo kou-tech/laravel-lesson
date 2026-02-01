@@ -1,4 +1,4 @@
-# Lesson 14 サービスクラスの設計
+# Lesson 16 サービスクラスの設計
 
 ## 学習目標
 
@@ -537,4 +537,4 @@ class CourseServiceTest extends TestCase
 
 ## 次のレッスン
 
-[Lesson 15 自動テストの書き方](./15-testing.md) では、PHPUnit/Pestを使った自動テストを書き、品質を担保する方法を学びます。
+[Lesson 17 自動テストの書き方](./17-testing.md) では、PHPUnit/Pestを使った自動テストを書き、品質を担保する方法を学びます。

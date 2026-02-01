@@ -1,16 +1,17 @@
-# Lesson 6 Course APIの実装
+# Lesson 9 Course APIの実装
 
 ## 学習目標
 
-このレッスンでは、前回設計した講座APIを実装し、Eloquentコレクションの活用を学びます。
+このレッスンでは、これまで学んだ知識を活用してCourse APIを実装し、受講管理システムの基盤を完成させます。
 
 ### 到達目標
 - Course モデルとマイグレーションを作成できる
 - CourseController で CRUD 操作を実装できる
-- CourseResource / CourseCollection を使ってレスポンスを整形できる
-- Eloquent コレクションのメソッドを活用できる
+- CourseResource を使ってレスポンスを整形できる
+- CoursePolicyで認可を実装できる
 
-## Step 1 モデルの修正
+
+## Step 1 モデルの作成
 
 ### CourseStatus Enumの作成
 
@@ -38,7 +39,7 @@ enum CourseStatus: string
 }
 ```
 
-### Courseモデルの修正
+### Courseモデル
 
 `app/Models/Course.php`
 
@@ -47,24 +48,38 @@ enum CourseStatus: string
 
 namespace App\Models;
 
-use App\Enums\CourseStatus; // 追加
+use App\Enums\CourseStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Course extends Model
 {
-    ...
+    use HasFactory;
+
+    protected $fillable = [
+        'title',
+        'description',
+        'instructor_id',
+        'capacity',
+        'status',
+    ];
 
     protected function casts(): array
     {
         return [
             'capacity' => 'integer',
-            'status' => CourseStatus::class, // 変更
+            'status' => CourseStatus::class,
         ];
     }
 
-    ...
+    /**
+     * 講師
+     */
+    public function instructor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'instructor_id');
+    }
 
     /**
      * 公開中の講座のみを取得するスコープ
@@ -75,6 +90,7 @@ class Course extends Model
     }
 }
 ```
+
 
 ## Step 2 API Resourceの作成
 
@@ -99,33 +115,108 @@ class CourseResource extends JsonResource
     /** @var \App\Models\Course */
     public $resource;
 
-
     public function toArray(Request $request): array
     {
         return [
             'id' => $this->resource->id,
             'title' => $this->resource->title,
             'description' => $this->resource->description,
-            'instructor' => new UserResource($this->resource->instructor),
+            'instructor' => new UserResource($this->whenLoaded('instructor')),
             'capacity' => $this->resource->capacity,
             'status' => $this->resource->status,
             'status_label' => $this->resource->status->label(),
             'created_at' => $this->resource->created_at->toISOString(),
-
         ];
     }
 }
 ```
 
-## Step 3 コントローラーの実装
 
-### コントローラーの作成
+## Step 3 FormRequestの作成
+
+### StoreCourseRequest
+
+```bash
+php artisan make:request StoreCourseRequest
+```
+
+```php
+<?php
+
+namespace App\Http\Requests;
+
+use App\Enums\CourseStatus;
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
+
+class StoreCourseRequest extends FormRequest
+{
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    public function rules(): array
+    {
+        return [
+            'title' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string'],
+            'capacity' => ['required', 'integer', 'min:1', 'max:100'],
+            'status' => ['sometimes', Rule::enum(CourseStatus::class)],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'title.required' => 'タイトルを入力してください。',
+            'title.max' => 'タイトルは255文字以内で入力してください。',
+            'capacity.required' => '定員を入力してください。',
+            'capacity.min' => '定員は1以上を指定してください。',
+            'capacity.max' => '定員は100以下を指定してください。',
+        ];
+    }
+}
+```
+
+### UpdateCourseRequest
+
+```php
+<?php
+
+namespace App\Http\Requests;
+
+use App\Enums\CourseStatus;
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
+
+class UpdateCourseRequest extends FormRequest
+{
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    public function rules(): array
+    {
+        return [
+            'title' => ['sometimes', 'string', 'max:255'],
+            'description' => ['nullable', 'string'],
+            'capacity' => ['sometimes', 'integer', 'min:1', 'max:100'],
+            'status' => ['sometimes', Rule::enum(CourseStatus::class)],
+        ];
+    }
+}
+```
+
+
+## Step 4 Controllerの実装
+
+### CourseControllerの作成
 
 ```bash
 php artisan make:controller Api/CourseController
 ```
-
-### CourseControllerの実装
 
 `app/Http/Controllers/Api/CourseController.php`
 
@@ -135,7 +226,8 @@ php artisan make:controller Api/CourseController
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\CourseCollection;
+use App\Http\Requests\StoreCourseRequest;
+use App\Http\Requests\UpdateCourseRequest;
 use App\Http\Resources\CourseResource;
 use App\Models\Course;
 use Illuminate\Http\Request;
@@ -158,15 +250,14 @@ class CourseController extends Controller
         $perPage = $request->input('per_page', 15);
         $courses = $query->latest()->paginate($perPage);
 
-        return new CourseCollection($courses);
+        return CourseResource::collection($courses);
     }
 
     /**
      * 講座詳細を取得
      */
-    public function show(Course $course)
+    public function show(Course $course): CourseResource
     {
-        // instructorをロードして返す
         $course->load('instructor');
 
         return new CourseResource($course);
@@ -175,22 +266,12 @@ class CourseController extends Controller
     /**
      * 講座を作成
      */
-    public function store(Request $request)
+    public function store(StoreCourseRequest $request): CourseResource
     {
-        // 認可チェック（講師のみ）
         $this->authorize('create', Course::class);
 
-        // バリデーション
-        $validated = $request->validate([
-            'title' => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string'],
-            'capacity' => ['sometimes', 'integer', 'min:1', 'max:100'],
-            'status' => ['required', 'string', Rule::enum(CourseStatus::class)],
-        ]);
-
-        // 講座を作成（講師は認証ユーザー）
         $course = Course::create([
-            ...$validated,
+            ...$request->validated(),
             'instructor_id' => $request->user()->id,
         ]);
 
@@ -202,19 +283,11 @@ class CourseController extends Controller
     /**
      * 講座を更新
      */
-    public function update(Request $request, Course $course)
+    public function update(UpdateCourseRequest $request, Course $course): CourseResource
     {
-        // 認可チェック（担当講師のみ）
         $this->authorize('update', $course);
 
-        $validated = $request->validate([
-            'title' => ['sometimes', 'string', 'max:255'],
-            'description' => ['nullable', 'string'],
-            'capacity' => ['sometimes', 'integer', 'min:1', 'max:100'],
-            'status' => ['sometimes', 'string', 'in:draft,active,closed'],
-        ]);
-
-        $course->update($validated);
+        $course->update($request->validated());
         $course->load('instructor');
 
         return new CourseResource($course);
@@ -225,7 +298,6 @@ class CourseController extends Controller
      */
     public function destroy(Course $course)
     {
-        // 認可チェック（担当講師のみ）
         $this->authorize('delete', $course);
 
         $course->delete();
@@ -235,7 +307,8 @@ class CourseController extends Controller
 }
 ```
 
-## Step 4 ルーティングの設定
+
+## Step 5 ルーティングの設定
 
 `routes/api.php`
 
@@ -254,15 +327,17 @@ Route::get('/courses/{course}', [CourseController::class, 'show']);
 Route::middleware('auth:sanctum')->group(function () {
     // ユーザー関連
     Route::get('/me', [UserController::class, 'me']);
+    Route::patch('/users/{user}', [UserController::class, 'update']);
 
     // 講座管理
-    Route::post('/courses', [App\Http\Controllers\Api\CourseController::class, 'store']);
-    Route::patch('/courses/{course}', [App\Http\Controllers\Api\CourseController::class, 'update']);
-    Route::delete('/courses/{course}', [App\Http\Controllers\Api\CourseController::class, 'destroy']);
+    Route::post('/courses', [CourseController::class, 'store']);
+    Route::patch('/courses/{course}', [CourseController::class, 'update']);
+    Route::delete('/courses/{course}', [CourseController::class, 'destroy']);
 });
 ```
 
-## Step 5 Policyの作成
+
+## Step 6 Policyの作成
 
 ### CoursePolicyの作成
 
@@ -295,7 +370,6 @@ class CoursePolicy
      */
     public function update(User $user, Course $course): bool
     {
-        // 担当講師のみ
         return $user->id === $course->instructor_id;
     }
 
@@ -304,111 +378,11 @@ class CoursePolicy
      */
     public function delete(User $user, Course $course): bool
     {
-        // 担当講師のみ
         return $user->id === $course->instructor_id;
     }
 }
 ```
 
-## Step 6 Eloquentコレクションの活用
-
-### コレクションとは？
-
-Eloquentでクエリを実行すると、結果は `Collection` オブジェクトとして返されます。
-
-```php
-$courses = Course::all();  // Collection
-$course = Course::find(1); // Model
-```
-
-### よく使うコレクションメソッド
-
-#### map - 各要素を変換
-
-```php
-$courses = Course::all();
-
-$titles = $courses->map(function ($course) {
-    return $course->title;
-});
-// ['Laravel入門', 'PHP基礎', 'Vue.js講座']
-```
-
-#### filter - 条件で絞り込み
-
-```php
-$activeCourses = $courses->filter(function ($course) {
-    return $course->status === CourseStatus::Active;
-});
-```
-
-#### pluck - 特定のカラムを抽出
-
-```php
-$titles = $courses->pluck('title');
-// ['Laravel入門', 'PHP基礎', 'Vue.js講座']
-
-$titlesById = $courses->pluck('title', 'id');
-// [1 => 'Laravel入門', 2 => 'PHP基礎', 3 => 'Vue.js講座']
-```
-
-#### groupBy - グループ化
-
-```php
-$coursesByStatus = $courses->groupBy('status');
-// [
-//     'active' => [Course, Course],
-//     'draft' => [Course],
-// ]
-```
-
-#### sortBy / sortByDesc - ソート
-
-```php
-$sortedCourses = $courses->sortBy('title');
-$sortedCoursesDesc = $courses->sortByDesc('created_at');
-```
-
-#### contains - 存在チェック
-
-```php
-if ($courses->contains('id', 1)) {
-    // ID=1の講座が含まれている
-}
-```
-
-#### first / last - 最初/最後の要素
-
-```php
-$firstCourse = $courses->first();
-$lastCourse = $courses->last();
-
-// 条件付き
-$activeCourse = $courses->first(fn ($c) => $c->status === CourseStatus::Active);
-```
-
-#### sum / avg / max / min - 集計
-
-```php
-$totalCapacity = $courses->sum('capacity');
-$averageCapacity = $courses->avg('capacity');
-$maxCapacity = $courses->max('capacity');
-```
-
-### チェーンして使う
-
-```php
-$result = Course::with('instructor')
-    ->get()
-    ->filter(fn ($course) => $course->capacity > 10)
-    ->sortByDesc('created_at')
-    ->map(fn ($course) => [
-        'id' => $course->id,
-        'title' => $course->title,
-        'instructor_name' => $course->instructor->name,
-    ])
-    ->values();  // キーをリセット
-```
 
 ## Step 7 テストデータの作成
 
@@ -449,6 +423,16 @@ class CourseFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'status' => CourseStatus::Active,
+        ]);
+    }
+
+    /**
+     * 下書きの講座
+     */
+    public function draft(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'status' => CourseStatus::Draft,
         ]);
     }
 }
@@ -498,49 +482,76 @@ class CourseSeeder extends Seeder
 php artisan db:seed --class=CourseSeeder
 ```
 
-## 動作確認
+
+## Step 8 動作確認
 
 ### 講座一覧
 
-```bash
-curl http://localhost:8000/api/courses
+Postmanで確認してください。
+
+```
+GET http://localhost:8000/api/courses
 ```
 
 ### 講座詳細
 
-```bash
-curl http://localhost:8000/api/courses/1
+```
+GET http://localhost:8000/api/courses/1
 ```
 
 ### 講座作成（認証必要）
 
-ブラウザでログイン後、開発者ツールのコンソールで実行します。
+ログイン後、以下のリクエストを送信してください。
 
-```javascript
-fetch('/api/courses', {
-    method: 'POST',
-    headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-    },
-    body: JSON.stringify({
-        title: 'テスト講座',
-        description: 'テストの説明',
-        capacity: 20
-    })
-})
-.then(r => r.json())
-.then(console.log);
 ```
+POST http://localhost:8000/api/courses
+Content-Type: application/json
+
+{
+    "title": "テスト講座",
+    "description": "テストの説明",
+    "capacity": 20
+}
+```
+
+### 講座更新
+
+```
+PATCH http://localhost:8000/api/courses/1
+Content-Type: application/json
+
+{
+    "title": "更新されたタイトル"
+}
+```
+
+### 講座削除
+
+```
+DELETE http://localhost:8000/api/courses/1
+```
+
+
+## まとめ
+
+このレッスンでは、これまで学んだ知識を総動員してCourse APIを実装しました。Model、Controller、FormRequest、Resource、Policyを組み合わせることで、認証・認可・バリデーションを備えた本格的なAPIが構築できます。
+
 
 ## 練習問題
 
 ### 問題1
-講座一覧APIに「講師名で検索」機能を追加してください。
+講座一覧APIに「講師名で検索」機能を追加してください。クエリパラメータ `instructor` で講師名を部分一致検索できるようにしてください。
 
 ### 問題2
-コレクションメソッドを使って、講座を status ごとにグループ化し、各ステータスの件数を取得してください。
+コレクションメソッドを使って、講座を status ごとにグループ化し、各ステータスの件数を取得するAPIエンドポイントを作成してください。
+
+
+## 参考資料
+
+- [Laravel 公式ドキュメント - Eloquent](https://laravel.com/docs/eloquent)
+- [Laravel 公式ドキュメント - Controllers](https://laravel.com/docs/controllers)
+
 
 ## 次のレッスン
 
-[Lesson 7 良いコードを書く](./07-clean-code.md) では、可読性の高い保守しやすいコードを書くための原則を学びます。
+[Lesson 10 良いコードを書く](./10-clean-code.md) では、可読性の高い保守しやすいコードを書くための原則を学びます。

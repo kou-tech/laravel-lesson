@@ -1,9 +1,8 @@
-# Lesson 3 認証の仕組みを理解する
+# Lesson 6 認証の仕組みを理解する
 
 ## 学習目標
 
-このレッスンでは、既に導入されているFortifyの仕組みを理解し、認証フローを把握します。
-手順に沿って実装し、完了したコードと練習問題の回答を含めたプルリクエストを作成しましょう。
+このレッスンでは、Fortifyの仕組みを理解し、認証フローを把握します。
 
 ### 到達目標
 - Laravel Fortifyの役割を理解する
@@ -11,7 +10,8 @@
 - ミドルウェア（`auth`）の動作を理解する
 - 認証済みユーザーのみアクセス可能なAPIを作成できる
 
-## 認証とは？
+
+## 認証とは
 
 認証（Authentication）とは、「このユーザーは本当に本人か？」を確認するプロセスです。
 
@@ -26,7 +26,8 @@
 | 認証 | この人は誰？ | ログイン処理 |
 | 認可 | この人は何ができる？ | 管理者のみアクセス可能 |
 
-## Laravel Fortifyとは？
+
+## Laravel Fortifyとは
 
 ### Fortifyの役割
 
@@ -39,7 +40,8 @@ Laravel Fortify は、認証機能のバックエンド実装を提供するパ�
 - メール確認
 - 2要素認証
 
-FortifyはフロントエンドのUIを提供しない点に注意してください。UIは別途実装する必要があります（このプロジェクトではInertia + Reactで実装済み）。
+FortifyはフロントエンドのUIを提供しません。UIは別途実装する必要があります（このプロジェクトではInertia + Reactで実装済み）。
+
 
 ## Step 1 認証の流れを理解する
 
@@ -66,7 +68,7 @@ sequenceDiagram
 
 ## Step 2 authミドルウェアを理解する
 
-### ミドルウェアとは？
+### ミドルウェアとは
 
 ミドルウェアは、リクエストがコントローラーに到達する前に実行される処理です。
 
@@ -103,17 +105,18 @@ Route::get('/dashboard', function () {
 
 ```php
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\UserController;
 
 // 認証不要（公開API）
-Route::get('/user/{user}', [UserController::class, 'show']);
+Route::get('/users/{user}', [UserController::class, 'show']);
 
 // 認証必要（要ログイン）
 Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/me', [App\Http\Controllers\Api\UserController::class, 'me']);
+    Route::get('/me', [UserController::class, 'me']);
 });
 ```
 
-### コントローラーにメソッドを追加
+### Controllerにメソッドを追加
 
 `app/Http/Controllers/Api/UserController.php`
 
@@ -149,8 +152,11 @@ class UserController extends Controller
 
 未認証でアクセスした場合
 
-```bash
-curl http://localhost:8000/api/me -H "Accept: application/json"
+Postmanで確認してください。
+
+```
+GET http://localhost:8000/api/me
+Accept: application/json
 ```
 
 ```json
@@ -163,25 +169,24 @@ curl http://localhost:8000/api/me -H "Accept: application/json"
 
 `Accept: application/json` ヘッダーがないと、ログイン画面へリダイレクトされるため注意してください。APIとして利用する場合は必ずこのヘッダーを付けましょう。
 
-### APIでログイン/ログアウトを試す
+### ログイン/ログアウトを試す
 
-curlでログイン/ログアウトの動作を確認してみましょう。
+Postmanでログイン/ログアウトの動作を確認してみましょう。
 
-1. ログイン → Postmanから「ログインAPI」でリクエストしてみましょう！
+1. ログインAPI
+2. 認証済みAPIにアクセス
+3. ログアウトAPI
 
-2. 認証済みAPIにアクセス → Postmanから「ログインAPI」でリクエストしてみましょう！
-
-3. ログアウト → Postmanから「ログアウトAPI」でリクエストしてみましょう！
 
 ## Step 4 Sanctumについて
 
-### Sanctumとは？
+### Sanctumとは
 
 Laravel Sanctumは、API認証のためのパッケージです。
 
 2つの認証方式を提供します。
-1. SPAセッション認証では、同一ドメインのSPAからのリクエストを処理します
-2. APIトークン認証では、モバイルアプリや外部サービスからのリクエストを処理します
+1. SPAセッション認証: 同一ドメインのSPAからのリクエストを処理
+2. APIトークン認証: モバイルアプリや外部サービスからのリクエストを処理
 
 このプロジェクトでは、InertiaがSPAとして動作するため、主にセッション認証を使います。
 
@@ -193,11 +198,7 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 ```
 
-このミドルウェアは
-- セッション認証（SPA用）
-- トークン認証（API用）
-
-の両方に対応しています。
+このミドルウェアはセッション認証（SPA用）とトークン認証（API用）の両方に対応しています。
 
 
 ## Guard と Provider
@@ -238,13 +239,20 @@ Provider: ユーザー情報の取得方法を決める
 
 通常、この設定を変更する必要はありません。
 
+
+## まとめ
+
+このレッスンでは、認証の仕組みを学びました。Fortifyがログイン/ログアウトのバックエンド処理を提供し、authミドルウェアで認証済みユーザーのみにアクセスを制限できます。Sanctumを使うことで、SPAとAPIの両方に対応した認証が実現できます。
+
+
 ## 練習問題
 
 ### 問題1
-認証済みユーザーの `name` を更新する `PUT /api/me` エンドポイントを作成してください。
+認証済みユーザーの `name` を更新する `PATCH /api/me` エンドポイントを作成してください。
 
 ### 問題2
 `me` メソッドにログ出力を追加し、認証済みユーザーが自身の情報を取得したことを記録してください。
+
 
 ## 参考資料
 
@@ -255,4 +263,4 @@ Provider: ユーザー情報の取得方法を決める
 
 ## 次のレッスン
 
-[Lesson 4 認可（Gate/Policy）を実装する](./04-authorization.md) では、「誰が何をできるか」を制御する認可機能を学びます。
+[Lesson 7 認可（Gate/Policy）を実装する](./07-authorization.md) では、「誰が何をできるか」を制御する認可機能を学びます。

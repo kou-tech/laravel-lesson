@@ -1,4 +1,4 @@
-# Lesson 9 N+1問題を解決する
+# Lesson 12 N+1問題を解決する
 
 ## 学習目標
 
@@ -337,4 +337,4 @@ public function index()
 
 ## 次のレッスン
 
-[Lesson 10 安全なモデルの記述](./10-safe-model.md) では、Mass Assignmentなどのセキュリティ対策を学びます。
+[Lesson 13 安全なモデルの記述](./13-safe-model.md) では、Mass Assignmentなどのセキュリティ対策を学びます。

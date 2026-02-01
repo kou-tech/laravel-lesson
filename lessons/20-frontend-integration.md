@@ -1,4 +1,4 @@
-# Lesson 18 フロントエンドとの統合
+# Lesson 20 フロントエンドとの統合
 
 ## 学習目標
 
@@ -526,7 +526,7 @@ export default function MyEnrollments({ enrollments }: Props) {
 
 ## カリキュラム完了
 
-これで全18レッスンが完了しました。
+これで全20レッスンが完了しました。
 
 ### 完成した受講管理システム
 

@@ -1,4 +1,4 @@
-# Lesson 4 認可（Gate/Policy）を実装する
+# Lesson 7 認可（Gate/Policy）を実装する
 
 ## 学習目標
 
@@ -10,6 +10,7 @@
 - Policy を使ったモデルベースの認可ができる
 - ユーザーに役割（role）を追加できる
 
+
 ## 認証 vs 認可
 
 | 概念 | 英語 | 質問 | 例 |
@@ -19,7 +20,7 @@
 
 前回のレッスンで「認証」を学びました。今回は「認可」です。
 
-### なぜ認可が必要か？
+### なぜ認可が必要か
 
 認証だけでは不十分なケースがあります。
 
@@ -33,12 +34,13 @@
 → ログインしている かつ 自分自身の情報のみ編集可能
 ```
 
+
 ## Step 1 ユーザーに役割を追加する
 
 このStepでは以下を実装します。
-- [ ] Userモデルに`role`フィールドを追加
-- [ ] UserRole Enumを作成
-- [ ] Userモデルにキャストと便利メソッドを追加
+- Userモデルに`role`フィールドを追加
+- UserRole Enumを作成
+- Userモデルにキャストと便利メソッドを追加
 
 ### Userモデルの修正
 
@@ -105,12 +107,13 @@ public function isStudent(): bool
 }
 ```
 
+
 ## Step 2 Gateを使った認可
 
 このStepでは以下を実装します。
-- [ ] AppServiceProviderにGateを定義
+- AppServiceProviderにGateを定義
 
-### Gateとは？
+### Gateとは
 
 Gate は、特定のアクションに対する認可を定義するシンプルな方法です。
 
@@ -138,7 +141,7 @@ public function boot(): void
 
 ### Gateの使用
 
-#### コントローラーで使う
+Controllerで使う
 
 ```php
 use Illuminate\Support\Facades\Gate;
@@ -153,7 +156,7 @@ public function manageCourses()
 }
 ```
 
-#### 条件分岐で使う
+条件分岐で使う
 
 ```php
 if (Gate::allows('manage-courses')) {
@@ -165,17 +168,18 @@ if (Gate::denies('manage-courses')) {
 }
 ```
 
-#### パラメータ付きで使う
+パラメータ付きで使う
 
 ```php
 Gate::authorize('access-own-data', $targetUser);
 ```
 
+
 ## Step 3 Policyを使った認可
 
 このStepでは以下を実装します。
-- [ ] UserPolicyを作成
-- [ ] 認可メソッド（view, update, delete等）を実装
+- UserPolicyを作成
+- 認可メソッド（view, update, delete等）を実装
 
 ### GateとPolicyの使い分け
 
@@ -188,7 +192,7 @@ flowchart TD
     D --> F[manage-courses, create-course...]
 ```
 
-### Policyとは？
+### Policyとは
 
 Policy は、特定のモデルに対する認可ルールをまとめたクラスです。
 
@@ -268,7 +272,7 @@ Laravel 11では、モデル名と一致するPolicyは自動的に登録され�
 
 - `User` モデル → `UserPolicy` が自動的に紐づく
 
-手動で登録する場合は `AppServiceProvider` で、
+手動で登録する場合は `AppServiceProvider` で設定します。
 
 ```php
 use App\Models\User;
@@ -281,9 +285,10 @@ public function boot(): void
 }
 ```
 
+
 ## Step 4 Policyをコントローラーで使う
 
-このStepでは、Step 3で作成したPolicyの使い方を学びます（コード例は参考用）。
+このStepでは、Step 3で作成したPolicyの使い方を学びます。
 
 ### authorize メソッド
 
@@ -338,9 +343,10 @@ class UserController extends Controller
 }
 ```
 
+
 ## Step 5 認可エラーのレスポンス
 
-このStepでは、認可エラー時のレスポンスについて学びます（参考情報）。
+このStepでは、認可エラー時のレスポンスについて学びます。
 
 ### デフォルトの動作
 
@@ -369,23 +375,24 @@ public function update(User $user, User $model): Response
 }
 ```
 
+
 ## Step 6 実践例 - ユーザー編集APIの保護
 
 このStepでは以下を実装します。
-- [ ] 認証が必要なルートを追加
-- [ ] UserControllerにupdateメソッドを実装（認可チェック付き）
+- 認証が必要なルートを追加
+- UserControllerにupdateメソッドを実装（認可チェック付き）
 
 ### ルートの定義
 
 ```php
 // routes/api.php
 Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/me', [App\Http\Controllers\Api\UserController::class, 'me']);
-    Route::patch('/users/{user}', [App\Http\Controllers\Api\UserController::class, 'update']);
+    Route::get('/me', [UserController::class, 'me']);
+    Route::patch('/users/{user}', [UserController::class, 'update']);
 });
 ```
 
-### コントローラーの実装
+### Controllerの実装
 
 ```php
 <?php
@@ -393,25 +400,19 @@ Route::middleware('auth:sanctum')->group(function () {
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\UpdateUserRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
-use Illuminate\Http\Request;
 
 class UserController extends Controller
 {
-    ...
-    public function update(Request $request, User $user): UserResource
+    public function update(UpdateUserRequest $request, User $user): UserResource
     {
         // 認可チェック
         $this->authorize('update', $user);
 
-        // バリデーション
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-        ]);
-
         // 更新
-        $user->update($validated);
+        $user->update($request->validated());
 
         return new UserResource($user);
     }
@@ -426,6 +427,11 @@ class UserController extends Controller
 他人を更新しようとする（失敗）
 
 
+## まとめ
+
+このレッスンでは、認可の仕組みを学びました。Gateは汎用的なアクションの認可に、Policyはモデルに紐づくアクションの認可に使います。認証（誰か）と認可（何ができるか）を組み合わせることで、セキュアなAPIを構築できます。
+
+
 ## 練習問題
 
 ### 問題1
@@ -434,10 +440,12 @@ UserPolicyに `updateRole` メソッドを追加し、「講師のみ生徒の�
 ### 問題2
 Gateを使って「講師のみが講座を作成できる」という認可 `create-course` を `AppServiceProvider` に追加してください。
 
+
 ## 参考資料
 
 - [Laravel 公式ドキュメント - Authorization](https://laravel.com/docs/authorization)
 
+
 ## 次のレッスン
 
-[Lesson 5: API設計の基本](./05-api-design.md) では、RESTful APIの設計原則を学び、受講管理システム全体のAPI設計を行います。
+[Lesson 8 コレクション](./08-collection.md) では、Eloquentコレクションとコレクションメソッドを学び、データ操作の幅を広げます。

@@ -1,4 +1,4 @@
-# Lesson 7 良いコードを書く
+# Lesson 10 良いコードを書く
 
 ## 学習目標
 
@@ -460,4 +460,4 @@ if ($daysUntilStart <= 7) {
 
 ## 次のレッスン
 
-[Lesson 8 データベース設計の基礎](./08-database-design.md) では、外部キー、インデックス、NULL制約など堅牢なDB設計の原則を学びます。
+[Lesson 11 データベース設計の基礎](./11-database-design.md) では、外部キー、インデックス、NULL制約など堅牢なDB設計の原則を学びます。

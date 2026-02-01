@@ -1,4 +1,4 @@
-# Lesson 17 TDDで機能を追加する
+# Lesson 19 TDDで機能を追加する
 
 ## 学習目標
 
@@ -436,4 +436,4 @@ public function cancel(EnrollmentService $service)
 
 ## 次のレッスン
 
-[Lesson 18 フロントエンドとの統合](./18-frontend-integration.md) では、Inertiaを使ってフロントエンドと統合し、受講管理システムを完成させます。
+[Lesson 20 フロントエンドとの統合](./20-frontend-integration.md) では、Inertiaを使ってフロントエンドと統合し、受講管理システムを完成させます。

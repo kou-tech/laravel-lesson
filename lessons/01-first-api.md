@@ -1,275 +1,244 @@
-# Lesson 1 はじめてのAPI実装
+# Lesson 1 はじめてのAPI
 
 ## 学習目標
 
-このレッスンでは、LaravelでシンプルなAPIエンドポイントを作成し、API Resourceを使ったレスポンス整形の基本を理解します。
-手順に沿って実装し、完了したコードと練習問題の回答を含めたプルリクエストを作成しましょう。
+このレッスンでは、Laravelで最もシンプルなAPIを作成し、APIの基本的な仕組みを理解します。
 
 ### 到達目標
-- `/api/user` エンドポイントを作成できる
-- `UserController` でユーザー情報を取得して返せる
-- `UserResource` を使ってレスポンス形式を整えられる
+- `routes/api.php` でAPIルートを定義できる
+- JSONレスポンスを返せる
+- Postmanを使ってAPIの動作確認ができる
 
-## Step 1 APIルーティングの作成
+## Step 1 最初のAPIエンドポイント
 
-まず、このレッスンで実装するAPIの全体像を確認しましょう。
+### api.phpにルートを追加
 
-```mermaid
-sequenceDiagram
-    participant Client as クライアント
-    participant Route as Route
-    participant Controller as Controller
-    participant Model as Model
-    participant Resource as Resource
-
-    Client->>Route: GET /api/user
-    Route->>Controller: show()
-    Controller->>Model: User::find(1)
-    Model-->>Controller: User
-    Controller->>Resource: new UserResource($user)
-    Resource-->>Client: JSON Response
-```
-
-### ルートの定義
-
-`routes/api.php` を開き、以下のルートを追加します。
+`routes/api.php` を開き、以下のコードを追加します。
 
 ```php
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\UserController;
 
-Route::get('/user', [UserController::class, 'show']);
+Route::get('/hello', function () {
+    return ['message' => 'Hello, World!'];
+});
 ```
 
-ポイント
-- APIルートは自動的に `/api` プレフィックスが付きます
-- つまり、実際のURLは `/api/user` になります
+これだけでAPIが完成です。
 
-次のコマンドでルーティングが追加されているか、確認してください。
+### URLの確認
 
-```bash
-php artisan route:list --path=api/user
-```
+APIルートは自動的に `/api` プレフィックスが付きます。
 
-## Step 2 コントローラーの作成
-
-### artisan コマンドでコントローラーを生成
-
-```bash
-php artisan make:controller Api/UserController
-```
-
-`app/Http/Controllers/Api/UserController.php` が作成されます。
-
-### コントローラーの実装
-
-```php
-<?php
-
-namespace App\Http\Controllers\Api;
-
-use App\Http\Controllers\Controller;
-use App\Models\User;
-
-class UserController extends Controller
-{
-    public function show()
-    {
-        // ID=1のユーザーを取得
-        $user = User::find(1);
-
-        // ユーザー情報をJSONで返す
-        return response()->json($user);
-    }
-}
-```
+| 定義 | 実際のURL |
+|------|----------|
+| `/hello` | `/api/hello` |
+| `/users` | `/api/users` |
 
 ### 動作確認
 
-ブラウザまたはターミナルで確認してみましょう。
+Postmanを開き、以下のリクエストを送信してください。
 
-```bash
-curl http://localhost:8000/api/user
+```
+GET http://localhost:8000/api/hello
 ```
 
-以下のようなレスポンスが返ってくれば成功です。
-※ 日時の値はシーダーを実行した時間の値になります。
+レスポンス
 
 ```json
 {
-    "id": 1,
-    "name": "Test User",
-    "email": "test@example.com",
-    "email_verified_at": null,
-    "created_at": "2025-01-01T00:00:00.000000Z",
-    "updated_at": "2025-01-01T00:00:00.000000Z"
+    "message": "Hello, World!"
 }
 ```
 
-## Step 3 API Resourceの作成
 
-### なぜAPI Resourceを使うのか？
+## Step 2 配列を返す
 
-現在のレスポンスには問題があります。
-
-1. `email_verified_at` や `updated_at` など不要な情報が含まれる可能性がある
-2. Controller のコードが肥大化する
-3. 他のエンドポイントでも同じ形式でユーザー情報を返したい場合、レスポンス形式がバラバラになったり、コードが重複する
-
-API Resourceを使うと、これらの問題を解決できます。
-
-### API Resourceの生成
-
-```bash
-php artisan make:resource UserResource
-```
-
-`app/Http/Resources/UserResource.php` が作成されます。
-
-### UserResourceの実装
+複数のデータを返すこともできます。
 
 ```php
-<?php
-
-namespace App\Http\Resources;
-
-use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\JsonResource;
-
-class UserResource extends JsonResource
-{
-    /** @var \App\Models\User */
-    public $resource;
-
-    /**
-     * Transform the resource into an array.
-     *
-     * @return array<string, mixed>
-     */
-    public function toArray(Request $request): array
-    {
-        return [
-            'id' => $this->resource->id,
-            'name' => $this->resource->name,
-            'email' => $this->resource->email,
-            'created_at' => $this->resource->created_at->toISOString(),
-        ];
-    }
-}
-
+Route::get('/fruits', function () {
+    return [
+        ['id' => 1, 'name' => 'りんご', 'price' => 150],
+        ['id' => 2, 'name' => 'みかん', 'price' => 100],
+        ['id' => 3, 'name' => 'バナナ', 'price' => 200],
+    ];
+});
 ```
 
-ポイント
-- `$this->resource` はUserモデルのインスタンスを指します
-- 返したいフィールドだけを指定できます
-- 日付のフォーマットも自由に変更できます
+Postmanで確認
 
-### コントローラーの修正
+```
+GET http://localhost:8000/api/fruits
+```
 
-`UserController.php` を修正して、`UserResource` を使うようにします。
+レスポンス
+
+```json
+[
+    {"id": 1, "name": "りんご", "price": 150},
+    {"id": 2, "name": "みかん", "price": 100},
+    {"id": 3, "name": "バナナ", "price": 200}
+]
+```
+
+
+## Step 3 パスパラメータを使う
+
+URLの一部を変数として受け取れます。
 
 ```php
-<?php
+Route::get('/fruits/{id}', function (int $id) {
+    $fruits = [
+        1 => ['id' => 1, 'name' => 'りんご', 'price' => 150],
+        2 => ['id' => 2, 'name' => 'みかん', 'price' => 100],
+        3 => ['id' => 3, 'name' => 'バナナ', 'price' => 200],
+    ];
 
-namespace App\Http\Controllers\Api;
-
-use App\Http\Controllers\Controller;
-use App\Http\Resources\UserResource;
-use App\Models\User;
-
-class UserController extends Controller
-{
-    public function show()
-    {
-        // ID=1のユーザーを取得
-        $user = User::find(1);
-
-        // ユーザー情報をJSONで返す
-        return new UserResource($user);
+    if (!isset($fruits[$id])) {
+        return response()->json(['message' => '見つかりません'], 404);
     }
-}
+
+    return $fruits[$id];
+});
 ```
 
-### 動作確認
+Postmanで確認
 
-再度APIを呼び出してみましょう。
+```
+GET http://localhost:8000/api/fruits/1
+```
 
-```bash
-curl http://localhost:8000/api/user
+レスポンス
+
+```json
+{"id": 1, "name": "りんご", "price": 150}
+```
+
+存在しないIDの場合
+
+```
+GET http://localhost:8000/api/fruits/999
 ```
 
 ```json
+{"message": "見つかりません"}
+```
+
+
+## Step 4 HTTPメソッドを使い分ける
+
+APIでは、HTTPメソッドで操作の種類を表現します。
+
+| メソッド | 用途 | 例 |
+|---------|------|-----|
+| GET | データ取得 | 一覧取得、詳細取得 |
+| POST | データ作成 | 新規登録 |
+| PATCH | データ更新 | 情報変更 |
+| DELETE | データ削除 | 削除 |
+
+### POSTの例
+
+```php
+Route::post('/fruits', function () {
+    // リクエストボディからデータを取得
+    $name = request('name');
+    $price = request('price');
+
+    // 本来はデータベースに保存する
+    return response()->json([
+        'message' => '作成しました',
+        'data' => [
+            'id' => 4,
+            'name' => $name,
+            'price' => $price,
+        ]
+    ], 201);
+});
+```
+
+Postmanで確認
+
+```
+POST http://localhost:8000/api/fruits
+Content-Type: application/json
+
 {
+    "name": "ぶどう",
+    "price": 500
+}
+```
+
+レスポンス（ステータスコード 201）
+
+```json
+{
+    "message": "作成しました",
     "data": {
-        "id": 1,
-        "name": "テストユーザー",
-        "email": "test@example.com",
-        "created_at": "2025-01-01T00:00:00.000Z"
+        "id": 4,
+        "name": "ぶどう",
+        "price": 500
     }
 }
 ```
 
-注目ポイント
-- レスポンスが `data` でラップされています（API Resourceのデフォルト動作）
-- 指定したフィールドのみが含まれています
-- 日付のフォーマットが変わっています
 
-## Step 4 発展 - パスパラメータでユーザーを指定
+## Step 5 HTTPステータスコード
 
-現在は ID=1 のユーザーを固定で返していますが、URLで任意のユーザーIDを指定できるようにしましょう。
+レスポンスにはステータスコードが含まれます。
 
-### ルートの修正
+| コード | 意味 | 用途 |
+|--------|------|------|
+| 200 | OK | 成功（デフォルト） |
+| 201 | Created | 作成成功 |
+| 404 | Not Found | 見つからない |
+| 500 | Internal Server Error | サーバーエラー |
 
-`routes/api.php` を修正します。
-
-```php
-Route::get('/user/{id}', [App\Http\Controllers\Api\UserController::class, 'show']);
-```
-
-### コントローラーの修正
+### ステータスコードを指定する
 
 ```php
-public function show(int $id): UserResource
-{
-    $user = User::find($id);
-    return new UserResource($user);
-}
+// 201 Created
+return response()->json($data, 201);
+
+// 404 Not Found
+return response()->json(['message' => 'Not Found'], 404);
+
+// ステータスコードなし（200がデフォルト）
+return $data;
 ```
 
-### さらに改善: Route Model Binding
 
-Laravelには「Route Model Binding」という便利な機能があります。これを使うと、IDからモデルの取得を自動化できます。
+## ルート一覧の確認
 
-```php
-// ルート（api.php）
-Route::get('/user/{user}', [App\Http\Controllers\Api\UserController::class, 'show']);
+定義したルートを確認するコマンドがあります。
 
-// コントローラー
-public function show(User $user): UserResource
-{
-    // Laravelが自動的にIDからUserを取得してくれる
-    // 見つからない場合は自動で404を返す
-    return new UserResource($user);
-}
+```bash
+php artisan route:list --path=api
 ```
 
-これにより、コントローラーのコードがシンプルになります。
+```
+GET|HEAD   api/fruits ........
+GET|HEAD   api/fruits/{id} ...
+POST       api/fruits ........
+GET|HEAD   api/hello .........
+```
 
 ## 練習問題
 
 ### 問題1
-`UserResource` に `full_name` というフィールドを追加してください。このフィールドは `{name}さん` という形式で値を返すようにしてください。
+`/api/status` にアクセスすると、現在の日時とアプリケーション名を返すAPIを作成してください。
 
 ### 問題2
-ユーザー一覧を返す `/api/users` エンドポイントを作成してください。
+`/api/users` にアクセスすると、3人分のユーザー情報（id, name, email）を返すAPIを作成してください。
+
 
 ## 参考資料
 
-- [Laravel 公式ドキュメント - Eloquent: API Resources](https://laravel.com/docs/eloquent-resources)
-- [Laravel 公式ドキュメント - Routing: Route Model Binding](https://laravel.com/docs/routing#route-model-binding)
-- [Laravel 公式ドキュメント - Controllers](https://laravel.com/docs/controllers)
+- [Laravel 公式ドキュメント - Routing](https://laravel.com/docs/routing)
+- [Laravel 公式ドキュメント - HTTP Responses](https://laravel.com/docs/responses)
+
 
 ## 次のレッスン
-[Lesson 2: デバッグ手法を身につける](./02-debugging.md) では、今回作成したAPIを使ってデバッグ方法を学びます。
+
+[Lesson 2 デバッグ手法を身につける](./02-debugging.md) では、開発中の問題解決に役立つデバッグ手法を学びます。
