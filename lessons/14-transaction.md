@@ -339,6 +339,29 @@ class AttendanceService
 }
 ```
 
+### TIPS: リレーション経由の作成で外部キーの指定を省略する
+
+上記の `attend` メソッドでは `Attendance::create()` に `user_id` を明示的に渡していますが、Lesson 11 で定義した `attendances()` リレーションを使うとよりシンプルに書けます。
+
+```php
+// Before
+$attendance = Attendance::create([
+    'user_id' => $user->id,
+    'course_id' => $course->id,
+    'status' => AttendanceStatus::Attending,
+    'attended_at' => now(),
+]);
+
+// After: $user->attendances() 経由で作成すると user_id が自動セットされる
+$attendance = $user->attendances()->create([
+    'course_id' => $course->id,
+    'status' => AttendanceStatus::Attending,
+    'attended_at' => now(),
+]);
+```
+
+HasMany リレーションの `create()` は親モデルの外部キーを自動的にセットするため、`user_id` の指定が不要になります。外部キーの書き間違いも防げるので、リレーションが定義されている場合は積極的に活用しましょう。
+
 ### AttendanceController
 
 ```php

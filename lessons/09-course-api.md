@@ -302,36 +302,6 @@ class CourseController extends Controller
 ```
 
 
-### TIPS: リレーション経由の作成
-
-`store` メソッドでは `instructor_id` を明示的に指定していますが、リレーションメソッドを使うと外部キーの指定を省略できます。
-
-```php
-// Before: 外部キーを明示的に指定
-$course = Course::create([
-    ...$request->validated(),
-    'instructor_id' => $request->user()->id,
-]);
-
-// After: リレーション経由で作成（instructor_id が自動的にセットされる）
-$course = $request->user()->courses()->create($request->validated());
-```
-
-リレーション経由の `create()` は、親モデルの外部キーを自動的にセットしてくれるため、コードがシンプルになり、キーの指定ミスも防げます。
-
-この書き方を使うには、`User` モデルに `courses()` リレーションを定義しておく必要があります。
-
-```php
-// app/Models/User.php
-public function courses(): HasMany
-{
-    return $this->hasMany(Course::class, 'instructor_id');
-}
-```
-
-> 本レッスンでは理解しやすさを優先して `Course::create()` を使用しています。以降のレッスンでリレーション経由の作成パターンも活用していきます。
-
-
 ## Step 5 ルーティングの設定
 
 `routes/api.php`
