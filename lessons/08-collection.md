@@ -140,6 +140,42 @@ $hasActive = $courses->contains(fn($c) => $c->status === 'active');
 ```
 
 
+### each - 各要素に処理を実行
+
+```php
+$numbers = collect([1, 2, 3]);
+
+$numbers->each(function ($number) {
+    echo $number;
+});
+// 1 2 3
+```
+
+`map` との違いは、`each` は新しいコレクションを返さず、副作用のある処理（ログ出力、メール送信など）に使う点です。
+
+Eloquentでの例
+
+```php
+$courses = Course::all();
+
+$courses->each(function ($course) {
+    logger("講座: {$course->title}");
+});
+```
+
+コールバックで `false` を返すとループを中断できます。
+
+```php
+$courses->each(function ($course) {
+    if ($course->status === 'draft') {
+        return false;  // ここでループ終了
+    }
+
+    logger("アクティブ講座: {$course->title}");
+});
+```
+
+
 ## Step 3 集計メソッド
 
 ### count - 件数
