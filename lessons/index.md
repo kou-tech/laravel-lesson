@@ -46,7 +46,7 @@
 | 11 | [データベース設計の基礎](./11-database-design.md) | 堅牢なDB設計の原則 |
 | 12 | [N+1問題を解決する](./12-n-plus-one.md) | Eager Loadingの習得 |
 | 13 | [安全なモデルの記述](./13-safe-model.md) | Mass Assignment対策 |
-| 14 | [トランザクション処理](./14-transaction.md) | データ整合性の担保 |
+| 14 | [トランザクション処理](./14-transaction.md) | データ整合性の担保、排他制御の理解 |
 
 
 ## Part 3: アーキテクチャ編 (Lesson 15-18)

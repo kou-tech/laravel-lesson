@@ -8,6 +8,7 @@
 - トランザクションの必要性を理解する
 - `DB::transaction()` を使える
 - 例外発生時のロールバックを理解する
+- 排他ロック（lockForUpdate）の必要性と仕組みを理解する
 - デッドロック対策ができる
 
 
@@ -179,7 +180,49 @@ public function complexOperation()
 → 2人とも登録できてしまう（定員オーバー）
 ```
 
-### 悲観的ロック（lockForUpdate）
+シーケンス図で見ると、問題がより明確になります。
+
+```mermaid
+sequenceDiagram
+    participant A as ユーザーA
+    participant B as ユーザーB
+    participant DB as データベース
+
+    Note over DB: 残席: 1
+
+    A->>DB: SELECT（残席確認）
+    DB-->>A: 残席 = 1
+    B->>DB: SELECT（残席確認）
+    DB-->>B: 残席 = 1
+
+    A->>DB: INSERT（受講登録）
+    Note over DB: 残席: 0
+    B->>DB: INSERT（受講登録）
+    Note over DB: 残席: -1 ← 定員オーバー！
+```
+
+AとBがほぼ同時に残席を確認し、どちらも「1席ある」と判断して登録を実行してしまいます。
+
+### なぜ DB::transaction() だけでは不十分か
+
+「トランザクションで囲めば安全」と思いがちですが、通常の SELECT はロックを取りません。
+
+MySQL のデフォルト分離レベル（REPEATABLE READ）では、トランザクション内の SELECT は MVCC（Multi-Version Concurrency Control）のスナップショット読み取りを使います。これは、トランザクション開始時点のデータを読み取る仕組みです。
+
+つまり、`DB::transaction()` 内で `Course::find($courseId)` を実行しても、その行にロックはかかりません。他のトランザクションも同じ行を同時に読み取れるため、上の競合状態は解決しません。
+
+### lockForUpdate とは
+
+`lockForUpdate()` は SQL の `SELECT ... FOR UPDATE` を発行し、対象の行に排他ロック（Xロック）を取得します。
+
+```sql
+-- lockForUpdate() が発行するSQL
+SELECT * FROM courses WHERE id = 1 FOR UPDATE;
+```
+
+排他ロックを取得すると、他のトランザクションは同じ行のロック取得をブロックされます。つまり、先にロックを取ったトランザクションがコミットまたはロールバックするまで、後からのトランザクションは待機します。
+
+### lockForUpdate で解決する
 
 ```php
 public function attend(User $user, int $courseId)
@@ -204,16 +247,58 @@ public function attend(User $user, int $courseId)
 }
 ```
 
-`lockForUpdate()` は、そのレコードを他のトランザクションが更新できないようにロックします。
+`lockForUpdate()` を使うことで、同時リクエストは以下のように直列化されます。
 
-### sharedLock（共有ロック）
+```mermaid
+sequenceDiagram
+    participant A as ユーザーA
+    participant B as ユーザーB
+    participant DB as データベース
 
-読み取りのみの場合に使用します。
+    Note over DB: 残席: 1
 
-```php
-$course = Course::sharedLock()->find($courseId);
-// 他のトランザクションは読み取り可能、更新は不可
+    A->>DB: SELECT ... FOR UPDATE（ロック取得）
+    DB-->>A: 残席 = 1（ロック保持中）
+
+    B->>DB: SELECT ... FOR UPDATE（ロック取得を試みる）
+    Note over B: ロック待ち...
+
+    A->>DB: INSERT（受講登録）
+    A->>DB: COMMIT
+    Note over DB: 残席: 0
+
+    DB-->>B: 残席 = 0（ロック取得、最新データを読み取り）
+    B->>B: 定員オーバー → 例外スロー
+    B->>DB: ROLLBACK
 ```
+
+ユーザーBはユーザーAのコミット後にロックを取得するため、最新の残席数（0）を読み取り、正しく登録を拒否できます。
+
+### 共有ロックと排他ロックの比較
+
+| 項目 | `sharedLock()` | `lockForUpdate()` |
+|------|---------------|-------------------|
+| SQL | `SELECT ... LOCK IN SHARE MODE` | `SELECT ... FOR UPDATE` |
+| ロック種別 | 共有ロック（Sロック） | 排他ロック（Xロック） |
+| 他のSロック | 共存できる | ブロックする |
+| 他のXロック | ブロックする | ブロックする |
+| 主な用途 | 読み取り中の変更を防ぐ | 読み取り後に更新する |
+
+今回のように「読み取った値に基づいて更新する」パターンでは、`lockForUpdate()` を使います。
+
+### 通常の SELECT はブロックされない
+
+排他ロックがかかっている行でも、通常の SELECT はブロックされません。MVCCにより、ロックを取得せずにスナップショットからデータを読み取るためです。
+
+ブロックされるもの（ロック待ちになる）:
+- `lockForUpdate()` / `SELECT ... FOR UPDATE`
+- `sharedLock()` / `SELECT ... LOCK IN SHARE MODE`
+- `UPDATE` / `DELETE` 文
+
+ブロックされないもの:
+- 通常の `SELECT`（`Course::find()` など）
+
+したがって、排他ロックを使っても、ロックに関係しない通常の読み取りクエリ（一覧画面の表示など）には影響しません。
 
 
 ## Step 4 デッドロック対策
