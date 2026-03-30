@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__serena",
+      "mcp__serena__read_file",
+      "mcp__serena__check_onboarding_performed",
+      "mcp__serena__find_symbol"
+    ]
+  }
+}

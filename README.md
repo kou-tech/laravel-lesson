@@ -4,65 +4,38 @@ Laravelの学習用プロジェクトです。
 
 ## 必要な環境
 
-- PHP 8.2 以上
-- Composer
-- Node.js / npm
-- SQLite
+- Docker
+- Make
+- Windows の場合は WSL2 + Docker Desktop
 
-## Mac での環境構築手順
-
-### 1. Homebrew のインストール（未導入の場合）
-
-```bash
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-```
-
-### 2. 必要なツールのインストール
-
-```bash
-brew install php composer node
-```
-
-### 3. リポジトリのクローン
+## セットアップ
 
 ```bash
 git clone https://github.com/kou-tech/laravel-lesson.git
 cd laravel-lesson
+make setup
 ```
 
-### 4. セットアップ
+初回は Docker イメージのビルドと依存パッケージのインストールが行われます。
 
-```bash
-composer run setup
-```
+完了後、以下の URL でアクセスできます。
 
-このコマンドで以下が一括実行されます。
+- アプリ: http://localhost:8000
+- Vite (HMR): http://localhost:5173
 
-- `composer install` — PHP 依存パッケージのインストール
-- `.env.example` → `.env` のコピー
-- アプリケーションキーの生成
-- データベースマイグレーション
-- `npm install` — Node.js 依存パッケージのインストール
-- `npm run build` — フロントエンドのビルド
-
-## 開発サーバーの起動
-
-```bash
-composer run dev
-```
-
-サーバー、キュー、ログ (Pail)、Vite がまとめて起動します。
-
-アクセス URL: http://localhost:8000
-
-## テスト実行
-
-```bash
-composer run test
-```
-
-## その他のコマンド
+## よく使うコマンド
 
 | コマンド | 内容 |
 |---|---|
-| `composer run format` | コードフォーマット (Pint) |
+| `make setup` | 初回セットアップ |
+| `make up` | コンテナ起動 |
+| `make down` | コンテナ停止 |
+| `make restart` | コンテナ再起動 |
+| `make logs` | ログ表示 |
+| `make app` | コンテナに入る |
+| `make fresh` | DB初期化 + シーダー |
+| `make seed` | シーダー実行 |
+| `make test` | テスト実行 |
+| `make lint` | ESLint |
+| `make format` | Pint + Prettier |
+| `make help` | コマンド一覧 |

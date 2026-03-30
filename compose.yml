@@ -1,0 +1,17 @@
+services:
+  app:
+    container_name: lesson_app
+    build:
+      context: .
+      dockerfile: docker/app/Dockerfile
+    ports:
+      - "8000:8000"   # Laravel
+      - "5173:5173"   # Vite dev server
+    volumes:
+      - .:/var/www/html
+    working_dir: /var/www/html
+    tty: true
+    stdin_open: true
+    environment:
+      - CHOKIDAR_USEPOLLING=true        # WSL対応: ファイル監視
+      - WATCHPACK_POLLING=true           # WSL対応: Vite監視
