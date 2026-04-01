@@ -2,6 +2,10 @@
 
 Laravelの学習用プロジェクトです。
 
+## レッスン
+
+レッスンの内容は [lessons/index.md](./lessons/index.md) を参照してください。
+
 ## 必要な環境
 
 - Docker
@@ -34,7 +38,7 @@ wsl --install
 
 #### 2. Docker Desktop をインストール
 
-[Docker Desktop](https://www.docker.com/products/docker-desktop/) をインストールし、設定画面で 「Use the WSL 2 based engine」が有効になっていることを確認します。
+[Docker Desktop](https://www.docker.com/products/docker-desktop/) をインストールし、設定画面で 「Use the WSL 2 based engine」が有効になっていることを確認します。セットアップやコンテナ操作を行う前に、必ず Docker Desktop を起動しておいてください。
 
 #### 3. WSL 内で clone・セットアップ
 
@@ -45,6 +49,10 @@ Ubuntu ターミナルを開き、以下を実行します。必ず WSL 内の�
 cd ~
 git clone https://github.com/kou-tech/laravel-lesson.git
 cd laravel-lesson
+
+# make が未インストールの場合は先にインストールする
+sudo apt update && sudo apt install -y make
+
 make setup
 ```
 
