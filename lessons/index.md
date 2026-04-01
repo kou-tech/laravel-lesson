@@ -17,6 +17,23 @@
 - Attendance: 受講（生徒と講座の中間テーブル）
 
 
+## 事前準備
+
+### Postmanのセットアップ
+
+本レッスンではAPIの動作確認に [Postman](https://www.postman.com/) を使用します。
+
+> 注意: ローカル環境（localhost）へリクエストを送るため、必ず デスクトップアプリ版のPostmanを使用してください。Web版（ブラウザ）ではlocalhostへのアクセスができません。
+
+以下の手順でコレクションをインポートしてください。
+
+1. Postmanを起動する
+2. 左上の「Import」ボタンをクリックする
+3. `postman/collections/実務講座チュートリアル.postman_collection.json` をドラッグ＆ドロップ（または「files」から選択）してインポートする
+
+<!-- 画像入れたい -->
+![Postmanのインポート手順](./images/postman-import.png)
+
 ## Lesson 0: 環境準備
 
 | # | タイトル | 学習目標 |
