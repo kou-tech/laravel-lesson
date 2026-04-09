@@ -14,6 +14,7 @@ init: up ## 依存インストール・マイグレーション
 		echo "⏳ 準備中... 10秒後にリトライ"; \
 		sleep 10; \
 	done
+	docker compose exec app php artisan migrate:fresh --seed
 	@echo "✅ http://localhost:8000"
 
 # コンテナ操作
