@@ -4,6 +4,33 @@
         "name": "Laravel 実務講座 コレクション",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
     },
+    "event": [
+        {
+            "listen": "prerequest",
+            "script": {
+                "type": "text/javascript",
+                "exec": [
+                    "const method = pm.request.method.toUpperCase();",
+                    "if (['POST', 'PATCH', 'PUT', 'DELETE'].includes(method)) {",
+                    "    pm.sendRequest({",
+                    "        url: pm.collectionVariables.get('BASE_URL') + '/sanctum/csrf-cookie',",
+                    "        method: 'GET'",
+                    "    }, function (error, response, { cookies }) {",
+                    "        const xsrfCookie = cookies.one('XSRF-TOKEN');",
+                    "        if (xsrfCookie) {",
+                    "            const xsrfToken = decodeURIComponent(xsrfCookie['value']);",
+                    "            pm.request.headers.upsert({",
+                    "                key: 'X-XSRF-TOKEN',",
+                    "                value: xsrfToken",
+                    "            });",
+                    "            pm.collectionVariables.set('XSRF-TOKEN', xsrfToken);",
+                    "        }",
+                    "    });",
+                    "}"
+                ]
+            }
+        }
+    ],
     "item": [
         {
             "name": "api",
