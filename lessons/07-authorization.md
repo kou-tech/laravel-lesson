@@ -202,6 +202,8 @@ Gate との違い
 
 ### Policyの作成
 
+`make app` でコンテナに入ってから、以下のコマンドを実行します。
+
 ```bash
 php artisan make:policy UserPolicy --model=User
 ```

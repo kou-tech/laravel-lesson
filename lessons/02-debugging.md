@@ -31,9 +31,13 @@ Laravelには複数のデバッグ手法があります。状況に応じて使�
 このレッスンでは、デバッグの題材として `UserController` を使います。
 まだ作成していない場合は、以下の手順で準備しましょう。
 
+まず、テストデータが入っていない場合は `make fresh` を実行して、データベースの初期化とテストデータの投入を行ってください。
+
 > Controllerの詳しい説明は [Lesson 4](./04-user-api.md) で学びます。ここではデバッグの練習用として作成します。
 
 ### 1. Controllerを生成する
+
+`make app` でコンテナに入ってから、以下のコマンドを実行します。
 
 ```bash
 php artisan make:controller Api/UserController
@@ -122,7 +126,7 @@ class UserController extends Controller
 
 ### ログの確認
 
-ログは `storage/logs/laravel.log` に出力されます。
+ログは `storage/logs/laravel.log` に出力されます。コンテナ内（`make app`）で確認しましょう。
 
 ```bash
 tail -f storage/logs/laravel.log

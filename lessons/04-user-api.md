@@ -160,6 +160,8 @@ API Resourceを使うと、これらの問題を解決できます。
 
 ### API Resourceの生成
 
+`make app` でコンテナに入ってから、以下のコマンドを実行します。
+
 ```bash
 php artisan make:resource UserResource
 ```

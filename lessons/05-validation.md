@@ -93,6 +93,8 @@ FormRequestに分離すると、
 
 ### FormRequestの生成
 
+`make app` でコンテナに入ってから、以下のコマンドを実行します。
+
 ```bash
 php artisan make:request StoreUserRequest
 ```

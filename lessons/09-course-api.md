@@ -98,6 +98,8 @@ class Course extends Model
 
 ### CourseResourceの作成
 
+`make app` でコンテナに入ってから、以下のコマンドを実行します。
+
 ```bash
 php artisan make:resource CourseResource
 ```
@@ -476,6 +478,8 @@ class CourseSeeder extends Seeder
 ```bash
 php artisan db:seed --class=CourseSeeder
 ```
+
+> 全テーブルを初期化してシーダーを実行したい場合は `make fresh` が使えます。
 
 
 ## Step 8 動作確認

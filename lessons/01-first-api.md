@@ -230,7 +230,7 @@ return $data;
 
 ## ルート一覧の確認
 
-定義したルートを確認するコマンドがあります。
+定義したルートを確認するコマンドがあります。`make app` でコンテナに入ってから実行してください。
 
 ```bash
 php artisan route:list --path=api

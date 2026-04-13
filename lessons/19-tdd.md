@@ -43,6 +43,8 @@
 
 ### テストファイルの作成
 
+`make app` でコンテナに入ってから、以下のコマンドを実行します。
+
 ```bash
 php artisan make:test Api/AttendanceCancelTest
 ```
@@ -334,6 +336,10 @@ public function destroy(Request $request, Course $course)
 ### テストを再実行して確認
 
 ```bash
+# 全テスト実行
+make test
+
+# または特定のテストファイルのみ実行（コンテナ内で）
 php artisan test tests/Feature/Api/AttendanceCancelTest.php
 ```
 

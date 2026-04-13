@@ -32,6 +32,8 @@ erDiagram
 
 ### マイグレーションの作成
 
+`make app` でコンテナに入ってから、以下のコマンドを実行します。
+
 ```bash
 php artisan make:migration create_attendances_table
 ```

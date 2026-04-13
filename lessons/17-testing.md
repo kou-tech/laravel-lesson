@@ -447,10 +447,12 @@ describe('POST /api/courses', function () {
 
 ## Step 9 テストの実行
 
+全テストの実行は `make test` で行えます。特定のテストだけ実行したい場合は、`make app` でコンテナに入ってから実行してください。
+
 ### 全テスト実行
 
 ```bash
-php artisan test
+make test
 ```
 
 ### 特定のファイルのみ

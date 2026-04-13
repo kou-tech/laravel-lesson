@@ -50,6 +50,8 @@ public function store(Request $request, Course $course)
 
 ### コマンドで生成
 
+`make app` でコンテナに入ってから、以下のコマンドを実行します。
+
 ```bash
 php artisan make:mail AttendanceConfirmation
 ```
@@ -277,12 +279,18 @@ QUEUE_CONNECTION=database
 
 ### データベースキューの準備
 
+`make app` でコンテナに入ってから実行します。
+
 ```bash
 php artisan queue:table
 php artisan migrate
 ```
 
+> DB初期化とシーダー実行を一括で行いたい場合は `make fresh` が使えます。
+
 ### キューワーカーの起動
+
+コンテナ内（`make app`）でキューワーカーを起動します。
 
 ```bash
 # 基本的な起動
