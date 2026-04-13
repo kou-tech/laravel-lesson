@@ -314,7 +314,7 @@ public function update(UpdateUserRequest $request, User $user): UserResource
 
 ### 動作確認
 
-- ユーザー更新
+Postmanのコレクション内の `api > users > {userId} > users_id`（PATCH）で確認してください。
 
 ```json
 {

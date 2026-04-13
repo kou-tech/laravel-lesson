@@ -80,8 +80,10 @@ Route::get('/users/{user}', [\App\Http\Controllers\Api\UserController::class, 's
 
 ### 4. Postmanで動作確認
 
-- GET: users
-- GET: users_id
+Postmanのコレクション内の以下のリクエストで確認します。
+
+- `api > users > users`（GET）— ユーザー一覧
+- `api > users > {userId} > users_id`（GET）— ユーザー詳細
 
 ユーザーデータが返ってくれば準備完了です。
 

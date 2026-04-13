@@ -38,11 +38,7 @@ APIルートは自動的に `/api` プレフィックスが付きます。
 
 ### 動作確認
 
-Postmanを開き、以下のリクエストを送信してください。
-
-```
-GET http://localhost:8000/api/hello
-```
+Postmanを開き、コレクション内の `api > hello > hello` を送信してください。
 
 レスポンス
 
@@ -67,11 +63,7 @@ Route::get('/fruits', function () {
 });
 ```
 
-Postmanで確認
-
-```
-GET http://localhost:8000/api/fruits
-```
+Postmanのコレクション内の `api > fruits > fruits`（GET）で確認
 
 レスポンス
 
@@ -104,11 +96,7 @@ Route::get('/fruits/{id}', function (int $id) {
 });
 ```
 
-Postmanで確認
-
-```
-GET http://localhost:8000/api/fruits/1
-```
+Postmanのコレクション内の `api > fruits > {fruitId} > fruits_id` で確認
 
 レスポンス
 
@@ -163,12 +151,11 @@ Route::post('/fruits', function () {
 });
 ```
 
-Postmanで確認
+Postmanのコレクション内の `api > fruits > fruits`（POST）で確認
 
-```
-POST http://localhost:8000/api/fruits
-Content-Type: application/json
+Bodyに以下のJSONを設定してください。
 
+```json
 {
     "name": "ぶどう",
     "price": 500

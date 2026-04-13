@@ -483,13 +483,14 @@ php artisan db:seed --class=CourseSeeder
 
 
 ## Step 8 動作確認
-Postmanで動作確認してください。
 
-- 講座一覧
-- 講座詳細
-- 講座作成（認証必要）
-- 講座更新（認証必要）
-- 講座削除 （認証必要）
+Postmanのコレクション内の以下のリクエストで確認してください。認証が必要なリクエストは、先に `login > ログイン` を実行してください。
+
+- `api > courses > 講座一覧`（GET）
+- `api > courses > {courseId} > 講座詳細`（GET）
+- `api > courses > 講座登録`（POST）— 認証必要
+- `api > courses > {courseId} > 講座更新`（PATCH）— 認証必要
+- `api > courses > {courseId} > 講座削除`（DELETE）— 認証必要
 
 ## 練習問題
 

@@ -119,11 +119,11 @@ Route::patch('/users/{user}', [\App\Http\Controllers\Api\UserController::class, 
 
 ### 動作確認
 
-Postmanで確認してください。
+Postmanのコレクション内の以下のリクエストで確認してください。
 
-- ユーザー一覧
-- ユーザー詳細
-- ユーザー更新
+- `api > users > users`（GET）— ユーザー一覧
+- `api > users > {userId} > users_id`（GET）— ユーザー詳細
+- `api > users > {userId} > users_id`（PATCH）— ユーザー更新
 
 ## Step 3 API Resourceの作成
 
@@ -245,8 +245,7 @@ class UserController extends Controller
 
 ### 動作確認
 
-Postmanで確認してください。
-- ユーザー詳細
+Postmanのコレクション内の `api > users > {userId} > users_id`（GET）で確認してください。
 
 レスポンス
 

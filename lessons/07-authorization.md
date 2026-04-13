@@ -401,10 +401,10 @@ class UserController extends Controller
 
 ### 動作確認
 
-自分自身を更新（成功）
-- /api/users/1 (PATCH)
-他人を更新しようとする（失敗）
-- /api/users/2 (PATCH)
+Postmanのコレクション内の `api > users > {userId} > users_id`（PATCH）で確認してください。
+
+- `userId` を自分のIDに設定して送信 → 成功（200）
+- `userId` を別のユーザーのIDに設定して送信 → 失敗（403）
 
 
 ## 練習問題
