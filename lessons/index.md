@@ -29,7 +29,7 @@
 
 1. Postmanを起動する
 2. 左上の「Import」ボタンをクリックする
-3. `postman/collections/実務講座チュートリアル.postman_collection.json` をドラッグ＆ドロップ（または「files」から選択）してインポートする
+3. `postman/collections/laravel-tutorial.postman_collection.json` をドラッグ＆ドロップ（または「files」から選択）してインポートする
 
 <!-- 画像入れたい -->
 ![Postmanのインポート手順](./images/postman-import.png)
