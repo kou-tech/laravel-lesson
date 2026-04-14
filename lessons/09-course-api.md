@@ -63,7 +63,6 @@ class Course extends Model
         'instructor_id',
         'capacity',
         'status',
-        'starts_at',
     ];
 
     protected function casts(): array
@@ -71,7 +70,6 @@ class Course extends Model
         return [
             'capacity' => 'integer',
             'status' => CourseStatus::class,
-            'starts_at' => 'datetime',
         ];
     }
 
@@ -129,7 +127,6 @@ class CourseResource extends JsonResource
             'capacity' => $this->resource->capacity,
             'status' => $this->resource->status,
             'status_label' => $this->resource->status->label(),
-            'starts_at' => $this->resource->starts_at?->toISOString(),
             'created_at' => $this->resource->created_at->toISOString(),
         ];
     }
@@ -409,7 +406,6 @@ class CourseFactory extends Factory
             'instructor_id' => User::factory(),
             'capacity' => fake()->numberBetween(10, 30),
             'status' => fake()->randomElement(CourseStatus::cases()),
-            'starts_at' => fake()->dateTimeBetween('+1 week', '+3 months'),
         ];
     }
 

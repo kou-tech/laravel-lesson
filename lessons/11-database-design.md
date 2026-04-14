@@ -446,7 +446,122 @@ $table->dropColumn('old_column');
 // 4. 旧カラム削除
 ```
 
-## Step 8 受講登録APIで動作確認
+## Step 8 既存テーブルへのカラム追加を実践する
+
+ここまで学んだことを使って、`courses` テーブルに「講座開始日時（`starts_at`）」を追加してみましょう。このカラムは後続のレッスン（Lesson 18 / 19）で使います。
+
+### 要件
+
+- 既存の `courses` テーブルに `starts_at`（NOT NULL）を追加する
+- 既存データには「今日の日付」を暫定値として入れる
+
+既にデータが入っているテーブルにいきなり NOT NULL カラムを追加するとエラーになるため、Step 7-3 で学んだ「一旦 nullable で追加 → データ移行 → NOT NULL に変更」の流れで進めます。
+
+### マイグレーションの作成
+
+```bash
+php artisan make:migration add_starts_at_to_courses_table
+```
+
+### マイグレーションの実装
+
+```php
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        // 1. nullable で追加
+        Schema::table('courses', function (Blueprint $table) {
+            $table->datetime('starts_at')->nullable()->after('status');
+        });
+
+        // 2. 既存データに暫定値を設定
+        DB::table('courses')
+            ->whereNull('starts_at')
+            ->update(['starts_at' => now()]);
+
+        // 3. NOT NULL に変更
+        Schema::table('courses', function (Blueprint $table) {
+            $table->datetime('starts_at')->nullable(false)->change();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::table('courses', function (Blueprint $table) {
+            $table->dropColumn('starts_at');
+        });
+    }
+};
+```
+
+### モデル・Factory・Resource の更新
+
+Lesson 9 で作成した `Course` モデル・`CourseFactory`・`CourseResource` にも `starts_at` を反映します。
+
+```php
+// app/Models/Course.php
+protected $fillable = [
+    'title',
+    'description',
+    'instructor_id',
+    'capacity',
+    'status',
+    'starts_at',  // 追加
+];
+
+protected function casts(): array
+{
+    return [
+        'capacity' => 'integer',
+        'status' => CourseStatus::class,
+        'starts_at' => 'datetime',  // 追加
+    ];
+}
+```
+
+```php
+// database/factories/CourseFactory.php
+public function definition(): array
+{
+    return [
+        'title' => fake()->sentence(3),
+        'description' => fake()->paragraph(),
+        'instructor_id' => User::factory(),
+        'capacity' => fake()->numberBetween(10, 30),
+        'status' => fake()->randomElement(CourseStatus::cases()),
+        'starts_at' => fake()->dateTimeBetween('+1 week', '+3 months'),  // 追加
+    ];
+}
+```
+
+```php
+// app/Http/Resources/CourseResource.php
+return [
+    // ...既存のフィールド
+    'status_label' => $this->resource->status->label(),
+    'starts_at' => $this->resource->starts_at?->toISOString(),  // 追加
+    'created_at' => $this->resource->created_at->toISOString(),
+];
+```
+
+### マイグレーションの適用
+
+```bash
+php artisan migrate
+```
+
+> 開発環境で壊れても問題なければ `make fresh` で全テーブルを作り直してもOKです。本番では必ず上記の段階的マイグレーションで対応します。
+
+
+## Step 9 受講登録APIで動作確認
 
 ここまでで設計したテーブル・モデル・制約が正しく機能するか、実際にAPIを1つ作って確認しましょう。
 
@@ -602,7 +717,7 @@ Schema::create('course_reviews', function (Blueprint $table) {
 </details>
 
 ### 問題2
-既存の `courses` テーブルに `starts_at` カラム（NOT NULL）を追加するマイグレーションを作成してください。既存データには今日の日付を設定します。
+既存の `courses` テーブルに `thumbnail_url` カラム（NOT NULL、文字列）を追加するマイグレーションを作成してください。既存データには空文字を設定します。Step 7-3で学んだ「一旦nullableで追加 → データ移行 → NOT NULLに変更」の手順を使ってください。
 
 <details>
 <summary>解答例</summary>
@@ -611,24 +726,24 @@ Schema::create('course_reviews', function (Blueprint $table) {
 public function up(): void
 {
     Schema::table('courses', function (Blueprint $table) {
-        $table->datetime('starts_at')->nullable()->after('status');
+        $table->string('thumbnail_url')->nullable()->after('description');
     });
 
     // 既存データにデフォルト値を設定
     DB::table('courses')
-        ->whereNull('starts_at')
-        ->update(['starts_at' => now()]);
+        ->whereNull('thumbnail_url')
+        ->update(['thumbnail_url' => '']);
 
     // NOT NULLに変更
     Schema::table('courses', function (Blueprint $table) {
-        $table->datetime('starts_at')->nullable(false)->change();
+        $table->string('thumbnail_url')->nullable(false)->change();
     });
 }
 
 public function down(): void
 {
     Schema::table('courses', function (Blueprint $table) {
-        $table->dropColumn('starts_at');
+        $table->dropColumn('thumbnail_url');
     });
 }
 ```
