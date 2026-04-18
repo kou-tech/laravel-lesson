@@ -133,3 +133,4 @@ graph TD
 ## 補足資料
 
 - [ER図](./er.md)
+- [API仕様一覧](./api-spec.md)

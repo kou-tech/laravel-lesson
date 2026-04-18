@@ -38,9 +38,10 @@
 ## Step 1 ユーザーに役割を追加する
 
 このStepでは以下を実装します。
-- Userモデルに`role`フィールドを追加
 - UserRole Enumを作成
-- Userモデルにキャストと便利メソッドを追加
+- Userモデルに`role`フィールドのfillable・キャスト・便利メソッドを追加
+
+> `users` テーブルの `role` カラムと、`test@example.com`（student）/`test2@example.com`（instructor）のテストユーザーは、初期マイグレーションと `DatabaseSeeder` で既に用意済みです。追加のマイグレーションは不要です。
 
 ### Userモデルの修正
 
@@ -108,97 +109,17 @@ public function isStudent(): bool
 ```
 
 
-## Step 2 Gateを使った認可
-
-このStepでは以下を実装します。
-- AppServiceProviderにGateを定義
-
-### Gateとは
-
-Gate は、特定のアクションに対する認可を定義するシンプルな方法です。
-
-### Gateの定義
-
-`app/Providers/AppServiceProvider.php` の `boot` メソッドに追加します。
-
-```php
-use Illuminate\Support\Facades\Gate;
-use App\Enums\UserRole;
-
-public function boot(): void
-{
-    // 講師のみアクセス可能なアクション
-    Gate::define('manage-courses', function ($user) {
-        return $user->isInstructor();
-    });
-
-    // 自分自身の情報のみアクセス可能
-    Gate::define('access-own-data', function ($user, $targetUser) {
-        return $user->id === $targetUser->id;
-    });
-}
-```
-
-### Gateの使用
-
-Controllerで使う
-
-```php
-use Illuminate\Support\Facades\Gate;
-
-public function manageCourses()
-{
-    // 認可チェック（失敗時は403エラー）
-    Gate::authorize('manage-courses');
-
-    // ここに到達 = 認可OK
-    return response()->json(['message' => '講座管理画面']);
-}
-```
-
-条件分岐で使う
-
-```php
-if (Gate::allows('manage-courses')) {
-    // 認可OK
-}
-
-if (Gate::denies('manage-courses')) {
-    // 認可NG
-}
-```
-
-パラメータ付きで使う
-
-```php
-Gate::authorize('access-own-data', $targetUser);
-```
-
-
-## Step 3 Policyを使った認可
+## Step 2 Policyを使った認可
 
 このStepでは以下を実装します。
 - UserPolicyを作成
 - 認可メソッド（view, update, delete等）を実装
 
-### GateとPolicyの使い分け
-
-```mermaid
-flowchart TD
-    A[認可が必要] --> B{モデルに紐づく?}
-    B -->|Yes| C[Policy]
-    B -->|No| D[Gate]
-    C --> E[UserPolicy, CoursePolicy...]
-    D --> F[manage-courses, create-course...]
-```
-
 ### Policyとは
 
-Policy は、特定のモデルに対する認可ルールをまとめたクラスです。
+Policy は、特定のモデルに対する認可ルールをまとめたクラスです。「このユーザーを編集できるか」のようなモデルに紐づくアクションを扱います。
 
-Gate との違い
-- Gate: 汎用的なアクション（「管理画面にアクセスできるか」）
-- Policy: モデルに紐づくアクション（「このユーザーを編集できるか」）
+> Laravelには Policy のほかに `Gate` という仕組みもあり、モデルに紐づかない汎用アクション（例: 「管理画面にアクセスできるか」）に使われます。本コースでは Policy を採用します。Gate の使い方はレッスン末尾の「参考」節を参照してください。
 
 ### Policyの作成
 
@@ -288,47 +209,29 @@ public function boot(): void
 ```
 
 
-## Step 4 Policyをコントローラーで使う
+## Step 3 Policyをコントローラーで使う（使い方の解説）
 
-このStepでは、Step 3で作成したPolicyの使い方を学びます。
+このStepでは、Policy を Controller から呼び出す方法を解説します。実際にコードを書くのは Step 4 です（ここでは見方を押さえるだけでOK）。
 
 ### authorize メソッド
 
 ```php
+// 例: show で view を、update で update を呼び出す
 public function show(User $user)
 {
-    // Policyの view メソッドをチェック
-    $this->authorize('view', $user);
-
+    $this->authorize('view', $user);    // UserPolicy@view
     return new UserResource($user);
 }
 
 public function update(Request $request, User $user)
 {
-    // Policyの update メソッドをチェック
-    $this->authorize('update', $user);
-
+    $this->authorize('update', $user);  // UserPolicy@update
     $user->update($request->validated());
-
     return new UserResource($user);
 }
 ```
 
-### Gate::authorize との違い
-
-```php
-// Gate（第1引数がアクション名）
-Gate::authorize('manage-courses');
-
-// Policy（$this->authorize はコントローラーのメソッド）
-$this->authorize('view', $user);  // UserPolicyのviewメソッド
-```
-
-## Step 5 認可エラーのレスポンス
-
-このStepでは、認可エラー時のレスポンスについて学びます。
-
-### デフォルトの動作
+### 認可失敗時のレスポンス
 
 認可に失敗すると、LaravelはHTTP 403エラーを返します。
 
@@ -338,7 +241,170 @@ $this->authorize('view', $user);  // UserPolicyのviewメソッド
 }
 ```
 
-### カスタムメッセージ
+本コースは既定メッセージのまま進めます。メッセージをカスタマイズする方法はレッスン末尾の「参考」節を参照してください。
+
+
+## Step 4 実践例 - ユーザー編集APIの保護
+
+ここが本レッスンの「手を動かす」メインパートです。以下を行います。
+
+- ルート: `PATCH /api/users/{user}` を `auth:sanctum` ミドルウェアグループに移動
+- Controller: 既存の `UserController@update`（Lesson 5 で作成済み）の先頭に `$this->authorize('update', $user)` を1行追加
+
+### ルートの変更
+
+`routes/api.php` — 既存の `/users` / `/users/{user}`（GET）は公開のまま。`PATCH /users/{user}` のみ `auth:sanctum` グループ内に移動します。
+
+```php
+// 公開API
+Route::get('/users', [UserController::class, 'index']);
+Route::get('/users/{user}', [UserController::class, 'show']);
+
+// 認証必要
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/me', [UserController::class, 'me']);
+    Route::patch('/me', [UserController::class, 'updateMe']);
+    Route::patch('/users/{user}', [UserController::class, 'update']); // 移動
+});
+```
+
+### Controllerの修正
+
+既存の `UserController@update` に `$this->authorize('update', $user);` の1行だけ追加します。メソッド全体を置き換える必要はありません。
+
+```php
+public function update(UpdateRequest $request, User $user): UserResource
+{
+    $this->authorize('update', $user);  // ← 追加
+
+    $user->update($request->validated());
+
+    return new UserResource($user);
+}
+```
+
+### 動作確認
+
+先に `login > ログイン` を実行してセッションを発行してから、Postmanのコレクション内の `api > users > {userId} > users_id`（PATCH）で確認してください。
+
+> 設定箇所
+> - `Params > Path Variables` の `userId` を対象ユーザーのIDに書き換える
+> - `Body > raw (JSON)` には更新用サンプルJSON（`name`, `email`）が事前設定済み。必要に応じて編集してください
+
+- `userId` を自分のIDに設定して送信 → 成功（200）
+- `userId` を別のユーザーのIDに設定して送信 → 失敗（403）
+
+
+## 練習問題
+
+> 動作確認用に Postman コレクションへ以下のリクエストを用意しています。
+> - 問題1: `api > users > {userId} > 役割変更`（PATCH `/api/users/:userId/role`、Body に `{"role":"instructor"}` 事前設定）
+
+### 問題1
+UserPolicyに `updateRole` メソッドを追加し、「講師のみ生徒の役割を変更できる」という認可を実装してください。また、`PATCH /api/users/{user}/role` エンドポイントを追加して動作確認してください。
+
+<details>
+<summary>解答例</summary>
+
+UserPolicy
+
+```php
+public function updateRole(User $user, User $model): bool
+{
+    // 講師のみが生徒の役割を変更できる
+    return $user->isInstructor() && $model->isStudent();
+}
+```
+
+UserController
+
+```php
+use App\Enums\UserRole;
+use Illuminate\Validation\Rule;
+
+public function updateRole(Request $request, User $user): UserResource
+{
+    $this->authorize('updateRole', $user);
+
+    $validated = $request->validate([
+        'role' => ['required', Rule::enum(UserRole::class)],
+    ]);
+
+    $user->update($validated);
+
+    return new UserResource($user);
+}
+```
+
+ルート（`auth:sanctum` グループ内に追加）
+
+```php
+Route::patch('/users/{user}/role', [UserController::class, 'updateRole']);
+```
+</details>
+
+## 参考
+
+本コースでは実装しませんが、知識として押さえておきたい関連トピックです。
+
+### Gate を使った認可
+
+Gate は、特定のモデルに紐づかない汎用的なアクションの認可に使います。
+
+#### GateとPolicyの使い分け
+
+```mermaid
+flowchart TD
+    A[認可が必要] --> B{モデルに紐づく?}
+    B -->|Yes| C[Policy]
+    B -->|No| D[Gate]
+    C --> E[UserPolicy, CoursePolicy...]
+    D --> F[manage-courses, create-course...]
+```
+
+#### Gateの定義
+
+`app/Providers/AppServiceProvider.php` の `boot` メソッドに追加します。
+
+```php
+use Illuminate\Support\Facades\Gate;
+
+public function boot(): void
+{
+    // 講師のみアクセス可能なアクション
+    Gate::define('manage-courses', function ($user) {
+        return $user->isInstructor();
+    });
+
+    // 自分自身の情報のみアクセス可能
+    Gate::define('access-own-data', function ($user, $targetUser) {
+        return $user->id === $targetUser->id;
+    });
+}
+```
+
+#### Gateの使用
+
+```php
+use Illuminate\Support\Facades\Gate;
+
+// Controllerで使う（失敗時は403エラー）
+Gate::authorize('manage-courses');
+
+// 条件分岐で使う
+if (Gate::allows('manage-courses')) {
+    // 認可OK
+}
+
+if (Gate::denies('manage-courses')) {
+    // 認可NG
+}
+
+// パラメータ付き
+Gate::authorize('access-own-data', $targetUser);
+```
+
+### 認可エラーのカスタムメッセージ
 
 Policyでカスタムレスポンスを返せます。
 
@@ -355,91 +421,6 @@ public function update(User $user, User $model): Response
 }
 ```
 
-
-## Step 6 実践例 - ユーザー編集APIの保護
-
-このStepでは以下を実装します。
-- 認証が必要なルートを追加
-- UserControllerにupdateメソッドを実装（認可チェック付き）
-
-### ルートの定義
-
-```php
-// routes/api.php
-Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/me', [UserController::class, 'me']);
-    Route::patch('/users/{user}', [UserController::class, 'update']);
-});
-```
-
-### Controllerの実装
-
-```php
-<?php
-
-namespace App\Http\Controllers\Api;
-
-use App\Http\Controllers\Controller;
-use App\Http\Requests\UpdateUserRequest;
-use App\Http\Resources\UserResource;
-use App\Models\User;
-
-class UserController extends Controller
-{
-    public function update(UpdateUserRequest $request, User $user): UserResource
-    {
-        // 認可チェック
-        $this->authorize('update', $user);
-
-        // 更新
-        $user->update($request->validated());
-
-        return new UserResource($user);
-    }
-}
-```
-
-### 動作確認
-
-Postmanのコレクション内の `api > users > {userId} > users_id`（PATCH）で確認してください。
-
-- `userId` を自分のIDに設定して送信 → 成功（200）
-- `userId` を別のユーザーのIDに設定して送信 → 失敗（403）
-
-
-## 練習問題
-
-### 問題1
-UserPolicyに `updateRole` メソッドを追加し、「講師のみ生徒の役割を変更できる」という認可を実装してください。
-
-<details>
-<summary>解答例</summary>
-
-```php
-public function updateRole(User $user, User $model): bool
-{
-    // 講師のみが生徒の役割を変更できる
-    return $user->isInstructor() && $model->isStudent();
-}
-```
-
-コントローラーでの使用例
-
-```php
-public function updateRole(Request $request, User $user)
-{
-    $this->authorize('updateRole', $user);
-
-    $validated = $request->validate([
-        'role' => ['required', Rule::enum(UserRole::class)],
-    ]);
-
-    $user->update($validated);
-
-    return new UserResource($user);
-}
-```
-</details>
 
 ## 参考資料
 

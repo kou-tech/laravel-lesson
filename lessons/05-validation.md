@@ -64,9 +64,7 @@ public function store(Request $request)
 ```
 
 
-## Step 2 FormRequestの作成
-
-### なぜFormRequestを使うのか
+## Step 2 FormRequestを使う理由
 
 Controllerにバリデーションを書くと、
 
@@ -91,67 +89,9 @@ FormRequestに分離すると、
 - バリデーションロジックを再利用できる
 - 単体テストが書きやすい
 
-### FormRequestの生成
+実際の作成・実装・使い方は Step 4 で `User/UpdateRequest` を作りながら手を動かして学びます。
 
-`make app` でコンテナに入ってから、以下のコマンドを実行します。
-
-```bash
-php artisan make:request StoreUserRequest
-```
-
-`app/Http/Requests/StoreUserRequest.php` が作成されます。
-
-### FormRequestの実装
-
-```php
-<?php
-
-namespace App\Http\Requests;
-
-use Illuminate\Foundation\Http\FormRequest;
-
-class StoreUserRequest extends FormRequest
-{
-    /**
-     * リクエストの認可判定
-     */
-    public function authorize(): bool
-    {
-        // 認可ロジックはPolicyで行うため、ここではtrueを返す
-        return true;
-    }
-
-    /**
-     * バリデーションルール
-     */
-    public function rules(): array
-    {
-        return [
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'unique:users'],
-            'password' => ['required', 'string', 'min:8'],
-        ];
-    }
-}
-```
-
-### Controllerでの使用
-
-```php
-use App\Http\Requests\StoreUserRequest;
-
-public function store(StoreUserRequest $request)
-{
-    // バリデーション済みのデータを取得
-    $validated = $request->validated();
-
-    $user = User::create($validated);
-
-    return new UserResource($user);
-}
-```
-
-型宣言でFormRequestを指定するだけで、自動的にバリデーションが実行されます。
+> 命名・配置の方針: 本コースでは FormRequest をリソース名のサブディレクトリにまとめ、クラス名はアクションのみ（`StoreRequest` / `UpdateRequest` など）に揃えます。`app/Http/Requests/` 直下が肥大化せず、クラス名も短くなるためです。
 
 
 ## Step 3 よく使うバリデーションルール
@@ -175,7 +115,6 @@ public function store(StoreUserRequest $request)
 | min:8 | 最小文字数 | `'password' => ['min:8']` |
 | email | メール形式 | `'email' => ['email']` |
 | url | URL形式 | `'website' => ['url']` |
-| regex | 正規表現 | `'code' => ['regex:/^[A-Z]{3}$/']` |
 
 ### 数値ルール
 
@@ -192,93 +131,51 @@ public function store(StoreUserRequest $request)
 | unique:users | 一意制約 | `'email' => ['unique:users']` |
 | exists:courses,id | 存在確認 | `'course_id' => ['exists:courses,id']` |
 
-### 更新時のuniqueルール
+### Enumルール
 
-更新時は自分自身を除外する必要があります。
+PHPの `enum` を使っているフィールドは、`Rule::enum()` でそのenumに定義されている値のみを許可できます。
 
 ```php
 use Illuminate\Validation\Rule;
+use App\Enums\CourseStatus;
 
 public function rules(): array
 {
     return [
-        'email' => [
-            'required',
-            'email',
-            Rule::unique('users')->ignore($this->user),
-        ],
+        'status' => ['required', Rule::enum(CourseStatus::class)],
     ];
 }
 ```
 
-## Step 4 条件付きバリデーション
+| ルール | 説明 | 例 |
+|--------|------|-----|
+| Rule::enum | 指定したEnumの値のみ許可 | `'status' => [Rule::enum(CourseStatus::class)]` |
 
-### sometimes ルール
+ポイント
+- 不正な値（enumに定義されていない文字列など）が送られると自動で422エラー
+- enum側に値を追加/削除すれば、バリデーションルールも自動的に追従する
 
-フィールドが存在する場合のみバリデーション
+## Step 4 実践例 - ユーザー更新API
 
-```php
-public function rules(): array
-{
-    return [
-        'name' => ['sometimes', 'string', 'max:255'],
-        'email' => ['sometimes', 'email'],
-    ];
-}
-```
+### User/UpdateRequest の作成
 
-PATCH リクエストで部分更新する場合に便利です。
-
-### 動的なルール
-
-```php
-public function rules(): array
-{
-    $rules = [
-        'name' => ['required', 'string', 'max:255'],
-        'email' => ['required', 'email'],
-    ];
-
-    // 新規作成時のみパスワード必須
-    if ($this->isMethod('post')) {
-        $rules['password'] = ['required', 'string', 'min:8'];
-    }
-
-    return $rules;
-}
-```
-
-### withValidator メソッド
-
-複雑な条件付きバリデーション
-
-```php
-public function withValidator($validator)
-{
-    $validator->sometimes('capacity', 'min:10', function ($input) {
-        return $input->status === 'active';
-    });
-}
-```
-
-
-## Step 5 実践例 - ユーザー更新API
-
-### UpdateUserRequestの作成
+`make app` でコンテナに入ってから、以下のコマンドを実行します。
 
 ```bash
-php artisan make:request UpdateUserRequest
+php artisan make:request User/UpdateRequest
 ```
+
+`app/Http/Requests/User/UpdateRequest.php` が生成されます（名前空間は `App\Http\Requests\User`、クラス名は `UpdateRequest`）。
 
 ```php
 <?php
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\User;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class UpdateUserRequest extends FormRequest
+class UpdateRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -302,9 +199,9 @@ class UpdateUserRequest extends FormRequest
 ### Controllerでの使用
 
 ```php
-use App\Http\Requests\UpdateUserRequest;
+use App\Http\Requests\User\UpdateRequest;
 
-public function update(UpdateUserRequest $request, User $user): UserResource
+public function update(UpdateRequest $request, User $user): UserResource
 {
     $user->update($request->validated());
 
@@ -315,6 +212,19 @@ public function update(UpdateUserRequest $request, User $user): UserResource
 ### 動作確認
 
 Postmanのコレクション内の `api > users > {userId} > users_id`（PATCH）で確認してください。
+
+> 補足
+> - `userId` は `Path Variables` に `1` が事前設定されています。
+> - Body には有効なサンプル（`name`, `email`）が事前設定されています。バリデーションエラーを発生させるために、`email` の値を以下のように不正な形式に書き換えて送信してください。
+>
+> ```json
+> {
+>     "name": "更新後の名前",
+>     "email": "invalid-email"
+> }
+> ```
+
+レスポンス（ステータスコード 422）
 
 ```json
 {
@@ -328,14 +238,23 @@ Postmanのコレクション内の `api > users > {userId} > users_id`（PATCH�
 ```
 
 
-## Step 6 バリデーションのベストプラクティス
+## Step 5 バリデーションのベストプラクティス
 
 ### 1. 命名規則
 
+リソース名のサブディレクトリを切り、クラス名はアクション名のみで表します。
+
 ```
-Store{Model}Request  - 作成用
-Update{Model}Request - 更新用
+app/Http/Requests/
+├── User/
+│   ├── StoreRequest.php   - 作成用
+│   └── UpdateRequest.php  - 更新用
+└── Course/
+    ├── StoreRequest.php
+    └── UpdateRequest.php
 ```
+
+生成コマンドは `php artisan make:request User/UpdateRequest` のようにスラッシュで区切ります。`app/Http/Requests/` 直下の肥大化を避け、クラス名も短く保てます。
 
 ### 2. 適切なルールの選択
 
@@ -360,7 +279,7 @@ Update{Model}Request - 更新用
 ## 練習問題
 
 ### 問題1
-講座作成用の `StoreCourseRequest` を作成してください。以下のルールを設定してください。
+講座作成用の `Course/StoreRequest` を作成してください（`php artisan make:request Course/StoreRequest`）。以下のルールを設定してください。
 - `title` は必須、文字列、最大255文字
 - `description` は任意、文字列
 - `capacity` は必須、整数、1以上100以下
@@ -371,11 +290,11 @@ Update{Model}Request - 更新用
 ```php
 <?php
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\Course;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class StoreCourseRequest extends FormRequest
+class StoreRequest extends FormRequest
 {
     public function authorize(): bool
     {

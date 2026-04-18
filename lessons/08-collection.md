@@ -10,6 +10,8 @@
 - Eloquentコレクションの特徴を理解する
 - メソッドチェーンでデータを加工できる
 
+> このレッスンはコレクションメソッドの文法・用法を学ぶリファレンス中心のレッスンです。プロジェクトのコードには反映せず、各メソッドの挙動を理解しておきます。実際にコレクションメソッドを使った実装は Lesson 9（Course API）以降で行います。練習問題も挙動確認のため、`php artisan tinker` などで試してみてください。
+
 
 ## コレクションとは
 
@@ -55,11 +57,16 @@ $users = collect([
 
 ### Eloquentコレクション
 
-Eloquentでクエリを実行すると、結果は `Eloquent\Collection` として返されます。
+Eloquentでクエリを実行すると、**複数件**の結果は `Eloquent\Collection` として返されます。
 
 ```php
 $courses = Course::all();  // Eloquent\Collection
-$course = Course::find(1); // Model（単体）
+```
+
+一方、単体取得（`find` / `first`）はモデルのインスタンスを返します。コレクションではないので、以降で紹介するコレクションメソッドは使えない点に注意してください。
+
+```php
+$course = Course::find(1); // App\Models\Course（単体モデル）
 ```
 
 
@@ -190,7 +197,7 @@ $count = $courses->count();  // 10
 $totalCapacity = $courses->sum('capacity');  // 200
 
 // コールバックで計算
-$total = $courses->sum(fn($c) => $c->capacity * $c->price);
+$doubled = $courses->sum(fn($c) => $c->capacity * 2);
 ```
 
 ### avg / average - 平均
@@ -367,6 +374,30 @@ $names = $products
     ->pluck('name')
     ->values();
 // ['パソコン', 'キーボード']
+```
+</details>
+
+### 問題2
+以下のコレクションから、カテゴリごとの商品数を取得してください。
+
+```php
+$products = collect([
+    ['name' => 'りんご', 'category' => 'fruit'],
+    ['name' => 'みかん', 'category' => 'fruit'],
+    ['name' => 'パソコン', 'category' => 'electronics'],
+    ['name' => 'ノート', 'category' => 'stationery'],
+    ['name' => 'キーボード', 'category' => 'electronics'],
+]);
+```
+
+<details>
+<summary>解答例</summary>
+
+```php
+$counts = $products
+    ->groupBy('category')
+    ->map(fn($items) => $items->count());
+// ['fruit' => 2, 'electronics' => 2, 'stationery' => 1]
 ```
 </details>
 

@@ -120,7 +120,7 @@ class CourseController extends Controller
         private NotificationService $notificationService
     ) {}
 
-    public function store(StoreCourseRequest $request)
+    public function store(StoreRequest $request)
     {
         $course = $this->courseService->create(
             $request->validated(),
@@ -140,7 +140,7 @@ class CourseController extends Controller
 
 ```php
 public function store(
-    StoreCourseRequest $request,
+    StoreRequest $request,
     CourseService $courseService  // メソッドで注入
 )
 {

@@ -245,7 +245,7 @@ public function createCourseAndNotify(Request $request)
 ```php
 class CourseController extends Controller
 {
-    public function store(StoreCourseRequest $request)
+    public function store(StoreRequest $request)
     {
         $course = $this->courseService->create(
             $request->validated(),

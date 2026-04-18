@@ -13,6 +13,8 @@
 
 ## Step 1 モデルの作成
 
+> `courses` テーブルのマイグレーション（`2026_01_04_065543_create_courses_table.php`）は既に用意済みです。追加のマイグレーションは不要です。
+
 ### CourseStatus Enumの作成
 
 `app/Enums/CourseStatus.php`
@@ -127,7 +129,7 @@ class CourseResource extends JsonResource
             'capacity' => $this->resource->capacity,
             'status' => $this->resource->status,
             'status_label' => $this->resource->status->label(),
-            'created_at' => $this->resource->created_at->toISOString(),
+            'created_at' => $this->resource->created_at->format('Y-m-d H:i:s'),
         ];
     }
 }
@@ -136,22 +138,24 @@ class CourseResource extends JsonResource
 
 ## Step 3 FormRequestの作成
 
-### StoreCourseRequest
+Lesson 5 で決めた命名規則に従い、`Course/` サブディレクトリに `StoreRequest` / `UpdateRequest` を作成します。
+
+### Course/StoreRequest
 
 ```bash
-php artisan make:request StoreCourseRequest
+php artisan make:request Course/StoreRequest
 ```
 
 ```php
 <?php
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\Course;
 
 use App\Enums\CourseStatus;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class StoreCourseRequest extends FormRequest
+class StoreRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -170,20 +174,24 @@ class StoreCourseRequest extends FormRequest
 }
 ```
 
-### UpdateCourseRequest
+### Course/UpdateRequest
 
-同様に `UpdateCourseRequest` も作成します。
+同様に `Course/UpdateRequest` も作成します。
+
+```bash
+php artisan make:request Course/UpdateRequest
+```
 
 ```php
 <?php
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\Course;
 
 use App\Enums\CourseStatus;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class UpdateCourseRequest extends FormRequest
+class UpdateRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -203,134 +211,9 @@ class UpdateCourseRequest extends FormRequest
 ```
 
 
-## Step 4 Controllerの実装
+## Step 4 Policyの作成
 
-### CourseControllerの作成
-
-```bash
-php artisan make:controller Api/CourseController
-```
-
-`app/Http/Controllers/Api/CourseController.php`
-
-```php
-<?php
-
-namespace App\Http\Controllers\Api;
-
-use App\Http\Controllers\Controller;
-use App\Http\Requests\StoreCourseRequest;
-use App\Http\Requests\UpdateCourseRequest;
-use App\Http\Resources\CourseResource;
-use App\Models\Course;
-use Illuminate\Http\Request;
-
-class CourseController extends Controller
-{
-    /**
-     * 講座一覧を取得
-     */
-    public function index(Request $request)
-    {
-        $query = Course::with('instructor');
-
-        // ステータスでフィルタリング
-        if ($request->has('status')) {
-            $query->where('status', $request->input('status'));
-        }
-
-        // ページネーション
-        $perPage = $request->input('per_page', 15);
-        $courses = $query->latest()->paginate($perPage);
-
-        return CourseResource::collection($courses);
-    }
-
-    /**
-     * 講座詳細を取得
-     */
-    public function show(Course $course): CourseResource
-    {
-        $course->load('instructor');
-
-        return new CourseResource($course);
-    }
-
-    /**
-     * 講座を作成
-     */
-    public function store(StoreCourseRequest $request): CourseResource
-    {
-        $this->authorize('create', Course::class);
-
-        $course = Course::create([
-            ...$request->validated(),
-            'instructor_id' => $request->user()->id,
-        ]);
-
-        $course->load('instructor');
-
-        return new CourseResource($course);
-    }
-
-    /**
-     * 講座を更新
-     */
-    public function update(UpdateCourseRequest $request, Course $course): CourseResource
-    {
-        $this->authorize('update', $course);
-
-        $course->update($request->validated());
-        $course->load('instructor');
-
-        return new CourseResource($course);
-    }
-
-    /**
-     * 講座を削除
-     */
-    public function destroy(Course $course)
-    {
-        $this->authorize('delete', $course);
-
-        $course->delete();
-
-        return response()->json(null, 204);
-    }
-}
-```
-
-
-## Step 5 ルーティングの設定
-
-`routes/api.php`
-
-```php
-<?php
-
-use App\Http\Controllers\Api\CourseController;
-use App\Http\Controllers\Api\UserController;
-use Illuminate\Support\Facades\Route;
-
-// 公開API（認証不要）
-Route::get('/courses', [CourseController::class, 'index']);
-Route::get('/courses/{course}', [CourseController::class, 'show']);
-
-// 認証が必要なAPI
-Route::middleware('auth:sanctum')->group(function () {
-    // ユーザー関連
-    Route::get('/me', [UserController::class, 'me']);
-    Route::patch('/users/{user}', [UserController::class, 'update']);
-
-    // 講座管理
-    Route::post('/courses', [CourseController::class, 'store']);
-    Route::patch('/courses/{course}', [CourseController::class, 'update']);
-    Route::delete('/courses/{course}', [CourseController::class, 'destroy']);
-});
-```
-
-
-## Step 6 Policyの作成
+Controller で `$this->authorize()` を呼ぶ前に、先に Policy を用意しておきます。
 
 ### CoursePolicyの作成
 
@@ -375,6 +258,126 @@ class CoursePolicy
     }
 }
 ```
+
+
+## Step 5 Controllerの実装
+
+### CourseControllerの作成
+
+```bash
+php artisan make:controller Api/CourseController
+```
+
+`app/Http/Controllers/Api/CourseController.php`
+
+```php
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Http\Requests\Course\StoreRequest;
+use App\Http\Requests\Course\UpdateRequest;
+use App\Http\Resources\CourseResource;
+use App\Models\Course;
+use Illuminate\Http\Request;
+
+class CourseController extends Controller
+{
+    /**
+     * 講座一覧を取得
+     */
+    public function index(Request $request)
+    {
+        $query = Course::with('instructor');
+
+        // ステータスでフィルタリング
+        if ($request->has('status')) {
+            $query->where('status', $request->input('status'));
+        }
+
+        // ページネーション
+        $perPage = $request->input('per_page', 15);
+        $courses = $query->latest()->paginate($perPage);
+
+        return CourseResource::collection($courses);
+    }
+
+    /**
+     * 講座詳細を取得
+     */
+    public function show(Course $course): CourseResource
+    {
+        $course->load('instructor');
+
+        return new CourseResource($course);
+    }
+
+    /**
+     * 講座を作成
+     */
+    public function store(StoreRequest $request): CourseResource
+    {
+        $this->authorize('create', Course::class);
+
+        $course = Course::create([
+            ...$request->validated(),
+            'instructor_id' => $request->user()->id,
+        ]);
+
+        $course->load('instructor');
+
+        return new CourseResource($course);
+    }
+
+    /**
+     * 講座を更新
+     */
+    public function update(UpdateRequest $request, Course $course): CourseResource
+    {
+        $this->authorize('update', $course);
+
+        $course->update($request->validated());
+        $course->load('instructor');
+
+        return new CourseResource($course);
+    }
+
+    /**
+     * 講座を削除
+     */
+    public function destroy(Course $course)
+    {
+        $this->authorize('delete', $course);
+
+        $course->delete();
+
+        return response()->json(null, 204);
+    }
+}
+```
+
+
+## Step 6 ルーティングの設定
+
+`routes/api.php` に **以下のルートを追加** します（既存の UserController 系ルートはそのまま残します）。
+
+```php
+use App\Http\Controllers\Api\CourseController;
+
+// 公開API（認証不要）
+Route::get('/courses', [CourseController::class, 'index']);
+Route::get('/courses/{course}', [CourseController::class, 'show']);
+
+// 認証が必要なAPI（既存の auth:sanctum グループに追加）
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/courses', [CourseController::class, 'store']);
+    Route::patch('/courses/{course}', [CourseController::class, 'update']);
+    Route::delete('/courses/{course}', [CourseController::class, 'destroy']);
+});
+```
+
+> すでに `auth:sanctum` グループが定義されている場合は、講座管理のルート3つを同グループ内に追記してください。
 
 
 ## Step 7 テストデータの作成
@@ -488,7 +491,22 @@ Postmanのコレクション内の以下のリクエストで確認してくだ�
 - `api > courses > {courseId} > 講座更新`（PATCH）— 認証必要
 - `api > courses > {courseId} > 講座削除`（DELETE）— 認証必要
 
+> Postman側の事前設定
+>
+> | リクエスト | Path Variables | Body（`raw / JSON`） |
+> |---|---|---|
+> | 講座詳細（GET） | `courseId = 1` | なし |
+> | 講座登録（POST） | — | `title`, `description`, `capacity`, `status` を含むサンプルJSON |
+> | 講座更新（PATCH） | `courseId = 1` | `title`, `capacity`, `status` を含むサンプルJSON |
+> | 講座削除（DELETE） | `courseId = 1` | なし |
+>
+> `courseId` の値や Body のフィールド（例: `title`, `status` など）を変えたいときは、Postman の `Params > Path Variables` と `Body > raw (JSON)` を直接編集してください。存在しないIDを指定すれば 404、バリデーションに反する値を入れれば 422 の確認もできます。
+
 ## 練習問題
+
+> 動作確認用に Postman コレクションへ以下のリクエストを用意しています。
+> - 問題1: 既存の `api > courses > 講座一覧` にクエリパラメータ `instructor=山田` を追加して確認
+> - 問題2: `api > courses > 講座ステータス別件数`（GET `/api/courses/stats`）
 
 ### 問題1
 講座一覧APIに「講師名で検索」機能を追加してください。クエリパラメータ `instructor` で講師名を部分一致検索できるようにしてください。

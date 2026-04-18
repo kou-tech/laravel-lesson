@@ -26,26 +26,25 @@
 Laravelには複数のデバッグ手法があります。状況に応じて使い分けましょう。
 
 
-## Step 1 準備 - UserControllerを作成する
+## Step 1 準備 - DebugControllerを作成する
 
-このレッスンでは、デバッグの題材として `UserController` を使います。
-まだ作成していない場合は、以下の手順で準備しましょう。
+このレッスンでは、デバッグ手法を試すための「使い捨てコントローラー」として `DebugController` を用意します。
 
 まず、テストデータが入っていない場合は `make fresh` を実行して、データベースの初期化とテストデータの投入を行ってください。
 
-> Controllerの詳しい説明は [Lesson 4](./04-user-api.md) で学びます。ここではデバッグの練習用として作成します。
+> Controllerの詳しい説明は [Lesson 4](./04-user-api.md) で学びます。`DebugController` はLesson 2専用の練習用コントローラーなので、Lesson 2 完了後はそのまま残しておいても、削除しても構いません。
 
 ### 1. Controllerを生成する
 
 `make app` でコンテナに入ってから、以下のコマンドを実行します。
 
 ```bash
-php artisan make:controller Api/UserController
+php artisan make:controller Api/DebugController
 ```
 
-### 2. UserControllerを編集する
+### 2. DebugControllerを編集する
 
-`app/Http/Controllers/Api/UserController.php` を以下の内容に書き換えます。
+`app/Http/Controllers/Api/DebugController.php` を以下の内容に書き換えます。
 
 ```php
 <?php
@@ -55,7 +54,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 
-class UserController extends Controller
+class DebugController extends Controller
 {
     public function index()
     {
@@ -74,16 +73,16 @@ class UserController extends Controller
 `routes/api.php` に以下を追加します。
 
 ```php
-Route::get('/users', [\App\Http\Controllers\Api\UserController::class, 'index']);
-Route::get('/users/{user}', [\App\Http\Controllers\Api\UserController::class, 'show']);
+Route::get('/debug/users', [\App\Http\Controllers\Api\DebugController::class, 'index']);
+Route::get('/debug/users/{user}', [\App\Http\Controllers\Api\DebugController::class, 'show']);
 ```
 
 ### 4. Postmanで動作確認
 
 Postmanのコレクション内の以下のリクエストで確認します。
 
-- `api > users > users`（GET）— ユーザー一覧
-- `api > users > {userId} > users_id`（GET）— ユーザー詳細
+- `api > debug > ユーザー一覧（デバッグ用）`（GET）— `/api/debug/users`
+- `api > debug > ユーザー詳細（デバッグ用）`（GET）— `/api/debug/users/:userId`（`Path Variables` の `userId` に初期値 `1` が設定済み）
 
 ユーザーデータが返ってくれば準備完了です。
 
@@ -101,7 +100,7 @@ Postmanのコレクション内の以下のリクエストで確認します。
 
 ### 基本的な使い方
 
-`UserController` にログ出力を追加してみましょう。
+`DebugController` にログ出力を追加してみましょう。
 
 ```php
 <?php
@@ -112,11 +111,11 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
 
-class UserController extends Controller
+class DebugController extends Controller
 {
     public function show(User $user)
     {
-        Log::info('UserController@show が呼ばれました', [
+        Log::info('DebugController@show が呼ばれました', [
             'user_id' => $user->id,
             'user_name' => $user->name,
         ]);
@@ -137,7 +136,7 @@ tail -f storage/logs/laravel.log
 APIを呼び出すと、以下のようなログが出力されます。
 
 ```
-[2025-01-01 12:00:00] local.INFO: UserController@show が呼ばれました {"user_id":1,"user_name":"テストユーザー"}
+[2025-01-01 12:00:00] local.INFO: DebugController@show が呼ばれました {"user_id":1,"user_name":"テストユーザー"}
 ```
 
 ### ログレベル
@@ -198,35 +197,11 @@ public function show(User $user)
    - `full_name` は User モデルに存在しない
    - `name` プロパティを使うか、アクセサを追加する
 
-## ベストプラクティス
-
-### 本番環境に残すログは info 以上
-
-```php
-// NG: 本番環境でdebugログが大量に出る
-Log::debug('ループの中で毎回ログ');
-
-// OK: 重要な操作のみログに残す
-Log::info('ユーザーがログインしました', ['user_id' => $user->id]);
-```
-
-### ログには必要な情報を含める
-
-```php
-// NG: 何のログか分からない
-Log::info('処理完了');
-
-// OK: 誰が何をしたか分かる
-Log::info('受講登録が完了しました', [
-    'user_id' => $user->id,
-    'course_id' => $course->id,
-]);
-```
 
 ## 練習問題
 
 ### 問題1
-`UserController@index`（ユーザー一覧API）に、取得したユーザー数をログ出力する処理を追加してください。
+`DebugController@index`（`/api/debug/users`）に、取得したユーザー数をログ出力する処理を追加してください。
 
 <details>
 <summary>解答例</summary>
@@ -246,7 +221,7 @@ public function index()
 </details>
 
 ### 問題2
-`UserController@show` で、存在しないユーザーIDが指定された場合に `warning` レベルのログを出力する処理を追加してください。ログには指定されたIDを含めてください。
+`DebugController@show`（`/api/debug/users/{user}`）で、存在しないユーザーIDが指定された場合に `warning` レベルのログを出力する処理を追加してください。ログには指定されたIDを含めてください。
 
 > ヒント: Route Model Bindingを使っている場合、存在しないIDでは自動的に404が返ります。`User::find()` を使う方法に変えると、自分でハンドリングできます。
 

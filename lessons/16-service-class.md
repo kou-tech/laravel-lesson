@@ -338,8 +338,8 @@ classDiagram
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\StoreCourseRequest;
-use App\Http\Requests\UpdateCourseRequest;
+use App\Http\Requests\Course\StoreRequest;
+use App\Http\Requests\Course\UpdateRequest;
 use App\Http\Resources\CourseResource;
 use App\Models\Course;
 use App\Services\Course\CreateCourse;
@@ -363,7 +363,7 @@ class CourseController extends Controller
         return CourseResource::collection($courses);
     }
 
-    public function store(StoreCourseRequest $request)
+    public function store(StoreRequest $request)
     {
         $course = ($this->createCourse)(
             $request->validated(),
@@ -378,7 +378,7 @@ class CourseController extends Controller
         return new CourseResource($course->load('instructor'));
     }
 
-    public function update(UpdateCourseRequest $request, Course $course)
+    public function update(UpdateRequest $request, Course $course)
     {
         $this->authorize('update', $course);
 
@@ -497,7 +497,7 @@ public function show(Course $course)
 }
 
 // 複雑なロジックはサービスへ
-public function store(StoreCourseRequest $request)
+public function store(StoreRequest $request)
 {
     $course = ($this->createCourse)($request->validated(), $request->user());
 }

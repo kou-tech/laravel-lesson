@@ -98,6 +98,8 @@ Route::get('/fruits/{id}', function (int $id) {
 
 Postmanのコレクション内の `api > fruits > {fruitId} > fruits_id` で確認
 
+> URL内の `:fruitId` はパス変数です。Postman の `Params` タブの `Path Variables` に `fruitId = 1` が初期値で入っています。別のIDで確認したい場合はここを書き換えてください。
+
 レスポンス
 
 ```json
@@ -153,7 +155,7 @@ Route::post('/fruits', function () {
 
 Postmanのコレクション内の `api > fruits > fruits`（POST）で確認
 
-Bodyに以下のJSONを設定してください。
+> このリクエストには Body タブに以下のJSONが事前設定されています。値を変えて送りたい場合は Postman の `Body` タブで編集してください。
 
 ```json
 {
@@ -232,6 +234,10 @@ GET|HEAD   api/hello .........
 
 ## 練習問題
 
+> 動作確認用に Postman コレクションへ以下のリクエストを用意しています。
+> - 問題1: `api > status > status`（GET）
+> - 問題2: `api > fruits > {fruitId} > fruits_id_delete`（DELETE、`fruitId=1` 初期設定）
+
 ### 問題1
 `/api/status` にアクセスすると、現在の日時とアプリケーション名を返すAPIを作成してください。
 
@@ -249,18 +255,29 @@ Route::get('/status', function () {
 </details>
 
 ### 問題2
-`/api/users` にアクセスすると、3人分のユーザー情報（id, name, email）を返すAPIを作成してください。
+`DELETE /api/fruits/{id}` を作成してください。以下を満たすようにしてください。
+
+- 削除成功時は 204 No Content を返す（レスポンスボディなし）
+- 存在しないIDの場合は 404 Not Found を返す
+
+> ヒント: Step 3 の GET `/api/fruits/{id}` と同じ固定配列（りんご・みかん・バナナ）を参照して、存在チェックだけ行えばOKです（実際の削除処理までは不要）。
 
 <details>
 <summary>解答例</summary>
 
 ```php
-Route::get('/users', function () {
-    return [
-        ['id' => 1, 'name' => '田中太郎', 'email' => 'tanaka@example.com'],
-        ['id' => 2, 'name' => '山田花子', 'email' => 'yamada@example.com'],
-        ['id' => 3, 'name' => '佐藤一郎', 'email' => 'sato@example.com'],
+Route::delete('/fruits/{id}', function ($id) {
+    $fruits = [
+        1 => ['id' => 1, 'name' => 'りんご', 'price' => 150],
+        2 => ['id' => 2, 'name' => 'みかん', 'price' => 100],
+        3 => ['id' => 3, 'name' => 'バナナ', 'price' => 200],
     ];
+
+    if (!isset($fruits[$id])) {
+        return response()->json(['message' => '見つかりません'], 404);
+    }
+
+    return response()->noContent(); // 204 No Content
 });
 ```
 </details>

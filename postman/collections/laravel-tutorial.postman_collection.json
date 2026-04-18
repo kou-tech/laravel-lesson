@@ -64,6 +64,34 @@
                     "id": "43be2528-3113-45da-a350-6dc3fb52527e"
                 },
                 {
+                    "name": "status",
+                    "item": [
+                        {
+                            "name": "status",
+                            "id": "3e8a9b52-7c4d-4e6f-b1a3-5c9f2d8e7b10",
+                            "protocolProfileBehavior": {
+                                "disableBodyPruning": true
+                            },
+                            "request": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{BASE_URL}}/api/status",
+                                    "host": ["{{BASE_URL}}"],
+                                    "path": ["api", "status"]
+                                }
+                            },
+                            "response": []
+                        }
+                    ],
+                    "id": "6b4c8f1d-2e95-4a73-9b28-7c1d5e8a4f9b"
+                },
+                {
                     "name": "fruits",
                     "item": [
                         {
@@ -77,6 +105,38 @@
                                     },
                                     "request": {
                                         "method": "GET",
+                                        "header": [
+                                            {
+                                                "key": "Accept",
+                                                "value": "application/json"
+                                            }
+                                        ],
+                                        "url": {
+                                            "raw": "{{BASE_URL}}/api/fruits/:fruitId",
+                                            "host": ["{{BASE_URL}}"],
+                                            "path": [
+                                                "api",
+                                                "fruits",
+                                                ":fruitId"
+                                            ],
+                                            "variable": [
+                                                {
+                                                    "key": "fruitId",
+                                                    "value": "1"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "response": []
+                                },
+                                {
+                                    "name": "fruits_id_delete",
+                                    "id": "a7e2f4c9-3b86-4d15-9e72-1f5c8a9d3e24",
+                                    "protocolProfileBehavior": {
+                                        "disableBodyPruning": true
+                                    },
+                                    "request": {
+                                        "method": "DELETE",
                                         "header": [
                                             {
                                                 "key": "Accept",
@@ -138,8 +198,22 @@
                                     {
                                         "key": "Accept",
                                         "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
                                     }
                                 ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"name\": \"ぶどう\",\n  \"price\": 500\n}",
+                                    "options": {
+                                        "raw": {
+                                            "headerFamily": "json",
+                                            "language": "json"
+                                        }
+                                    }
+                                },
                                 "url": {
                                     "raw": "{{BASE_URL}}/api/fruits",
                                     "host": ["{{BASE_URL}}"],
@@ -152,11 +226,149 @@
                     "id": "47d0dad5-ff76-4ee4-93cc-d30e63fd8fcc"
                 },
                 {
+                    "name": "debug",
+                    "item": [
+                        {
+                            "name": "ユーザー一覧（デバッグ用）",
+                            "id": "b9e5a6c1-4d2e-4f35-8a91-2e7b6d3f8c14",
+                            "protocolProfileBehavior": {
+                                "disableBodyPruning": true
+                            },
+                            "request": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{BASE_URL}}/api/debug/users",
+                                    "host": ["{{BASE_URL}}"],
+                                    "path": ["api", "debug", "users"]
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "ユーザー詳細（デバッグ用）",
+                            "id": "d4f8b7a2-9c1e-4853-a6d3-5f2b9e8c7a41",
+                            "protocolProfileBehavior": {
+                                "disableBodyPruning": true
+                            },
+                            "request": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{BASE_URL}}/api/debug/users/:userId",
+                                    "host": ["{{BASE_URL}}"],
+                                    "path": ["api", "debug", "users", ":userId"],
+                                    "variable": [
+                                        {
+                                            "key": "userId",
+                                            "value": "1"
+                                        }
+                                    ]
+                                }
+                            },
+                            "response": []
+                        }
+                    ],
+                    "id": "fa5c3b18-7e62-4d9a-b541-8c3e9a7f2b6d"
+                },
+                {
                     "name": "users",
                     "item": [
                         {
                             "name": "{userId}",
                             "item": [
+                                {
+                                    "name": "users_id",
+                                    "id": "c54d3d1a-1f4e-4a90-9c60-1a9f5c5a2d10",
+                                    "protocolProfileBehavior": {
+                                        "disableBodyPruning": true
+                                    },
+                                    "request": {
+                                        "method": "GET",
+                                        "header": [
+                                            {
+                                                "key": "Accept",
+                                                "value": "application/json"
+                                            }
+                                        ],
+                                        "url": {
+                                            "raw": "{{BASE_URL}}/api/users/:userId",
+                                            "host": ["{{BASE_URL}}"],
+                                            "path": ["api", "users", ":userId"],
+                                            "variable": [
+                                                {
+                                                    "key": "userId",
+                                                    "value": "1"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "response": []
+                                },
+                                {
+                                    "name": "役割変更",
+                                    "id": "e5c8a2f4-9b36-4d17-b9e2-3a6c1f5b8d20",
+                                    "protocolProfileBehavior": {
+                                        "disableBodyPruning": true
+                                    },
+                                    "request": {
+                                        "method": "PATCH",
+                                        "header": [
+                                            {
+                                                "key": "Accept",
+                                                "value": "application/json"
+                                            },
+                                            {
+                                                "key": "X-XSRF-TOKEN",
+                                                "value": "{{XSRF-TOKEN}}"
+                                            },
+                                            {
+                                                "key": "Referer",
+                                                "value": "{{Referer}}"
+                                            },
+                                            {
+                                                "key": "Origin",
+                                                "value": "{{Origin}}"
+                                            },
+                                            {
+                                                "key": "Content-Type",
+                                                "value": "application/json"
+                                            }
+                                        ],
+                                        "body": {
+                                            "mode": "raw",
+                                            "raw": "{\n  \"role\": \"instructor\"\n}",
+                                            "options": {
+                                                "raw": {
+                                                    "headerFamily": "json",
+                                                    "language": "json"
+                                                }
+                                            }
+                                        },
+                                        "url": {
+                                            "raw": "{{BASE_URL}}/api/users/:userId/role",
+                                            "host": ["{{BASE_URL}}"],
+                                            "path": ["api", "users", ":userId", "role"],
+                                            "variable": [
+                                                {
+                                                    "key": "userId",
+                                                    "value": "1"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "response": []
+                                },
                                 {
                                     "name": "users_id",
                                     "id": "ef2e6c82-a693-4f8f-bdd9-6fe78b27fa60",
@@ -181,8 +393,22 @@
                                             {
                                                 "key": "Origin",
                                                 "value": "{{Origin}}"
+                                            },
+                                            {
+                                                "key": "Content-Type",
+                                                "value": "application/json"
                                             }
                                         ],
+                                        "body": {
+                                            "mode": "raw",
+                                            "raw": "{\n  \"name\": \"更新後の名前\",\n  \"email\": \"updated@example.com\"\n}",
+                                            "options": {
+                                                "raw": {
+                                                    "headerFamily": "json",
+                                                    "language": "json"
+                                                }
+                                            }
+                                        },
                                         "url": {
                                             "raw": "{{BASE_URL}}/api/users/:userId",
                                             "host": ["{{BASE_URL}}"],
@@ -248,6 +474,40 @@
                                     {
                                         "key": "Origin",
                                         "value": "{{Origin}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{BASE_URL}}/api/me",
+                                    "host": ["{{BASE_URL}}"],
+                                    "path": ["api", "me"]
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "認証済みユーザー更新",
+                            "id": "2a9f7b3e-6c18-4d7a-b521-8f4e6c9b2d13",
+                            "protocolProfileBehavior": {
+                                "disableBodyPruning": true
+                            },
+                            "request": {
+                                "method": "PATCH",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "X-XSRF-TOKEN",
+                                        "value": "{{XSRF-TOKEN}}"
+                                    },
+                                    {
+                                        "key": "Referer",
+                                        "value": "{{Referer}}"
+                                    },
+                                    {
+                                        "key": "Origin",
+                                        "value": "{{Origin}}"
                                     },
                                     {
                                         "key": "Content-Type",
@@ -256,7 +516,7 @@
                                 ],
                                 "body": {
                                     "mode": "raw",
-                                    "raw": "{}",
+                                    "raw": "{\n  \"name\": \"更新後の名前\"\n}",
                                     "options": {
                                         "raw": {
                                             "headerFamily": "json",
@@ -308,22 +568,8 @@
                                                     {
                                                         "key": "Origin",
                                                         "value": "{{Origin}}"
-                                                    },
-                                                    {
-                                                        "key": "Content-Type",
-                                                        "value": "application/json"
                                                     }
                                                 ],
-                                                "body": {
-                                                    "mode": "raw",
-                                                    "raw": "{}",
-                                                    "options": {
-                                                        "raw": {
-                                                            "headerFamily": "json",
-                                                            "language": "json"
-                                                        }
-                                                    }
-                                                },
                                                 "url": {
                                                     "raw": "{{BASE_URL}}/api/courses/:courseId/attendances",
                                                     "host": ["{{BASE_URL}}"],
@@ -366,22 +612,8 @@
                                             {
                                                 "key": "Origin",
                                                 "value": "{{Origin}}"
-                                            },
-                                            {
-                                                "key": "Content-Type",
-                                                "value": "application/json"
                                             }
                                         ],
-                                        "body": {
-                                            "mode": "raw",
-                                            "raw": "{\n  \"name\": \"更新テスト\"\n}",
-                                            "options": {
-                                                "raw": {
-                                                    "headerFamily": "json",
-                                                    "language": "json"
-                                                }
-                                            }
-                                        },
                                         "url": {
                                             "raw": "{{BASE_URL}}/api/courses/:courseId",
                                             "host": ["{{BASE_URL}}"],
@@ -482,22 +714,8 @@
                                             {
                                                 "key": "Origin",
                                                 "value": "{{Origin}}"
-                                            },
-                                            {
-                                                "key": "Content-Type",
-                                                "value": "application/json"
                                             }
                                         ],
-                                        "body": {
-                                            "mode": "raw",
-                                            "raw": "{}",
-                                            "options": {
-                                                "raw": {
-                                                    "headerFamily": "json",
-                                                    "language": "json"
-                                                }
-                                            }
-                                        },
                                         "url": {
                                             "raw": "{{BASE_URL}}/api/courses/:courseId",
                                             "host": ["{{BASE_URL}}"],
@@ -539,26 +757,34 @@
                                     {
                                         "key": "Origin",
                                         "value": "{{Origin}}"
-                                    },
-                                    {
-                                        "key": "Content-Type",
-                                        "value": "application/json"
                                     }
                                 ],
-                                "body": {
-                                    "mode": "raw",
-                                    "raw": "{\n  \"name\": \"更新テスト\"\n}",
-                                    "options": {
-                                        "raw": {
-                                            "headerFamily": "json",
-                                            "language": "json"
-                                        }
-                                    }
-                                },
                                 "url": {
                                     "raw": "{{BASE_URL}}/api/courses",
                                     "host": ["{{BASE_URL}}"],
                                     "path": ["api", "courses"]
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "講座ステータス別件数",
+                            "id": "4c9e7f3a-2d51-4b86-9a14-6f8c3e5b2d71",
+                            "protocolProfileBehavior": {
+                                "disableBodyPruning": true
+                            },
+                            "request": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{BASE_URL}}/api/courses/stats",
+                                    "host": ["{{BASE_URL}}"],
+                                    "path": ["api", "courses", "stats"]
                                 }
                             },
                             "response": []
@@ -698,22 +924,8 @@
                             {
                                 "key": "Origin",
                                 "value": "{{Origin}}"
-                            },
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
                             }
                         ],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"password\"\n}",
-                            "options": {
-                                "raw": {
-                                    "headerFamily": "json",
-                                    "language": "json"
-                                }
-                            }
-                        },
                         "url": {
                             "raw": "{{BASE_URL}}/logout",
                             "host": ["{{BASE_URL}}"],

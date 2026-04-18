@@ -9,6 +9,10 @@
 - API Resourceを使ってレスポンスを整形できる
 - Route Model Bindingを活用できる
 
+> このLessonから受講管理システムの実装に入ります。全体像は以下を参照してください。
+> - [API仕様一覧](./api-spec.md) — 本コースで実装する全エンドポイントと認証/認可要件
+> - [ER図](./er.md) — テーブル構造とリレーション
+
 
 ## Step 1 Controllerの作成
 
@@ -39,6 +43,16 @@ public function show(User $user)
 
 
 ## Step 2 基本的なCRUD実装
+
+### UserControllerの生成
+
+`make app` でコンテナに入ってから、以下のコマンドを実行します。
+
+```bash
+php artisan make:controller Api/UserController
+```
+
+`app/Http/Controllers/Api/UserController.php` が作成されます。
 
 ### UserControllerの実装
 
@@ -125,6 +139,10 @@ Postmanのコレクション内の以下のリクエストで確認してくだ�
 - `api > users > {userId} > users_id`（GET）— ユーザー詳細
 - `api > users > {userId} > users_id`（PATCH）— ユーザー更新
 
+> 補足
+> - `{userId}` はパス変数です。Postman の `Params` タブ内 `Path Variables` に `userId = 1` が初期設定されています。別のユーザーで確認したい場合は値を変更してください。
+> - PATCH の Body には更新用サンプルJSON（`name`, `email`）を事前設定済みです。更新内容を変えたい場合は `Body > raw (JSON)` を編集してください。
+
 ## Step 3 API Resourceの作成
 
 ### なぜAPI Resourceを使うのか
@@ -194,7 +212,7 @@ class UserResource extends JsonResource
             'id' => $this->resource->id,
             'name' => $this->resource->name,
             'email' => $this->resource->email,
-            'created_at' => $this->resource->created_at->toISOString(),
+            'created_at' => $this->resource->created_at->format('Y-m-d H:i:s'),
         ];
     }
 }
@@ -245,7 +263,7 @@ class UserController extends Controller
 
 ### 動作確認
 
-Postmanのコレクション内の `api > users > {userId} > users_id`（GET）で確認してください。
+Postmanのコレクション内の `api > users > {userId} > users_id`（GET）で確認してください。`userId` は `Path Variables` に事前設定された `1` のままで動きます。
 
 レスポンス
 
@@ -330,6 +348,8 @@ public function index()
 
 ## 練習問題
 
+> 練習問題ではPostmanコレクションにリクエストを用意していません。既存のリクエスト（`api > users > users` や `api > users > {userId} > users_id`）でレスポンスを確認するか、新しいリクエストを作成して確認してみてください。
+
 ### 問題1
 UserResourceに `full_name` フィールドを追加してください。値は `{name}さん` という形式で返してください。
 
@@ -344,7 +364,7 @@ public function toArray(Request $request): array
         'name' => $this->resource->name,
         'full_name' => $this->resource->name . 'さん',
         'email' => $this->resource->email,
-        'created_at' => $this->resource->created_at->toISOString(),
+        'created_at' => $this->resource->created_at->format('Y-m-d H:i:s'),
     ];
 }
 ```
