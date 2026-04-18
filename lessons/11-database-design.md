@@ -547,8 +547,8 @@ public function definition(): array
 return [
     // ...既存のフィールド
     'status_label' => $this->resource->status->label(),
-    'starts_at' => $this->resource->starts_at?->toISOString(),  // 追加
-    'created_at' => $this->resource->created_at->toISOString(),
+    'starts_at' => $this->resource->starts_at?->format('Y-m-d H:i:s'),  // 追加
+    'created_at' => $this->resource->created_at->format('Y-m-d H:i:s'),
 ];
 ```
 
@@ -592,7 +592,7 @@ class AttendanceResource extends JsonResource
             'course' => new CourseResource($this->resource->course),
             'status' => $this->resource->status,
             'status_label' => $this->resource->status->label(),
-            'attended_at' => $this->resource->attended_at->toISOString(),
+            'attended_at' => $this->resource->attended_at->format('Y-m-d H:i:s'),
         ];
     }
 }
