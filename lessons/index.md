@@ -134,3 +134,28 @@ graph TD
 
 - [ER図](./er.md)
 - [API仕様一覧](./api-spec.md)
+
+
+## トラブルシューティング
+
+### Postman から API にアクセスできない / 応答がない
+
+Docker コンテナが停止している可能性があります。PC 再起動・Docker Desktop の終了・スリープなどの後に起きやすいです。
+
+状態確認
+
+```bash
+docker compose ps
+```
+
+起動していない場合は `make up` で再起動してください（データは保持されます）。
+
+```bash
+make up
+```
+
+DB がおかしくなった・初期状態に戻したい場合は以下でリセットできます。
+
+```bash
+make fresh
+```
