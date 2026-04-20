@@ -10,6 +10,8 @@
 - 適切な変数名・メソッド名を付けられる
 - メソッドの責務を分割できる
 
+> このレッスンは原則を学ぶリファレンス中心のレッスンです。プロジェクトのコードに直接反映する手順はなく、以降のレッスン（Lesson 15 サービスクラスなど）で実際にこれらの原則を適用していきます。サンプルコードの中には `NotificationService` / `CourseService` / `admin` ロール / `DiscountType` など、**このコースでは実装しない仮の題材**も含まれます。原則の説明用と割り切って読み進めてください。
+
 ## なぜ「良いコード」が重要か？
 
 コードは書く時間より読む時間の方が長いです。
@@ -20,9 +22,11 @@
 
 読みやすいコードはバグが発見しやすく、変更が容易で、引き継ぎも楽になります。
 
-## 1. 早期リターン（Early Return）
+## Step 1 早期リターン（Early Return）
 
 ### 問題のあるコード
+
+> 以下のサンプルで使われている `hasAttendanceFor` / `hasCapacity` / 各 Exception は、説明のために先取りした仮のAPIです。Lesson 11 以降で似た仕組みを実装します。ここではネストの深さに注目してください。
 
 ```php
 public function attend(User $user, Course $course)
@@ -90,7 +94,7 @@ public function attend(User $user, Course $course)
 
 > 異常系を先に処理し、正常系を最後に残す
 
-## 2. マジックナンバーの排除
+## Step 2 マジックナンバーの排除
 
 ### 問題のあるコード
 
@@ -140,6 +144,8 @@ class CourseService
 
 ### さらに改善（Enumを使用）
 
+> `DiscountType` は説明用の仮の Enum です。このコースでは実装しません。
+
 ```php
 // app/Enums/DiscountType.php
 enum DiscountType: string
@@ -159,7 +165,7 @@ enum DiscountType: string
 }
 ```
 
-## 3. 意味のある名前
+## Step 3 意味のある名前
 
 ### 変数名
 
@@ -199,7 +205,9 @@ public function sendAttendanceConfirmationEmail($attendance) { ... }
 | 判定メソッド | is/has/can で始める | `hasAttendance()`, `hasPermission()` |
 | 変換メソッド | to で始める | `toArray()`, `toJson()` |
 
-## 4. メソッドの責務を分割
+## Step 4 メソッドの責務を分割
+
+> このセクションの `CourseService` / `NotificationService` は Lesson 15・16 で扱う設計パターンの先取りです。`admin` ロール・`NewCourseMail` もこのコースでは実装しません。構造の対比だけ読み取ってください。
 
 ### 問題のあるコード
 
@@ -302,7 +310,7 @@ class NotificationService
 
 > 1つのクラス/メソッドは1つのことだけを行う
 
-## 5. コメントよりコードで語る
+## Step 5 コメントよりコードで語る
 
 ### 不要なコメント
 
@@ -349,12 +357,14 @@ if ($user->isInstructor()) {
 ### 問題1
 以下のコードを早期リターンパターンでリファクタリングしてください。
 
+> 実務では権限チェックは Policy、バリデーションは FormRequest に寄せるのが一般的ですが、この問題では「早期リターン」の練習のため、あえて Controller に条件を並べた形にしています。
+
 ```php
 public function updateProfile(Request $request, User $user)
 {
     if ($request->user()->id === $user->id) {
         if ($request->has('name')) {
-            if (strlen($request->name) <= 255) {
+            if (mb_strlen($request->name) <= 255) {
                 $user->name = $request->name;
                 $user->save();
                 return new UserResource($user);
@@ -384,7 +394,7 @@ public function updateProfile(Request $request, User $user)
         return response()->json(['error' => '名前は必須です'], 422);
     }
 
-    if (strlen($request->name) > 255) {
+    if (mb_strlen($request->name) > 255) {
         return response()->json(['error' => '名前が長すぎます'], 422);
     }
 
@@ -394,6 +404,8 @@ public function updateProfile(Request $request, User $user)
     return new UserResource($user);
 }
 ```
+
+> 文字数制限には `strlen`（バイト数）ではなく `mb_strlen`（文字数）を使います。日本語のような多バイト文字を正しく数えるためです。
 </details>
 
 ### 問題2
