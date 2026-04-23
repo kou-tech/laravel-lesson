@@ -10,82 +10,23 @@
 - NULL許可のデメリットを理解し適切に設計できる
 - attendances（受講）テーブルを設計できる
 
+> このレッスンは2部構成です。
+> - 第1部（Step 1〜5）: DB設計の原則を学ぶ座学パート。サンプルコードには `phone` / `nickname` など仮の題材が含まれます
+> - 第2部（Step 6〜9）: 第1部で学んだ原則を使って attendances テーブル・受講登録APIを実装するハンズオンパート
+
 ## データベース設計の重要性
 
 データベースはアプリケーションの土台です。
 
 設計を間違えると、データの整合性が崩れたり、パフォーマンスが悪化したり、後からの修正が困難になります。
 
-## Step 1 Attendancesテーブルの設計
+---
 
-### エンティティ分析
+# 第1部 DB設計の原則（座学）
 
-受講（Attendance）は、ユーザーと講座の多対多の関係を表します。
+ここからは理論の解説です。サンプルコードは `phone` / `nickname` などプロジェクトにない仮の題材を含みます。プロジェクトへの適用は第2部で行います。
 
-```mermaid
-erDiagram
-    User ||--o{ Attendance : "受講する"
-    Course ||--o{ Attendance : "受講される"
-```
-
-1人のユーザーは複数の講座を受講でき、1つの講座には複数の受講者がいます。
-
-### マイグレーションの作成
-
-`make app` でコンテナに入ってから、以下のコマンドを実行します。
-
-```bash
-php artisan make:migration create_attendances_table
-```
-
-### マイグレーションの実装
-
-```php
-<?php
-
-use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
-use App\Models\User;
-use App\Models\Course;
-
-return new class extends Migration
-{
-    public function up(): void
-    {
-        Schema::create('attendances', function (Blueprint $table) {
-            $table->id();
-
-            // 外部キー
-            $table->foreignIdFor(User::class)
-                ->constrained()
-                ->onDelete('cascade');
-
-            $table->foreignIdFor(Course::class)
-                ->constrained()
-                ->onDelete('cascade');
-
-            // 受講状態
-            $table->string('status')->default('attending');
-
-            // 受講日時
-            $table->timestamp('attended_at')->useCurrent();
-
-            $table->timestamps();
-
-            // 複合ユニーク制約（同じ講座に2回登録できない）
-            $table->unique(['user_id', 'course_id']);
-        });
-    }
-
-    public function down(): void
-    {
-        Schema::dropIfExists('attendances');
-    }
-};
-```
-
-## Step 2 外部キー制約
+## Step 1 外部キー制約
 
 ### 外部キー制約とは
 
@@ -127,7 +68,7 @@ $table->foreignIdFor(Category::class)
 | set null | 参照は消えるが履歴は残したい（担当者の退職など） |
 | restrict | 削除させたくない（カテゴリに商品があれば削除不可） |
 
-## Step 3 インデックス
+## Step 2 インデックス
 
 ### インデックスとは
 
@@ -142,7 +83,7 @@ $table->foreignIdFor(Category::class)
 $table->string('status')->index();
 
 // 検索・ソートに使うカラム
-$table->timestamp('attended_at')->index();
+$table->datetime('attended_at')->index();
 
 // 外部キー（自動的にインデックスが作成される）
 $table->foreignIdFor(User::class)->constrained();
@@ -163,7 +104,7 @@ $table->index(['user_id', 'status']);
 
 原則として、検索に使うカラムにのみ追加してください。
 
-## Step 4 NULL許可のデメリット
+## Step 3 NULL許可のデメリット
 
 ### NULLとは
 
@@ -179,16 +120,7 @@ SELECT * FROM users WHERE email = NULL;  -- 結果は0件
 SELECT * FROM users WHERE email IS NULL; -- これが正しい
 ```
 
-#### 2. 集計が複雑になる
-
-```php
-// NULLは集計から除外される
-SELECT AVG(score) FROM exams;  -- NULL以外の平均
-SELECT COUNT(score) FROM exams; -- NULL以外の件数
-SELECT COUNT(*) FROM exams;     -- 全件数
-```
-
-#### 3. コードが複雑になる
+#### 2. コードが複雑になる
 
 ```php
 // NULLチェックが必要
@@ -221,15 +153,7 @@ $table->integer('login_count')->default(0);
 - 「未設定」と「空」を区別する必要がある
 - 外部キーで「関連なし」を表現する
 
-```php
-// 講師が退職した場合 → NULLにする（履歴は残す）
-$table->foreignIdFor(User::class, 'instructor_id')
-    ->nullable()
-    ->constrained('users')
-    ->onDelete('set null');
-```
-
-## Step 5 複合ユニーク制約
+## Step 4 複合ユニーク制約
 
 ### 問題（重複登録を防ぐ）
 
@@ -256,130 +180,24 @@ $table->unique(['user_id', 'course_id']);
 
 ### 例外処理
 
+複合ユニーク制約違反は、Laravel 11 以降で提供される `UniqueConstraintViolationException` でキャッチできます。DB ドライバ（MySQL / SQLite など）に依存せずに判定できるのが利点です。
+
 ```php
-use Illuminate\Database\QueryException;
+use Illuminate\Database\UniqueConstraintViolationException;
 
 try {
     Attendance::create([
         'user_id' => $userId,
         'course_id' => $courseId,
     ]);
-} catch (QueryException $e) {
-    if ($e->errorInfo[1] === 1062) {  // Duplicate entry
-        throw new AlreadyAttendedException();
-    }
-    throw $e;
+} catch (UniqueConstraintViolationException) {
+    throw new AlreadyAttendedException();
 }
 ```
 
-## Step 6 Attendanceモデルの作成
+> 以前はドライバごとのエラーコード（MySQL なら `1062`）を `QueryException::errorInfo` で判定していましたが、SQLite では別のコードが返るため非可搬でした。`UniqueConstraintViolationException` に寄せるのがおすすめです。
 
-### モデルの作成
-
-```bash
-php artisan make:model Attendance
-```
-
-### Attendanceモデルの実装
-
-```php
-<?php
-
-namespace App\Models;
-
-use App\Enums\AttendanceStatus;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-
-class Attendance extends Model
-{
-    protected $fillable = [
-        'user_id',
-        'course_id',
-        'status',
-        'attended_at',
-    ];
-
-    protected function casts(): array
-    {
-        return [
-            'status' => AttendanceStatus::class,
-            'attended_at' => 'datetime',
-        ];
-    }
-
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class);
-    }
-
-    public function course(): BelongsTo
-    {
-        return $this->belongsTo(Course::class);
-    }
-}
-```
-
-### AttendanceStatus Enum
-
-```php
-<?php
-
-namespace App\Enums;
-
-enum AttendanceStatus: string
-{
-    case Attending = 'attending';
-    case Completed = 'completed';
-    case Cancelled = 'cancelled';
-
-    public function label(): string
-    {
-        return match($this) {
-            self::Attending => '受講中',
-            self::Completed => '修了',
-            self::Cancelled => 'キャンセル',
-        };
-    }
-}
-```
-
-### User と Course にリレーションを追加
-
-```php
-// User.php
-public function attendances(): HasMany
-{
-    return $this->hasMany(Attendance::class);
-}
-
-public function attendedCourses(): BelongsToMany
-{
-    return $this->belongsToMany(Course::class, 'attendances')
-        ->withPivot('status', 'attended_at')
-        ->withTimestamps();
-}
-
-// Course.php
-public function attendances(): HasMany
-{
-    return $this->hasMany(Attendance::class);
-}
-
-public function students(): BelongsToMany
-{
-    return $this->belongsToMany(User::class, 'attendances')
-        ->withPivot('status', 'attended_at')
-        ->withTimestamps();
-}
-
-public function hasCapacity(): bool
-{
-    return $this->attendances()->count() < $this->capacity;
-}
-```
-
-## Step 7 マイグレーションのベストプラクティス
+## Step 5 マイグレーションのベストプラクティス
 
 ### 1. 小さな単位で作成
 
@@ -446,6 +264,215 @@ $table->dropColumn('old_column');
 // 4. 旧カラム削除
 ```
 
+---
+
+# 第2部 実践 - attendancesテーブルの設計と受講登録API
+
+ここからは第1部で学んだ原則を実際に適用していきます。attendances（受講）テーブルを作り、最後に受講登録APIで動作確認します。
+
+## Step 6 Attendancesテーブルの設計
+
+### エンティティ分析
+
+受講（Attendance）は、ユーザーと講座の多対多の関係を表します。
+
+```mermaid
+erDiagram
+    User ||--o{ Attendance : "受講する"
+    Course ||--o{ Attendance : "受講される"
+```
+
+1人のユーザーは複数の講座を受講でき、1つの講座には複数の受講者がいます。
+
+### マイグレーションの作成
+
+`make app` でコンテナに入ってから、以下のコマンドを実行します。
+
+```bash
+php artisan make:migration create_attendances_table
+```
+
+### マイグレーションの実装
+
+以下のコードには第1部で学んだ要素がすべて含まれています。どこが外部キー制約・複合ユニーク制約かを意識しながら実装してください。
+
+```php
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+use App\Models\User;
+use App\Models\Course;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('attendances', function (Blueprint $table) {
+            $table->id();
+
+            // 外部キー（Step 1: 受講履歴は残したいので restrict）
+            $table->foreignIdFor(User::class)
+                ->constrained()
+                ->onDelete('restrict');
+
+            $table->foreignIdFor(Course::class)
+                ->constrained()
+                ->onDelete('restrict');
+
+            // 受講状態（Step 3: NOT NULL + デフォルト値）
+            $table->string('status')->default('attending');
+
+            // 受講日時（timestamp 型は 2038 年問題があるので datetime を使う）
+            $table->datetime('attended_at')->useCurrent();
+
+            // 同上の理由で timestamps() ではなく datetimes() を使う
+            $table->datetimes();
+
+            // 複合ユニーク制約（Step 4: 同じ講座に2回登録できない）
+            $table->unique(['user_id', 'course_id']);
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('attendances');
+    }
+};
+```
+
+> `restrict` を選ぶ理由 ： 受講履歴は「誰がいつ受けた／修了した」という監査データ的な性質があるため、ユーザーや講座を削除したら紐づく履歴が静かに消えると問題になります。`restrict` にしておくと、受講履歴が残っている限り親レコード（user / course）を削除できず、「履歴があるのに消そうとしている」ことに気付けます。
+
+### マイグレーションの実行
+
+作成したマイグレーションを適用します。
+
+```bash
+php artisan migrate
+```
+
+> 既存データを保持したまま差分適用するのが `migrate` です。何かおかしくなったら `make fresh` で全テーブル作り直し＋シーダーが走ります。
+
+## Step 7 Attendanceモデルの作成
+
+### モデルの作成
+
+```bash
+php artisan make:model Attendance
+```
+
+### Attendanceモデルの実装
+
+生成された `app/Models/Attendance.php` を以下の内容に書き換えます。
+
+```php
+<?php
+
+namespace App\Models;
+
+use App\Enums\AttendanceStatus;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class Attendance extends Model
+{
+    protected $fillable = [
+        'user_id',
+        'course_id',
+        'status',
+        'attended_at',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'status' => AttendanceStatus::class,
+            'attended_at' => 'datetime',
+        ];
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function course(): BelongsTo
+    {
+        return $this->belongsTo(Course::class);
+    }
+}
+```
+
+### AttendanceStatus Enum
+
+`app/Enums/AttendanceStatus.php` を新規作成します。
+
+```php
+<?php
+
+namespace App\Enums;
+
+enum AttendanceStatus: string
+{
+    case Attending = 'attending';
+    case Completed = 'completed';
+    case Cancelled = 'cancelled';
+
+    public function label(): string
+    {
+        return match($this) {
+            self::Attending => '受講中',
+            self::Completed => '修了',
+            self::Cancelled => 'キャンセル',
+        };
+    }
+}
+```
+
+### User と Course にリレーションを追加
+
+Lesson 4 / 9 で作成済みの `app/Models/User.php` と `app/Models/Course.php` に、以下のメソッドを**追記**します（既存のメソッドは残したまま末尾に追加）。
+
+```php
+// app/Models/User.php に追記
+public function attendances(): HasMany
+{
+    return $this->hasMany(Attendance::class);
+}
+
+public function attendedCourses(): BelongsToMany
+{
+    return $this->belongsToMany(Course::class, 'attendances')
+        ->withPivot('status', 'attended_at')
+        ->withTimestamps();
+}
+```
+
+```php
+// app/Models/Course.php に追記
+public function attendances(): HasMany
+{
+    return $this->hasMany(Attendance::class);
+}
+
+public function students(): BelongsToMany
+{
+    return $this->belongsToMany(User::class, 'attendances')
+        ->withPivot('status', 'attended_at')
+        ->withTimestamps();
+}
+
+public function hasCapacity(): bool
+{
+    return $this->attendances()->count() < $this->capacity;
+}
+```
+
+`HasMany` / `BelongsToMany` の `use` 文も忘れずに追加してください。
+
+> `hasCapacity()` は現在の実装だと毎回 `attendances` を COUNT するため、講座を多数扱うときにN+1問題の温床になります。Lesson 12でこのコードを Eager Loading と `withCount` で改善します。今はひとまずこの形で進めてOK。
+
 ## Step 8 既存テーブルへのカラム追加を実践する
 
 ここまで学んだことを使って、`courses` テーブルに「講座開始日時（`starts_at`）」を追加してみましょう。このカラムは後続のレッスン（Lesson 18 / 19）で使います。
@@ -455,7 +482,7 @@ $table->dropColumn('old_column');
 - 既存の `courses` テーブルに `starts_at`（NOT NULL）を追加する
 - 既存データには「今日の日付」を暫定値として入れる
 
-既にデータが入っているテーブルにいきなり NOT NULL カラムを追加するとエラーになるため、Step 7-3 で学んだ「一旦 nullable で追加 → データ移行 → NOT NULL に変更」の流れで進めます。
+既にデータが入っているテーブルにいきなり NOT NULL カラムを追加するとエラーになるため、Step 5-3 で学んだ「一旦 nullable で追加 → データ移行 → NOT NULL に変更」の流れで進めます。
 
 ### マイグレーションの作成
 
@@ -565,6 +592,8 @@ php artisan migrate
 
 ここまでで設計したテーブル・モデル・制約が正しく機能するか、実際にAPIを1つ作って確認しましょう。
 
+> 動作確認の前提として、`CourseSeeder` で作られる講座データが必要です。`make fresh` では `DatabaseSeeder` が実行されますが、`CourseSeeder` は個別に `php artisan db:seed --class=CourseSeeder` で実行するか、`DatabaseSeeder::run` の末尾に `$this->call(CourseSeeder::class);` を追記してください。
+
 ### AttendanceResource の作成
 
 ```bash
@@ -609,11 +638,12 @@ php artisan make:controller Api/AttendanceController
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\AttendanceStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\AttendanceResource;
 use App\Models\Attendance;
 use App\Models\Course;
-use Illuminate\Database\QueryException;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Request;
 
 class AttendanceController extends Controller
@@ -635,16 +665,13 @@ class AttendanceController extends Controller
             $attendance = Attendance::create([
                 'user_id' => $request->user()->id,
                 'course_id' => $course->id,
-                'status' => \App\Enums\AttendanceStatus::Attending,
+                'status' => AttendanceStatus::Attending,
                 'attended_at' => now(),
             ]);
-        } catch (QueryException $e) {
-            if ($e->errorInfo[1] === 1062) {
-                return response()->json([
-                    'message' => 'すでにこの講座に登録済みです。',
-                ], 409);
-            }
-            throw $e;
+        } catch (UniqueConstraintViolationException) {
+            return response()->json([
+                'message' => 'すでにこの講座に登録済みです。',
+            ], 409);
         }
 
         $attendance->load(['user', 'course.instructor']);
@@ -655,8 +682,8 @@ class AttendanceController extends Controller
 ```
 
 ポイント
-- `hasCapacity()` で定員チェック（Step 6 で定義したメソッド）
-- 複合ユニーク制約違反は `QueryException` をキャッチして 409 Conflict を返す
+- `hasCapacity()` で定員チェック（Step 7 で定義したメソッド）
+- 複合ユニーク制約違反は `UniqueConstraintViolationException` をキャッチして 409 Conflict を返す（DBドライバ非依存）
 - アプリ側チェックだけでなく、DB制約が最後の砦として機能する
 
 ### ルート追加
@@ -711,7 +738,7 @@ Schema::create('course_reviews', function (Blueprint $table) {
     $table->foreignIdFor(Course::class)->constrained()->onDelete('cascade');
     $table->unsignedTinyInteger('rating');  // 1-5
     $table->text('comment')->nullable();
-    $table->timestamps();
+    $table->dateTime('created_at');
 
     $table->unique(['user_id', 'course_id']);
     $table->index('course_id');  // 講座ごとのレビュー取得用
@@ -720,7 +747,7 @@ Schema::create('course_reviews', function (Blueprint $table) {
 </details>
 
 ### 問題2
-既存の `courses` テーブルに `thumbnail_url` カラム（NOT NULL、文字列）を追加するマイグレーションを作成してください。既存データには空文字を設定します。Step 7-3で学んだ「一旦nullableで追加 → データ移行 → NOT NULLに変更」の手順を使ってください。
+既存の `courses` テーブルに `thumbnail_url` カラム（NOT NULL、文字列）を追加するマイグレーションを作成してください。既存データには空文字を設定します。Step 5-3で学んだ「一旦nullableで追加 → データ移行 → NOT NULLに変更」の手順を使ってください。
 
 <details>
 <summary>解答例</summary>
