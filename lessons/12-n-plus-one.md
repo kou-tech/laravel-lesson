@@ -10,6 +10,10 @@
 - Telescope/ログでクエリを確認できる
 - 開発時にN+1問題を検出できる
 
+> このレッスンは2部構成です。
+> - 第1部（Step 1〜4）: N+1問題と Eager Loading の原則・機能を学ぶ座学パート
+> - 第2部（Step 5〜7）: 第1部で学んだテクニックをプロジェクトの既存コードに適用するハンズオンパート（`Course::hasCapacity()` 改善、`preventLazyLoading` 導入、CourseController 最適化）
+
 ## N+1問題とは
 
 ### 問題のあるコード
@@ -50,6 +54,12 @@ SELECT * FROM users WHERE id = N;
 ### なぜ問題か
 
 クエリ数が増えるほどパフォーマンスが低下し、DBへの接続・切断のオーバーヘッドも増加します。データが増えるほど悪化するため、スケールしません。
+
+---
+
+# 第1部 N+1対策の基本（座学）
+
+Eager Loading の使い方を一通り押さえます。サンプルコードは原則の説明用で、プロジェクトへの適用は第2部で行います。
 
 ## Step 1 Eager Loadingで解決
 
@@ -112,36 +122,17 @@ SELECT * FROM users WHERE id IN (...);
 ### 条件付きロード
 
 ```php
+use App\Enums\AttendanceStatus;
+
 // 受講中のもののみロード
 $courses = Course::with(['attendances' => function ($query) {
-    $query->where('status', 'attending');
+    $query->where('status', AttendanceStatus::Attending);
 }])->get();
 ```
 
-## Step 3 遅延Eager Loading
+> `status` は Enum にキャストしていますが、`where` に Enum を渡すと Laravel が内部で文字列値（`'attending'`）に変換します。素の文字列 `'attending'` を渡しても動作しますが、Enum を渡す方が型安全でリファクタ耐性があります。
 
-### load()（後からロード）
-
-```php
-$courses = Course::all();
-
-// 条件に応じて後からロード
-if ($includeInstructor) {
-    $courses->load('instructor');
-}
-```
-
-### loadMissing()（未ロードのみロード）
-
-```php
-$courses = Course::with('instructor')->get();
-
-// instructor は既にロード済みなのでスキップ
-// attendances のみロード
-$courses->loadMissing(['instructor', 'attendances']);
-```
-
-## Step 4 N+1問題の検出
+## Step 3 N+1問題の検出
 
 ### Telescopeで確認
 
@@ -183,7 +174,7 @@ Model::handleLazyLoadingViolationUsing(function ($model, $relation) {
 });
 ```
 
-## Step 5 カウントの最適化
+## Step 4 カウントの最適化
 
 ### 問題（受講者数を取得）
 
@@ -222,10 +213,12 @@ FROM courses;
 ### 条件付きカウント
 
 ```php
+use App\Enums\AttendanceStatus;
+
 $courses = Course::withCount([
     'attendances',
     'attendances as attending_count' => function ($query) {
-        $query->where('status', 'attending');
+        $query->where('status', AttendanceStatus::Attending);
     },
 ])->get();
 
@@ -233,87 +226,119 @@ $courses = Course::withCount([
 // $course->attending_count
 ```
 
-## Step 6 実践例
+---
 
-### Before（N+1問題あり）
+# 第2部 プロジェクトへの適用
+
+ここからは第1部で学んだテクニックを、実際のプロジェクトコードに適用します。
+
+## Step 5 `Course::hasCapacity()` の改善
+
+Lesson 11 Step 7 で実装した `Course::hasCapacity()` は、呼ぶたびに `COUNT` クエリを発行します。講座一覧で全講座の残席をチェックすると N+1 になります。
+
+### 現状（Lesson 11 の実装）
 
 ```php
-class CourseController extends Controller
+public function hasCapacity(): bool
 {
-    public function index()
-    {
-        $courses = Course::active()->get();
-
-        return $courses->map(function ($course) {
-            return [
-                'title' => $course->title,
-                'instructor' => $course->instructor->name,                    // N回クエリ
-                'capacity' => $course->attendances->count() . ' / ' . $course->capacity . '人',  // N回クエリ（全データ取得）
-                'remaining' => $course->capacity - $course->attendances->count() . '席',
-            ];
-        });
-    }
+    return $this->attendances()->count() < $this->capacity;
 }
 ```
 
-問題点として、`$course->instructor` でN回クエリ、`$course->attendances->count()` でN回クエリ（さらに全データ取得）が発生しています。
+### 改善後
 
-### After（最適化）
+`withCount('attendances')` でロード済みの場合は `attendances_count` を優先して使い、そうでなければ従来通りクエリを発行するフォールバックを用意します。
 
 ```php
-class CourseController extends Controller
+// app/Models/Course.php
+public function hasCapacity(): bool
 {
-    public function index()
-    {
-        $courses = Course::active()
-            ->with('instructor:id,name')
-            ->withCount('attendances')
-            ->get();
+    $count = $this->attendances_count ?? $this->attendances()->count();
 
-        return $courses->map(function ($course) {
-            return [
-                'title' => $course->title,
-                'instructor' => $course->instructor->name,
-                'capacity' => $course->attendances_count . ' / ' . $course->capacity . '人',
-                'remaining' => $course->capacity - $course->attendances_count . '席',
-            ];
-        });
-    }
+    return $count < $this->capacity;
 }
 ```
 
-改善点として、合計2回のクエリで済み、受講データ自体は取得しない（カウントのみ）ようになりました。
+これで呼び出し側で `Course::withCount('attendances')->get()` しておけば、追加クエリなしで定員チェックが行えます。単体取得時（`find` など）は `attendances_count` が無いので従来通り1回のクエリでカウントします。
 
-## Step 7 APIでのEager Loading
+## Step 6 `preventLazyLoading()` で Eager Loading 忘れを検出
 
-### CourseResource での対応
+開発中の N+1 を早期発見するため、`AppServiceProvider::boot` に `preventLazyLoading()` を導入します。
+
+`app/Providers/AppServiceProvider.php`
 
 ```php
-class CourseResource extends JsonResource
+use Illuminate\Database\Eloquent\Model;
+
+public function boot(): void
 {
-    public function toArray(Request $request): array
-    {
-        return [
-            'id' => $this->id,
-            'title' => $this->title,
-            // リレーションがロードされている場合のみ含める
-            'instructor' => $this->whenLoaded('instructor', function () {
-                return [
-                    'id' => $this->instructor->id,
-                    'name' => $this->instructor->name,
-                ];
-            }),
-            'attendances_count' => $this->whenCounted('attendances'),
-        ];
-    }
+    // 本番では無効（万一の例外で500にしないため）、開発環境でのみ N+1 を例外として検出
+    Model::preventLazyLoading(! app()->isProduction());
 }
 ```
 
-### whenLoaded() のメリット
+これ以降、Eager Loading 忘れがあると `LazyLoadingViolationException` が発生し、開発時点で気付けます。
 
-- ロードされていなければ含めない
-- 意図しないN+1を防止
-- レスポンスサイズの最適化
+```
+Attempted to lazy load [instructor] on model [App\Models\Course]
+but lazy loading is disabled.
+```
+
+> 既存コードで例外が出る場合は、その呼び出し箇所で `with()` を追加してください。
+
+## Step 7 `CourseController::index` の最適化
+
+Lesson 9 で作った `CourseController::index` は `with('instructor')` まで入っていますが、受講者数の表示にも耐えるよう `withCount('attendances')` を追加します。
+
+### Before / After
+
+```php
+// Before（Lesson 9 時点）
+public function index(Request $request)
+{
+    $query = Course::with('instructor');
+    // ... フィルタリング
+    $courses = $query->latest()->paginate($perPage);
+
+    return CourseResource::collection($courses);
+}
+```
+
+```php
+// After（withCount を追加）
+public function index(Request $request)
+{
+    $query = Course::with('instructor')
+        ->withCount('attendances');
+    // ... フィルタリング
+    $courses = $query->latest()->paginate($perPage);
+
+    return CourseResource::collection($courses);
+}
+```
+
+### CourseResource への `attendances_count` 反映
+
+Lesson 9 で作った `CourseResource` に、ロードされている場合のみカウントを返すフィールドを追加します。
+
+```php
+// app/Http/Resources/CourseResource.php
+return [
+    // ...既存のフィールド
+    'status_label' => $this->resource->status->label(),
+    'starts_at' => $this->resource->starts_at?->format('Y-m-d H:i:s'),
+    'attendances_count' => $this->whenCounted('attendances'),  // 追加
+    'created_at' => $this->resource->created_at->format('Y-m-d H:i:s'),
+];
+```
+
+> `whenCounted('attendances')` は `withCount('attendances')` を付けて取得したときだけフィールドが出力されます。意図しないN+1が起きる呼び出しパスではそもそも値が入らないので、レスポンス上で異常に気付けます。
+>
+> Lesson 9 の `CourseResource` では `instructor` 側で `new UserResource($this->whenLoaded('instructor'))` 形式を使っています。これは `whenLoaded('instructor', fn () => [...])` のようにコールバックを渡す書き方と等価で、どちらもロード済みでなければ出力しません。
+
+### 動作確認
+
+Postman で `api > courses > 講座一覧` を送信し、レスポンスの各要素に `attendances_count` が含まれることを確認してください。`preventLazyLoading` を入れたので、もし今後 N+1 を起こすコードを書くと即座に例外で気付けます。
 
 ## 練習問題
 
@@ -321,9 +346,11 @@ class CourseResource extends JsonResource
 以下のコードにはN+1問題があります。修正してください。
 
 ```php
+use App\Enums\AttendanceStatus;
+
 public function index()
 {
-    $attendances = Attendance::where('status', 'attending')->get();
+    $attendances = Attendance::where('status', AttendanceStatus::Attending)->get();
 
     return $attendances->map(function ($attendance) {
         return [
@@ -339,10 +366,12 @@ public function index()
 <summary>解答例</summary>
 
 ```php
+use App\Enums\AttendanceStatus;
+
 public function index()
 {
     $attendances = Attendance::with(['user', 'course'])
-        ->where('status', 'attending')
+        ->where('status', AttendanceStatus::Attending)
         ->get();
 
     return $attendances->map(function ($attendance) {
@@ -359,17 +388,23 @@ public function index()
 </details>
 
 ### 問題2
-講師ごとに担当講座数を取得するクエリを書いてください。
+ユーザーごとに受講中（`status = attending`）の件数を取得するクエリを書いてください。
+
+> ヒント: `User` モデルには Lesson 11 で `attendances()` リレーションを追加済みです。`withCount` の条件付きバリエーション（第1部 Step 4）を使います。
 
 <details>
 <summary>解答例</summary>
 
 ```php
-$instructors = User::withCount('courses')
-    ->whereHas('courses')
-    ->get();
+use App\Enums\AttendanceStatus;
 
-// $instructor->courses_count で講座数を参照
+$users = User::withCount([
+    'attendances as attending_count' => function ($query) {
+        $query->where('status', AttendanceStatus::Attending);
+    },
+])->get();
+
+// $user->attending_count で受講中の件数を参照
 ```
 </details>
 
