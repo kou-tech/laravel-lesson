@@ -26,7 +26,7 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Testing
+    | Pages
     |--------------------------------------------------------------------------
     |
     | The values described here are used to locate Inertia components on the
@@ -35,15 +35,15 @@ return [
     |
     */
 
-    'testing' => [
+    'pages' => [
 
-        'ensure_pages_exist' => true,
+        'ensure_pages_exist' => false,
 
-        'page_paths' => [
+        'paths' => [
             resource_path('js/pages'),
         ],
 
-        'page_extensions' => [
+        'extensions' => [
             'js',
             'jsx',
             'svelte',
@@ -51,6 +51,23 @@ return [
             'tsx',
             'vue',
         ],
+
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Testing
+    |--------------------------------------------------------------------------
+    |
+    | When using `assertInertia`, the assertion attempts to locate the
+    | component as a file relative to the `pages.paths` AND with any of
+    | the `pages.extensions` specified above.
+    |
+    */
+
+    'testing' => [
+
+        'ensure_pages_exist' => true,
 
     ],
 
