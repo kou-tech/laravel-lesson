@@ -5,7 +5,7 @@
 - 対象者: Laravel少し経験あり
 - 形式: 自習教材（ドキュメント型）
 - 構成: 全20レッスン（4パート）
-- 技術スタック: Laravel 12 + Inertia.js + React + Fortify
+- 技術スタック: Laravel 13 + Inertia.js v3 + React 19 + Fortify
 
 ## 題材概要
 
