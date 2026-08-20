@@ -4,7 +4,7 @@ Laravelの学習用プロジェクトです。
 
 ## レッスン
 
-レッスンの内容は [lessons/index.md](./lessons/index.md) を参照してください。
+レッスンの内容は [lessons/README.md](./lessons/README.md) を参照してください。
 
 ## 必要な環境
 
