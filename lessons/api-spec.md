@@ -17,9 +17,12 @@
 | メソッド | エンドポイント | 説明 | 認証 | 認可 |
 |---------|---------------|------|------|------|
 | GET | /api/me | 自分の情報を取得 | 必要 | - |
-| GET | /api/users | ユーザー一覧 | 必要 | 講師のみ |
-| GET | /api/users/{id} | ユーザー詳細 | 必要 | 自分 or 講師 |
+| PATCH | /api/me | 自分の情報を更新 | 必要 | - |
+| GET | /api/users | ユーザー一覧 | 不要 | - |
+| GET | /api/users/{id} | ユーザー詳細 | 不要 | - |
 | PATCH | /api/users/{id} | ユーザー更新 | 必要 | 自分のみ |
+
+> ユーザー一覧・詳細は、本コースでは公開APIのまま進めます（Lesson 6・7）。`UserPolicy` の `viewAny` / `view` は「認可を絞るならこう書く」という例として定義しますが、Controller には接続しません。認証を必須にして Policy を効かせる改造は、余力があれば取り組んでみてください。
 
 ## 講座関連
 
@@ -36,6 +39,8 @@
 | メソッド | エンドポイント | 説明 | 認証 | 認可 |
 |---------|---------------|------|------|------|
 | GET | /api/courses/{id}/attendances | 講座の受講者一覧 | 必要 | 担当講師のみ |
-| POST | /api/courses/{id}/attend | 講座に申し込む | 必要 | 生徒のみ |
-| DELETE | /api/courses/{id}/attend | 受講をキャンセル | 必要 | 自分のみ |
+| POST | /api/courses/{id}/attendances | 講座に申し込む | 必要 | 生徒のみ |
+| DELETE | /api/courses/{id}/attendances | 受講をキャンセル | 必要 | 自分のみ |
 | GET | /api/me/attendances | 自分の受講一覧 | 必要 | - |
+
+> 受講の申込み・キャンセルは、同じURL（`/api/courses/{id}/attendances`）に対して HTTP メソッドを変えて表現します。Lesson 3 で学んだ「URLは名詞、操作はHTTPメソッド」の原則に沿った形です。実装は Lesson 11（申込み）と Lesson 19（キャンセル）で行います。

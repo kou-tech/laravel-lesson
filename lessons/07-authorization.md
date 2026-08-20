@@ -108,6 +108,36 @@ public function isStudent(): bool
 }
 ```
 
+### UserFactory に role の state を追加
+
+テストで「生徒のユーザー」「講師のユーザー」を作れるように、`database/factories/UserFactory.php` に state を追加します。Lesson 17 以降のテストで多用するので、ここで用意しておきます。
+
+```php
+use App\Enums\UserRole;
+
+/**
+ * 生徒ロールのユーザー
+ */
+public function student(): static
+{
+    return $this->state(fn (array $attributes) => [
+        'role' => UserRole::Student,
+    ]);
+}
+
+/**
+ * 講師ロールのユーザー
+ */
+public function instructor(): static
+{
+    return $this->state(fn (array $attributes) => [
+        'role' => UserRole::Instructor,
+    ]);
+}
+```
+
+> state は「このFactoryで作るモデルの、ある決まったバリエーション」を名前付きで定義する仕組みです。以降 `User::factory()->instructor()->create()` と書けば、講師ロールのユーザーが1件作られます。
+
 
 ## Step 2 Policyを使った認可
 
@@ -191,7 +221,7 @@ class UserPolicy
 
 ### Policyの登録
 
-Laravel 11では、モデル名と一致するPolicyは自動的に登録されます。
+Laravel 11以降（本プロジェクトは Laravel 13）では、モデル名と一致するPolicyは自動的に登録されます。
 
 - `User` モデル → `UserPolicy` が自動的に紐づく
 

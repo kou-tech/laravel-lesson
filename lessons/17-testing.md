@@ -21,6 +21,23 @@
 4. 設計の改善として、テストしづらいコード = 設計が悪いことがわかります
 
 
+## Step 0 準備 - RefreshDatabase を有効にする
+
+テストは「毎回まっさらなDBで実行する」のが原則です。開発用のデータが残っていると、`assertJsonCount(3, 'data')` のような件数チェックが、シーダーで入れたデータのせいで落ちてしまいます。
+
+`tests/Pest.php` の以下の行のコメントを外してください。
+
+```php
+pest()->extend(TestCase::class)
+    ->use(Illuminate\Foundation\Testing\RefreshDatabase::class)  // ← コメントを外す
+    ->in('Feature');
+```
+
+これで `tests/Feature` 配下のテストは、1テストごとにマイグレーション済みの空のDBで実行され、終わると自動でロールバックされます。開発用のDBのデータが消えることはありません。
+
+> `->in('Feature')` は「Feature ディレクトリ配下のテストに適用する」という意味です。`tests/Unit` にはDBを触らないテストを置くため、対象外にしています。
+
+
 ## Step 1 テストの種類
 
 ### Feature テスト（機能テスト）
@@ -28,9 +45,8 @@
 HTTPリクエストからレスポンスまでの一連の流れをテストします。
 
 ```php
-// tests/Feature/CourseControllerTest.php
-public function test_can_get_course_list(): void
-{
+// tests/Feature/Api/CourseTest.php
+test('講座一覧を取得できる', function () {
     // Arrange: テストデータ準備
     Course::factory()->count(3)->create();
 
@@ -40,7 +56,7 @@ public function test_can_get_course_list(): void
     // Assert: レスポンスを検証
     $response->assertStatus(200)
         ->assertJsonCount(3, 'data');
-}
+});
 ```
 
 ### Unit テスト（単体テスト）
@@ -48,17 +64,16 @@ public function test_can_get_course_list(): void
 クラスやメソッド単位でテストします。
 
 ```php
-// tests/Unit/CourseServiceTest.php
-public function test_calculate_available_seats(): void
-{
+// tests/Unit/CourseTest.php
+test('残席数を計算できる', function () {
     $course = Course::factory()->make(['capacity' => 20]);
-    $course->setRelation('attendances', collect(range(1, 15)));
+    $course->attendances_count = 15;
 
-    $service = new CourseService();
-
-    $this->assertEquals(5, $service->getAvailableSeats($course));
-}
+    expect($course->available_seats)->toBe(5);
+});
 ```
+
+> Unit テストはDBに触れないため、`Course::factory()->make()`（保存しない）を使います。DBを使うテストは `tests/Feature` に置いてください（Step 0 で `RefreshDatabase` を有効にしたのは Feature 側だけです）。
 
 ### 使い分け
 
@@ -99,7 +114,9 @@ test('認証なしで講座を作成できない', function () {
 });
 ```
 
-### PHPUnit スタイル
+### 参考: PHPUnit スタイル
+
+Pest は内部的に PHPUnit の上で動いており、従来のクラス形式でも書けます。既存プロジェクトではこちらを見かけることも多いので、読めるようにしておいてください。
 
 ```php
 // tests/Feature/CourseControllerTest.php
@@ -107,14 +124,10 @@ test('認証なしで講座を作成できない', function () {
 namespace Tests\Feature;
 
 use App\Models\Course;
-use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class CourseControllerTest extends TestCase
 {
-    use RefreshDatabase;
-
     public function test_can_get_course_list(): void
     {
         Course::factory()->count(3)->create();
@@ -126,6 +139,8 @@ class CourseControllerTest extends TestCase
     }
 }
 ```
+
+> **本コースで書くテストはすべて Pest 形式に統一します。** `php artisan make:test` もPest形式のファイルを生成します。この先のレッスン（18・19）のサンプルもPest形式です。
 
 
 ## Step 3 テストデータの準備
@@ -209,6 +224,8 @@ test('講師は講座を作成できる', function () {
         ->postJson('/api/courses', [
             'title' => 'テスト講座',
             'capacity' => 20,
+            'status' => 'draft',
+            'starts_at' => now()->addWeek()->toDateTimeString(),
         ]);
 
     $response->assertStatus(201);
@@ -221,11 +238,15 @@ test('生徒は講座を作成できない', function () {
         ->postJson('/api/courses', [
             'title' => 'テスト講座',
             'capacity' => 20,
+            'status' => 'draft',
+            'starts_at' => now()->addWeek()->toDateTimeString(),
         ]);
 
     $response->assertStatus(403);
 });
 ```
+
+> リクエストボディに `status` と `starts_at` を入れているのは、`Course/StoreRequest` で必須にしているためです（Lesson 9・11）。**バリデーションは認可より先に走る**ので、ここを省くと「403を期待していたのに422が返る」というテスト失敗になります。認可のテストをするときは、**バリデーションを通過する正しいボディ**を送るのがコツです。
 
 
 ## Step 5 レスポンスのアサーション
@@ -323,6 +344,8 @@ test('講座作成時に通知が送信される', function () {
         ->postJson('/api/courses', [
             'title' => 'テスト講座',
             'capacity' => 20,
+            'status' => 'draft',
+            'starts_at' => now()->addWeek()->toDateTimeString(),
         ])
         ->assertCreated();
 });
@@ -341,7 +364,7 @@ test('受講時にメールが送信される', function () {
     $course = Course::factory()->active()->create();
 
     $this->actingAs($user)
-        ->postJson("/api/courses/{$course->id}/attend")
+        ->postJson("/api/courses/{$course->id}/attendances")
         ->assertCreated();
 
     Mail::assertSent(AttendanceConfirmation::class, function ($mail) use ($user) {
@@ -413,6 +436,8 @@ describe('POST /api/courses', function () {
                 'title' => 'Laravel入門',
                 'description' => '初心者向け',
                 'capacity' => 20,
+                'status' => 'draft',
+                'starts_at' => now()->addWeek()->toDateTimeString(),
             ]);
 
         $response->assertCreated()

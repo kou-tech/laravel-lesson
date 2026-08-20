@@ -216,9 +216,9 @@ public function createCourseAndNotify(Request $request)
 {
     // バリデーション
     $validated = $request->validate([
-        'title' => 'required|string|max:255',
-        'description' => 'nullable|string',
-        'capacity' => 'required|integer|min:1',
+        'title' => ['required', 'string', 'max:255'],
+        'description' => ['nullable', 'string'],
+        'capacity' => ['required', 'integer', 'min:1'],
     ]);
 
     // 講座作成

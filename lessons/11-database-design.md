@@ -114,10 +114,19 @@ $table->index(['user_id', 'status']);
 
 #### 1. 比較が直感的でない
 
-```php
-// NULLは等価比較できない
-SELECT * FROM users WHERE email = NULL;  -- 結果は0件
+`NULL` は「＝」で比較できず、専用の書き方が必要です。
+
+```sql
+-- NULL は等価比較できない
+SELECT * FROM users WHERE email = NULL;  -- 結果は常に0件
 SELECT * FROM users WHERE email IS NULL; -- これが正しい
+```
+
+Eloquent で書くと以下に対応します。SQLを書けるようになる必要はありませんが、「`where('email', null)` ではなく `whereNull('email')` を使う」という対応関係だけ押さえてください。
+
+```php
+User::where('email', null)->get(); // 期待通りに動かない
+User::whereNull('email')->get();   // これが正しい
 ```
 
 #### 2. コードが複雑になる
@@ -180,7 +189,7 @@ $table->unique(['user_id', 'course_id']);
 
 ### 例外処理
 
-複合ユニーク制約違反は、Laravel 11 以降で提供される `UniqueConstraintViolationException` でキャッチできます。DB ドライバ（MySQL / SQLite など）に依存せずに判定できるのが利点です。
+複合ユニーク制約違反は、Laravel 11 以降で提供される `UniqueConstraintViolationException` でキャッチできます（本プロジェクトは Laravel 13）。DB ドライバ（MySQL / SQLite など）に依存せずに判定できるのが利点です。
 
 ```php
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -359,8 +368,10 @@ php artisan migrate
 ### モデルの作成
 
 ```bash
-php artisan make:model Attendance
+php artisan make:model Attendance --factory
 ```
+
+`--factory` を付けると、モデルと同時に `database/factories/AttendanceFactory.php` も生成されます。Lesson 17 以降のテストで使います。
 
 ### Attendanceモデルの実装
 
@@ -372,11 +383,14 @@ php artisan make:model Attendance
 namespace App\Models;
 
 use App\Enums\AttendanceStatus;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Attendance extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'user_id',
         'course_id',
@@ -429,6 +443,46 @@ enum AttendanceStatus: string
     }
 }
 ```
+
+### AttendanceFactory の実装
+
+`--factory` で生成された `database/factories/AttendanceFactory.php` を以下の内容にします。
+
+```php
+<?php
+
+namespace Database\Factories;
+
+use App\Enums\AttendanceStatus;
+use App\Models\Course;
+use App\Models\User;
+use Illuminate\Database\Eloquent\Factories\Factory;
+
+class AttendanceFactory extends Factory
+{
+    public function definition(): array
+    {
+        return [
+            'user_id' => User::factory(),
+            'course_id' => Course::factory(),
+            'status' => AttendanceStatus::Attending,
+            'attended_at' => now(),
+        ];
+    }
+
+    /**
+     * キャンセル済みの受講
+     */
+    public function cancelled(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'status' => AttendanceStatus::Cancelled,
+        ]);
+    }
+}
+```
+
+> `'user_id' => User::factory()` と書いておくと、`user_id` を明示しなかったときに紐づくユーザーも自動で作られます。テストで `Attendance::factory()->create(['course_id' => $course->id])` のように一部だけ指定できるのはこのためです。
 
 ### User と Course にリレーションを追加
 
@@ -529,9 +583,11 @@ return new class extends Migration
 };
 ```
 
-### モデル・Factory・Resource の更新
+### モデル・Factory・Resource・FormRequest の更新
 
-Lesson 9 で作成した `Course` モデル・`CourseFactory`・`CourseResource` にも `starts_at` を反映します。
+Lesson 9 で作成した `Course` モデル・`CourseFactory`・`CourseResource`・`Course/StoreRequest`・`Course/UpdateRequest` にも `starts_at` を反映します。
+
+> ここを忘れると、`POST /api/courses` が「`starts_at` に値が入っていない」というDBエラー（500）になります。**NOT NULL カラムを増やしたら、そのカラムを作る側の経路（バリデーション → fillable → Factory）を一通り見直す**、というのが実務でのチェック手順です。
 
 ```php
 // app/Models/Course.php
@@ -577,6 +633,34 @@ return [
     'starts_at' => $this->resource->starts_at?->format('Y-m-d H:i:s'),  // 追加
     'created_at' => $this->resource->created_at->format('Y-m-d H:i:s'),
 ];
+```
+
+```php
+// app/Http/Requests/Course/StoreRequest.php
+public function rules(): array
+{
+    return [
+        'title' => ['required', 'string', 'max:255'],
+        'description' => ['nullable', 'string'],
+        'capacity' => ['required', 'integer', 'min:1', 'max:100'],
+        'status' => ['required', Rule::enum(CourseStatus::class)],
+        'starts_at' => ['required', 'date'],  // 追加
+    ];
+}
+```
+
+```php
+// app/Http/Requests/Course/UpdateRequest.php
+public function rules(): array
+{
+    return [
+        'title' => ['sometimes', 'string', 'max:255'],
+        'description' => ['nullable', 'string'],
+        'capacity' => ['sometimes', 'integer', 'min:1', 'max:100'],
+        'status' => ['sometimes', Rule::enum(CourseStatus::class)],
+        'starts_at' => ['sometimes', 'date'],  // 追加
+    ];
+}
 ```
 
 ### マイグレーションの適用
@@ -644,6 +728,7 @@ use App\Http\Resources\AttendanceResource;
 use App\Models\Attendance;
 use App\Models\Course;
 use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class AttendanceController extends Controller
@@ -651,7 +736,7 @@ class AttendanceController extends Controller
     /**
      * 受講登録
      */
-    public function store(Request $request, Course $course)
+    public function store(Request $request, Course $course): JsonResponse
     {
         // 定員チェック
         if (!$course->hasCapacity()) {
@@ -676,7 +761,9 @@ class AttendanceController extends Controller
 
         $attendance->load(['user', 'course.instructor']);
 
-        return new AttendanceResource($attendance);
+        return (new AttendanceResource($attendance))
+            ->response()
+            ->setStatusCode(201);
     }
 }
 ```
@@ -685,6 +772,7 @@ class AttendanceController extends Controller
 - `hasCapacity()` で定員チェック（Step 7 で定義したメソッド）
 - 複合ユニーク制約違反は `UniqueConstraintViolationException` をキャッチして 409 Conflict を返す（DBドライバ非依存）
 - アプリ側チェックだけでなく、DB制約が最後の砦として機能する
+- 受講レコードを新規作成するので、成功時は 201 Created を返す（Lesson 9 の `CourseController@store` と同じ方針）
 
 ### ルート追加
 

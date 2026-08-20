@@ -113,6 +113,11 @@ use Illuminate\Support\Facades\Log;
 
 class DebugController extends Controller
 {
+    public function index()
+    {
+        return User::all();
+    }
+
     public function show(User $user)
     {
         Log::info('DebugController@show が呼ばれました', [
@@ -124,6 +129,8 @@ class DebugController extends Controller
     }
 }
 ```
+
+> `index()` は Step 1 で作ったものをそのまま残しています（練習問題1で使います）。変更点は `use Illuminate\Support\Facades\Log;` の追加と、`show()` 内のログ出力の2箇所だけです。
 
 ### ログの確認
 

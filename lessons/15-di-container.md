@@ -10,6 +10,10 @@
 - コンストラクタインジェクションを使える
 - インターフェースとバインディングを設定できる
 
+> このレッスンは仕組みを理解する座学中心のレッスンです。登場する `MailerInterface` / `SmtpMailer` / `FakeMailer` / `NotificationService` / `AttendanceService` / `AttendanceServiceInterface` は**説明用の仮の題材**で、プロジェクトのコードには反映しません（練習問題だけは、手を動かしたい人向けに実際に作ってみてOKです）。プロジェクトに実際にサービスクラスを導入するのは Lesson 16 です。
+>
+> 先に方針を示しておくと、**本コースが最終的に採用するのは「インターフェースを切らず、具象クラスをそのまま注入する」形**です（Lesson 16）。インターフェースは常に必要なものではなく、実装を差し替える必要が出たときの引き出しです。使い分けの基準はレッスン末尾の「いつインターフェースを切るか」にまとめています。
+
 
 ## 依存性とは？
 
@@ -429,31 +433,47 @@ public function register(): void
 
 ### DIのメリット（テスト容易性）
 
+本コースのテストは Pest 形式で書きます（Lesson 17 で詳しく学びます）。
+
 ```php
 use App\Contracts\AttendanceServiceInterface;
-use Mockery;
+use App\Models\Attendance;
+use App\Models\Course;
+use App\Models\User;
 
-class AttendanceControllerTest extends TestCase
-{
-    public function test_attendance_success(): void
-    {
-        // モックを作成
-        $mockService = Mockery::mock(AttendanceServiceInterface::class);
-        $mockService->shouldReceive('attend')
-            ->once()
-            ->andReturn(Attendance::factory()->make());
+test('受講登録はサービスに処理を委譲する', function () {
+    $user = User::factory()->student()->create();
+    $course = Course::factory()->active()->create();
 
-        // サービスコンテナにモックをバインド
-        $this->app->instance(AttendanceServiceInterface::class, $mockService);
+    // モックを作成（attend が1回だけ呼ばれることを期待）
+    $mockService = Mockery::mock(AttendanceServiceInterface::class);
+    $mockService->shouldReceive('attend')
+        ->once()
+        ->andReturn(Attendance::factory()->make());
 
-        // テスト実行
-        $response = $this->actingAs($user)
-            ->postJson("/api/courses/{$course->id}/attend");
+    // サービスコンテナにモックをバインド
+    $this->app->instance(AttendanceServiceInterface::class, $mockService);
 
-        $response->assertStatus(201);
-    }
-}
+    $this->actingAs($user)
+        ->postJson("/api/courses/{$course->id}/attendances")
+        ->assertCreated();
+});
 ```
+
+コントローラーが `new AttendanceService()` していたら、この差し替えはできません。DIの一番わかりやすい見返りがここです。
+
+## いつインターフェースを切るか
+
+インターフェースは「あると綺麗」ではなく、**差し替える理由があるときに切る**ものです。判断の目安は以下の通りです。
+
+| 状況 | 判断 |
+|------|------|
+| 実装が1つしかなく、増える見込みもない | インターフェース不要。具象クラスを直接注入する |
+| 環境によって実装を変えたい（本番はSMTP、テストはダミー） | インターフェースを切る価値がある |
+| 外部サービス（決済、SMS送信など）に依存する | インターフェースを切る。差し替え・モックがしやすくなる |
+| 単にビジネスロジックをControllerから追い出したいだけ | インターフェース不要 |
+
+本コースの `CreateCourse` などのサービスクラス（Lesson 16）は最後のケースにあたるため、インターフェースは切りません。テストでモックしたくなったときに、後から切っても遅くありません。
 
 ## 練習問題
 
