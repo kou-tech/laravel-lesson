@@ -90,6 +90,14 @@ class Course extends Model
     {
         return $query->where('status', CourseStatus::Active);
     }
+
+    /**
+     * この講座が公開中かどうか
+     */
+    public function isActive(): bool
+    {
+        return $this->status === CourseStatus::Active;
+    }
 }
 ```
 

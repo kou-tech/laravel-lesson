@@ -174,6 +174,19 @@ public function complexOperation()
 
 ## Step 3 排他制御（ロック）
 
+> **重要: このStepの説明はMySQL / PostgreSQLを前提としています。**
+> 本プロジェクトのDBは SQLite で、SQLite のドライバでは `lockForUpdate()` は
+> **何も出力しません**（`SELECT ... FOR UPDATE` は付かず、素の SELECT になります）。
+>
+> ```bash
+> php artisan tinker --execute 'echo Course::whereKey(1)->lockForUpdate()->toRawSql();'
+> # select * from "courses" where "courses"."id" = 1   ← FOR UPDATE が付かない
+> ```
+>
+> つまり、このStepのコードをそのまま書いても、この環境では排他制御は効きません。
+> 「実務でMySQLを使うときに何が起きるか」を理解するための座学パートとして読み進めてください。
+> SQLite はDB全体をロックする方式のため、そもそも行単位のロックという概念がありません。
+
 ### 競合状態の問題
 
 2人のユーザーが同時に残り1席の講座に申し込む場合を考えます。
@@ -369,7 +382,17 @@ DB::transaction(function () {
 ```
 
 
-## Step 5 実践 - 受講登録APIの実装
+## Step 5 サービスクラスへの切り出し（先取り）
+
+> このStepは**これから先のレッスンの完成形を先に見ておくためのサンプル**です。この時点ではまだ作っていないクラスを参照しているため、**そのまま写しても動きません**。手を動かすのは以下のレッスンです。
+>
+> | 参照しているもの | 実際に作るレッスン |
+> |---|---|
+> | `App\Exceptions\CourseNotActiveException` など3つの例外 | Lesson 16（`BusinessException` を継承する形で作ります） |
+> | `App\Mail\AttendanceConfirmation` | Lesson 18 |
+> | `App\Services\` へのサービスクラスの切り出し | Lesson 16（講座）・Lesson 19（受講キャンセル） |
+>
+> いま読み取ってほしいのは、**「DB操作は `DB::transaction()` の中に閉じ、メール送信はその外に出す」という構造**だけです。受講登録API自体は Lesson 11 で実装済みのものがそのまま動いています。
 
 ### AttendanceService
 
