@@ -344,6 +344,16 @@ public function update(UpdateRequest $request, User $user): UserResource
 ### 問題1
 UserPolicyに `updateRole` メソッドを追加し、「講師のみ生徒の役割を変更できる」という認可を実装してください。また、`PATCH /api/users/{user}/role` エンドポイントを追加して動作確認してください。
 
+> 動作確認の注意: この認可は「対象が**生徒である**こと」を条件にしているため、一度成功すると対象は講師になり、**同じリクエストをもう一度送ると 403 になります**。実装ミスではありません。もう一度試したい場合は、対象ユーザーの役割を戻してから実行してください。
+>
+> ```bash
+> php artisan tinker --execute '
+>   $u = App\Models\User::find(1);
+>   $u->role = App\Enums\UserRole::Student;
+>   $u->save();
+> '
+> ```
+
 <details>
 <summary>解答例</summary>
 

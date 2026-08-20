@@ -402,6 +402,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
 ### Factoryの作成
 
+`Course` モデルには最初から `HasFactory` トレイトが付いていますが、対応する `CourseFactory` はここで初めて作ります。**このStepより前に `Course::factory()` を呼ぶとエラーになります**ので注意してください。
+
 ```bash
 php artisan make:factory CourseFactory
 ```
