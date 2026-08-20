@@ -64,16 +64,25 @@ test('講座一覧を取得できる', function () {
 クラスやメソッド単位でテストします。
 
 ```php
-// tests/Unit/CourseTest.php
-test('残席数を計算できる', function () {
-    $course = Course::factory()->make(['capacity' => 20]);
-    $course->attendances_count = 15;
+// tests/Unit/CourseStatusTest.php
+use App\Enums\CourseStatus;
 
-    expect($course->available_seats)->toBe(5);
+test('ステータスに対応する日本語ラベルを返す', function () {
+    expect(CourseStatus::Active->label())->toBe('公開中');
+    expect(CourseStatus::Draft->label())->toBe('下書き');
 });
 ```
 
-> Unit テストはDBに触れないため、`Course::factory()->make()`（保存しない）を使います。DBを使うテストは `tests/Feature` に置いてください（Step 0 で `RefreshDatabase` を有効にしたのは Feature 側だけです）。
+> **`tests/Unit` では Laravel のアプリケーションが起動していません。**
+> `tests/Pest.php` で `Tests\TestCase` を束ねているのは `->in('Feature')` の行だけだからです。そのため `tests/Unit` に置けるのは、Enum やプレーンなクラスのように**フレームワークに依存しないコード**のテストに限られます。
+>
+> よくある失敗は、Unit テストでモデルの Factory を使ってしまうことです。`Course::factory()` はサービスコンテナを必要とするため `Target class [config] does not exist.` になりますし、`CourseFactory` は `'instructor_id' => User::factory()` を持っているので、保存しない `make()` でも講師を作るDBアクセスが発生します。**モデルの Factory を使うテストは `tests/Feature` に置いてください。**
+>
+> どうしても `tests/Unit` でモデルを扱いたい場合は、そのファイルの先頭に以下を書けばコンテナとDBが使えますが、実質的に Feature テストと同じ重さになります。
+>
+> ```php
+> uses(Tests\TestCase::class, Illuminate\Foundation\Testing\RefreshDatabase::class);
+> ```
 
 ### 使い分け
 
