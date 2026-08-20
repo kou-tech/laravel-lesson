@@ -103,6 +103,8 @@ Route::get('/dashboard', function () {
 
 `routes/api.php` に以下を追加します。
 
+> ここで出てくる `auth:sanctum` は「Sanctum の仕組みで認証済みかをチェックするミドルウェア」です。いまは「APIで認証を required にするときの決まり文句」と捉えて構いません。Sanctum が何をしているかは Step 4 で説明します。
+
 ```php
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\UserController;

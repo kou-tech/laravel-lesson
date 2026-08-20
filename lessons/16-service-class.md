@@ -10,6 +10,10 @@
 - カスタム例外クラスを作成できる
 - コントローラーを薄く保てる
 
+> このレッスンは**プロジェクトのコードを実際に書き換えるハンズオン**です。Step 1〜3 で作る `app/Services/Course/` と `app/Exceptions/` のクラス、および `CourseController` の書き換えは、実際にファイルを作成してください。
+>
+> Lesson 15 との関係: Lesson 15 ではインターフェース（`AttendanceServiceInterface` など）を紹介しましたが、**本コースの実装方針はインターフェースを切らず、具象クラス（`CreateCourse` など）をそのままコンストラクタに注入する形**です。実装が1つしかないうちはインターフェースを増やしても得るものが少ないためです（判断基準は Lesson 15 末尾の「いつインターフェースを切るか」）。Lesson 15 で登場した `AttendanceService` は説明用の仮の題材なので、ここでは使いません。
+
 
 ## Fat Controller の問題
 
@@ -22,8 +26,8 @@ class CourseController extends Controller
     {
         // バリデーション
         $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'capacity' => 'required|integer|min:1',
+            'title' => ['required', 'string', 'max:255'],
+            'capacity' => ['required', 'integer', 'min:1'],
         ]);
 
         // 重複チェック
@@ -126,6 +130,7 @@ app/
 
 namespace App\Services\Course;
 
+use App\Enums\CourseStatus;
 use App\Exceptions\CourseLimitExceededException;
 use App\Exceptions\DuplicateCourseTitleException;
 use App\Models\Course;
@@ -145,7 +150,7 @@ class CreateCourse
             $course = Course::create([
                 ...$data,
                 'instructor_id' => $instructor->id,
-                'status' => 'draft',
+                'status' => CourseStatus::Draft,
             ]);
 
             Log::info('講座が作成されました', [
@@ -345,6 +350,8 @@ use App\Models\Course;
 use App\Services\Course\CreateCourse;
 use App\Services\Course\DeleteCourse;
 use App\Services\Course\UpdateCourse;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Response;
 
 class CourseController extends Controller
 {
@@ -363,14 +370,18 @@ class CourseController extends Controller
         return CourseResource::collection($courses);
     }
 
-    public function store(StoreRequest $request)
+    public function store(StoreRequest $request): JsonResponse
     {
+        $this->authorize('create', Course::class);
+
         $course = ($this->createCourse)(
             $request->validated(),
             $request->user()
         );
 
-        return new CourseResource($course);
+        return (new CourseResource($course))
+            ->response()
+            ->setStatusCode(201);
     }
 
     public function show(Course $course)
@@ -387,7 +398,7 @@ class CourseController extends Controller
         return new CourseResource($course);
     }
 
-    public function destroy(Course $course)
+    public function destroy(Course $course): Response
     {
         $this->authorize('delete', $course);
 
@@ -399,6 +410,8 @@ class CourseController extends Controller
 ```
 
 コントローラーの各メソッドは「リクエストを受けてサービスを呼び、レスポンスを返す」だけになりました。
+
+> 書き換えるときの注意: Lesson 9 で入れた `$this->authorize(...)` は**残してください**。認可はHTTPレイヤーの関心事なのでControllerに置いたままにします（サービスクラスに移すと、コマンドラインやジョブから呼んだときに意図せず認可が走ってしまいます）。また `index` に Lesson 12 で入れた `withCount('attendances')` も引き継いでいます。
 
 ### Before / After の比較
 
@@ -511,52 +524,50 @@ public function store(StoreRequest $request)
 ### サービスの単体テスト
 
 ```php
-class CreateCourseTest extends TestCase
-{
-    use RefreshDatabase;
+// tests/Feature/Services/CreateCourseTest.php
 
-    private CreateCourse $service;
+use App\Exceptions\DuplicateCourseTitleException;
+use App\Models\Course;
+use App\Models\User;
+use App\Services\Course\CreateCourse;
 
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->service = app(CreateCourse::class);
-    }
+beforeEach(function () {
+    $this->service = app(CreateCourse::class);
+});
 
-    public function test_create_course_successfully(): void
-    {
-        $instructor = User::factory()->instructor()->create();
+test('講座を作成できる', function () {
+    $instructor = User::factory()->instructor()->create();
 
-        $course = ($this->service)([
-            'title' => 'テスト講座',
-            'capacity' => 20,
-        ], $instructor);
+    ($this->service)([
+        'title' => 'テスト講座',
+        'capacity' => 20,
+        'starts_at' => now()->addWeek(),
+    ], $instructor);
 
-        $this->assertDatabaseHas('courses', [
-            'title' => 'テスト講座',
-            'instructor_id' => $instructor->id,
-        ]);
-    }
+    $this->assertDatabaseHas('courses', [
+        'title' => 'テスト講座',
+        'instructor_id' => $instructor->id,
+    ]);
+});
 
-    public function test_cannot_create_duplicate_title(): void
-    {
-        $instructor = User::factory()->instructor()->create();
-        Course::factory()->create([
-            'title' => '既存講座',
-            'instructor_id' => $instructor->id,
-        ]);
+test('同じタイトルの講座は作成できない', function () {
+    $instructor = User::factory()->instructor()->create();
+    Course::factory()->create([
+        'title' => '既存講座',
+        'instructor_id' => $instructor->id,
+    ]);
 
-        $this->expectException(DuplicateCourseTitleException::class);
-
-        ($this->service)([
-            'title' => '既存講座',
-            'capacity' => 20,
-        ], $instructor);
-    }
-}
+    expect(fn () => ($this->service)([
+        'title' => '既存講座',
+        'capacity' => 20,
+        'starts_at' => now()->addWeek(),
+    ], $instructor))->toThrow(DuplicateCourseTitleException::class);
+});
 ```
 
 テスト対象が1メソッドだけなので、何をテストしているかが明確です。
+
+> テストの書き方（Pest の構文、`beforeEach`、`expect()->toThrow()` など）は Lesson 17 で詳しく学びます。ここでは「1クラス1操作にすると、テストがこれだけ短くなる」ことだけ確認できればOKです。
 
 ## 練習問題
 

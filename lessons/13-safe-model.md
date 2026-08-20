@@ -74,9 +74,9 @@ class User extends Authenticatable
 public function store(Request $request)
 {
     $validated = $request->validate([
-        'name' => 'required|string|max:255',
-        'email' => 'required|email|unique:users',
-        'password' => 'required|min:8',
+        'name' => ['required', 'string', 'max:255'],
+        'email' => ['required', 'email', 'unique:users'],
+        'password' => ['required', 'min:8'],
     ]);
 
     // $fillable に含まれるカラムのみ設定される
@@ -390,15 +390,19 @@ namespace App\Models;
 
 use App\Enums\AttendanceStatus;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Attendance extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'user_id',
         'course_id',
         'status',
+        'attended_at',
     ];
 
     protected $hidden = [
@@ -444,6 +448,8 @@ class Attendance extends Model
     }
 }
 ```
+
+> Lesson 11 で作ったモデルからの変更点は、`$hidden` / `$appends` / アクセサ / スコープの追加だけです。`$fillable` の `attended_at` は**残したまま**にしてください。Lesson 11 の `AttendanceController` が `'attended_at' => now()` を渡しているため、ここから外すとその指定が無視されます（DB側の `useCurrent()` で値自体は入るので、エラーにならず気付きにくい種類の事故です）。`$fillable` を変えるときは、そのカラムを渡している箇所がないか必ず確認する習慣をつけてください。
 
 ## 練習問題
 

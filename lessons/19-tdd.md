@@ -49,6 +49,8 @@
 php artisan make:test Api/AttendanceCancelTest
 ```
 
+`make:test` はPest形式のテストファイルを生成します（Lesson 17 Step 0 で `RefreshDatabase` を有効にしてあることを前提にしています）。
+
 ### 最初のテスト
 
 ```php
@@ -56,55 +58,45 @@ php artisan make:test Api/AttendanceCancelTest
 
 <?php
 
-namespace Tests\Feature\Api;
-
 use App\Enums\AttendanceStatus;
-use App\Models\Course;
 use App\Models\Attendance;
+use App\Models\Course;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
 
-class AttendanceCancelTest extends TestCase
-{
-    use RefreshDatabase;
+test('生徒は自分の受講をキャンセルできる', function () {
+    // Arrange: テストデータ準備
+    $student = User::factory()->student()->create();
+    $course = Course::factory()->create([
+        'starts_at' => now()->addDays(7),  // 7日後開始
+    ]);
+    $attendance = Attendance::factory()->create([
+        'user_id' => $student->id,
+        'course_id' => $course->id,
+        'status' => AttendanceStatus::Attending,
+    ]);
 
-    public function test_student_can_cancel_attendance(): void
-    {
-        // Arrange: テストデータ準備
-        $student = User::factory()->student()->create();
-        $course = Course::factory()->create([
-            'starts_at' => now()->addDays(7),  // 7日後開始
-        ]);
-        $attendance = Attendance::factory()->create([
-            'user_id' => $student->id,
-            'course_id' => $course->id,
-            'status' => AttendanceStatus::Attending,
-        ]);
+    // Act: APIを呼び出す
+    $response = $this->actingAs($student)
+        ->deleteJson("/api/courses/{$course->id}/attendances");
 
-        // Act: APIを呼び出す
-        $response = $this->actingAs($student)
-            ->deleteJson("/api/courses/{$course->id}/attend");
+    // Assert: 結果を検証
+    $response->assertOk();
 
-        // Assert: 結果を検証
-        $response->assertOk();
-
-        $this->assertDatabaseHas('attendances', [
-            'id' => $attendance->id,
-            'status' => AttendanceStatus::Cancelled->value,
-        ]);
-    }
-}
+    $this->assertDatabaseHas('attendances', [
+        'id' => $attendance->id,
+        'status' => AttendanceStatus::Cancelled->value,
+    ]);
+});
 ```
 
 ### テストを実行（失敗する）
 
 ```bash
-php artisan test --filter=test_student_can_cancel_attendance
+php artisan test --filter="生徒は自分の受講をキャンセルできる"
 ```
 
 ```
-FAILED  Tests\Feature\Api\AttendanceCancelTest > student can cancel attendance
+FAILED  Tests\Feature\Api\AttendanceCancelTest > 生徒は自分の受講をキャンセルできる
 404 Not Found
 ```
 
@@ -121,9 +113,11 @@ FAILED  Tests\Feature\Api\AttendanceCancelTest > student can cancel attendance
 Route::middleware('auth:sanctum')->group(function () {
     // ... 既存のルート
 
-    Route::delete('/courses/{course}/attend', [AttendanceController::class, 'destroy']);
+    Route::delete('/courses/{course}/attendances', [AttendanceController::class, 'destroy']);
 });
 ```
+
+> URLは Lesson 11 で作った受講登録（`POST /api/courses/{course}/attendances`）と同じにし、HTTPメソッドだけ `DELETE` に変えています。Lesson 3 で学んだ「URLは名詞、操作はHTTPメソッドで表す」という原則の通りです。
 
 ### コントローラーにメソッドを追加
 
@@ -148,11 +142,11 @@ public function destroy(Request $request, Course $course)
 ### テストを実行（成功する）
 
 ```bash
-php artisan test --filter=test_student_can_cancel_attendance
+php artisan test --filter="生徒は自分の受講をキャンセルできる"
 ```
 
 ```
-PASS  Tests\Feature\Api\AttendanceCancelTest > student can cancel attendance
+PASS  Tests\Feature\Api\AttendanceCancelTest > 生徒は自分の受講をキャンセルできる
 ```
 
 Green状態になりました。
@@ -163,8 +157,7 @@ Green状態になりました。
 ### 3日前以降はキャンセル不可
 
 ```php
-public function test_cannot_cancel_within_3_days_before_start(): void
-{
+test('講座開始3日前以降はキャンセルできない', function () {
     $student = User::factory()->student()->create();
     $course = Course::factory()->create([
         'starts_at' => now()->addDays(2),  // 2日後開始（3日を切っている）
@@ -176,7 +169,7 @@ public function test_cannot_cancel_within_3_days_before_start(): void
     ]);
 
     $response = $this->actingAs($student)
-        ->deleteJson("/api/courses/{$course->id}/attend");
+        ->deleteJson("/api/courses/{$course->id}/attendances");
 
     $response->assertUnprocessable()
         ->assertJsonPath('message', '講座開始3日前以降はキャンセルできません');
@@ -186,13 +179,13 @@ public function test_cannot_cancel_within_3_days_before_start(): void
         'id' => $attendance->id,
         'status' => AttendanceStatus::Attending->value,
     ]);
-}
+});
 ```
 
 ### テスト実行（失敗）
 
 ```bash
-php artisan test --filter=test_cannot_cancel_within_3_days
+php artisan test --filter="講座開始3日前以降はキャンセルできない"
 ```
 
 ```
@@ -213,7 +206,7 @@ public function destroy(Request $request, Course $course)
         ->firstOrFail();
 
     // 3日前チェックを追加
-    if ($course->starts_at->diffInDays(now()) < 3) {
+    if ($course->starts_at->lt(now()->addDays(3))) {
         return response()->json([
             'message' => '講座開始3日前以降はキャンセルできません',
         ], 422);
@@ -227,6 +220,13 @@ public function destroy(Request $request, Course $course)
 }
 ```
 
+> 日付比較の注意: `$course->starts_at->diffInDays(now())` と書きたくなりますが、Carbon 3（本プロジェクトが使用）の `diffInDays()` は**符号付きの小数**を返します。開始日が未来の講座では負の値になるため、`< 3` が常に真になり、**どの講座もキャンセルできなくなります**。「◯日以内か」を判定したいときは、`lt()` / `gt()` で日時そのものを比較するのが安全です。
+>
+> ```php
+> // 開始が「今から3日後」より前 = 3日を切っている
+> $course->starts_at->lt(now()->addDays(3));
+> ```
+
 ### テスト実行（成功）
 
 ```bash
@@ -234,8 +234,8 @@ php artisan test tests/Feature/Api/AttendanceCancelTest.php
 ```
 
 ```
-PASS  Tests\Feature\Api\AttendanceCancelTest > student can cancel attendance
-PASS  Tests\Feature\Api\AttendanceCancelTest > cannot cancel within 3 days before start
+PASS  Tests\Feature\Api\AttendanceCancelTest > 生徒は自分の受講をキャンセルできる
+PASS  Tests\Feature\Api\AttendanceCancelTest > 講座開始3日前以降はキャンセルできない
 ```
 
 
@@ -244,28 +244,25 @@ PASS  Tests\Feature\Api\AttendanceCancelTest > cannot cancel within 3 days befor
 ### 再キャンセル不可
 
 ```php
-public function test_cannot_cancel_already_cancelled(): void
-{
+test('キャンセル済みの受講は再キャンセルできない', function () {
     $student = User::factory()->student()->create();
     $course = Course::factory()->create(['starts_at' => now()->addDays(7)]);
-    Attendance::factory()->create([
+    Attendance::factory()->cancelled()->create([
         'user_id' => $student->id,
         'course_id' => $course->id,
-        'status' => AttendanceStatus::Cancelled,  // 既にキャンセル済み
     ]);
 
     $response = $this->actingAs($student)
-        ->deleteJson("/api/courses/{$course->id}/attend");
+        ->deleteJson("/api/courses/{$course->id}/attendances");
 
     $response->assertNotFound();
-}
+});
 ```
 
 ### 他人の受講はキャンセル不可
 
 ```php
-public function test_cannot_cancel_others_attendance(): void
-{
+test('他人の受講はキャンセルできない', function () {
     $student1 = User::factory()->student()->create();
     $student2 = User::factory()->student()->create();
     $course = Course::factory()->create(['starts_at' => now()->addDays(7)]);
@@ -277,10 +274,10 @@ public function test_cannot_cancel_others_attendance(): void
 
     // student2 が student1 の受講をキャンセルしようとする
     $response = $this->actingAs($student2)
-        ->deleteJson("/api/courses/{$course->id}/attend");
+        ->deleteJson("/api/courses/{$course->id}/attendances");
 
     $response->assertNotFound();
-}
+});
 ```
 
 これらのテストは既存の実装で通ります。
@@ -290,44 +287,83 @@ public function test_cannot_cancel_others_attendance(): void
 
 ### サービスクラスに抽出
 
+Lesson 16 で決めた「1サービス = 1操作、`__invoke` で呼ぶ」方針に沿って、`App\Services\Attendance\CancelAttendance` に抽出します（Lesson 16 の練習問題1で作ったものを、ここでは「ユーザーと講座からキャンセルする」形に整えます）。
+
 ```php
-// app/Services/AttendanceService.php
+// app/Services/Attendance/CancelAttendance.php
+<?php
 
-public function cancel(User $user, Course $course): void
+namespace App\Services\Attendance;
+
+use App\Enums\AttendanceStatus;
+use App\Exceptions\CancellationDeadlineExceededException;
+use App\Models\Attendance;
+use App\Models\Course;
+use App\Models\User;
+
+class CancelAttendance
 {
-    $attendance = $this->findActiveAttendance($user, $course);
+    private const CANCELLABLE_DAYS_BEFORE_START = 3;
 
-    $this->validateCancellation($course);
+    public function __invoke(User $user, Course $course): void
+    {
+        $attendance = $this->findActiveAttendance($user, $course);
 
-    DB::transaction(function () use ($attendance) {
+        $this->validateDeadline($course);
+
         $attendance->update([
             'status' => AttendanceStatus::Cancelled,
         ]);
-    });
-}
+    }
 
-private function findActiveAttendance(User $user, Course $course): Attendance
-{
-    return Attendance::where('user_id', $user->id)
-        ->where('course_id', $course->id)
-        ->where('status', AttendanceStatus::Attending)
-        ->firstOrFail();
-}
+    private function findActiveAttendance(User $user, Course $course): Attendance
+    {
+        return Attendance::where('user_id', $user->id)
+            ->where('course_id', $course->id)
+            ->where('status', AttendanceStatus::Attending)
+            ->firstOrFail();
+    }
 
-private function validateCancellation(Course $course): void
-{
-    if ($course->starts_at->diffInDays(now()) < 3) {
-        throw new CancellationDeadlineExceededException();
+    private function validateDeadline(Course $course): void
+    {
+        if ($course->starts_at->lt(now()->addDays(self::CANCELLABLE_DAYS_BEFORE_START))) {
+            throw new CancellationDeadlineExceededException();
+        }
     }
 }
 ```
 
+`CancellationDeadlineExceededException` は Lesson 16 の `BusinessException` を継承して作ります。これで 422 とエラーメッセージが自動的に返ります。
+
+```php
+// app/Exceptions/CancellationDeadlineExceededException.php
+<?php
+
+namespace App\Exceptions;
+
+class CancellationDeadlineExceededException extends BusinessException
+{
+    protected $message = '講座開始3日前以降はキャンセルできません';
+
+    public function getErrorCode(): string
+    {
+        return 'CANCELLATION_DEADLINE_EXCEEDED';
+    }
+}
+```
+
+> 更新が1テーブル1行だけなので、ここでは `DB::transaction()` を使っていません。Lesson 14 で学んだ通り、トランザクションが必要になるのは「複数の更新をまとめて成功／失敗させたいとき」です。Step 7 でメール送信を足しても、メールはDBの更新ではないのでこの判断は変わりません。
+
 ### コントローラーをシンプルに
 
 ```php
-public function destroy(Request $request, Course $course)
+public function __construct(
+    private CancelAttendance $cancelAttendance,
+) {}
+
+public function destroy(Request $request, Course $course): JsonResponse
 {
-    $this->attendanceService->cancel($request->user(), $course);
+    ($this->cancelAttendance)($request->user(), $course);
 
     return response()->json(['message' => 'キャンセルしました']);
 }
@@ -349,11 +385,10 @@ php artisan test tests/Feature/Api/AttendanceCancelTest.php
 ## Step 7 メール通知のテストを追加
 
 ```php
-use Illuminate\Support\Facades\Mail;
 use App\Mail\AttendanceCancellation;
+use Illuminate\Support\Facades\Mail;
 
-public function test_sends_cancellation_email(): void
-{
+test('キャンセル時に通知メールが送信される', function () {
     Mail::fake();
 
     $student = User::factory()->student()->create();
@@ -365,29 +400,29 @@ public function test_sends_cancellation_email(): void
     ]);
 
     $this->actingAs($student)
-        ->deleteJson("/api/courses/{$course->id}/attend")
+        ->deleteJson("/api/courses/{$course->id}/attendances")
         ->assertOk();
 
     Mail::assertQueued(AttendanceCancellation::class, function ($mail) use ($student) {
         return $mail->hasTo($student->email);
     });
-}
+});
 ```
 
 ### サービスにメール送信を追加
 
+`queue()` で送るので、アサーションも `assertQueued` になります（Lesson 18 の使い分けを参照）。
+
 ```php
-public function cancel(User $user, Course $course): void
+public function __invoke(User $user, Course $course): void
 {
     $attendance = $this->findActiveAttendance($user, $course);
 
-    $this->validateCancellation($course);
+    $this->validateDeadline($course);
 
-    DB::transaction(function () use ($attendance) {
-        $attendance->update([
-            'status' => AttendanceStatus::Cancelled,
-        ]);
-    });
+    $attendance->update([
+        'status' => AttendanceStatus::Cancelled,
+    ]);
 
     // メール送信を追加
     Mail::to($user)->queue(new AttendanceCancellation($attendance));
@@ -402,18 +437,17 @@ public function cancel(User $user, Course $course): void
 テストしやすいコード = 良い設計です。
 
 ```php
-// ❌ テストしにくい（依存が隠れている）
-public function cancel()
+// ❌ テストしにくい（依存が隠れていて差し替えられない）
+public function destroy(Request $request, Course $course)
 {
-    $service = new AttendanceService();
-    $service->cancel(...);
+    $cancelAttendance = new CancelAttendance();
+    $cancelAttendance($request->user(), $course);
 }
 
-// ✅ テストしやすい（依存が明示的）
-public function cancel(AttendanceService $service)
-{
-    $service->cancel(...);
-}
+// ✅ テストしやすい（依存が明示的で、モックに差し替えられる）
+public function __construct(
+    private CancelAttendance $cancelAttendance,
+) {}
 ```
 
 ### 2. 過剰な実装を防ぐ
@@ -448,65 +482,53 @@ Step 1 テストを書く
 // tests/Feature/Api/CoursePublishTest.php
 <?php
 
-namespace Tests\Feature\Api;
-
 use App\Enums\CourseStatus;
 use App\Models\Course;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
 
-class CoursePublishTest extends TestCase
-{
-    use RefreshDatabase;
+test('講師は自分のドラフト講座を公開できる', function () {
+    $instructor = User::factory()->instructor()->create();
+    $course = Course::factory()->create([
+        'instructor_id' => $instructor->id,
+        'status' => CourseStatus::Draft,
+    ]);
 
-    public function test_instructor_can_publish_own_draft_course(): void
-    {
-        $instructor = User::factory()->instructor()->create();
-        $course = Course::factory()->create([
-            'instructor_id' => $instructor->id,
-            'status' => CourseStatus::Draft,
-        ]);
+    $response = $this->actingAs($instructor)
+        ->patchJson("/api/courses/{$course->id}/publish");
 
-        $response = $this->actingAs($instructor)
-            ->patchJson("/api/courses/{$course->id}/publish");
+    $response->assertOk();
+    $this->assertDatabaseHas('courses', [
+        'id' => $course->id,
+        'status' => CourseStatus::Active->value,
+    ]);
+});
 
-        $response->assertOk();
-        $this->assertDatabaseHas('courses', [
-            'id' => $course->id,
-            'status' => CourseStatus::Active->value,
-        ]);
-    }
+test('公開済みの講座は再公開できない', function () {
+    $instructor = User::factory()->instructor()->create();
+    $course = Course::factory()->create([
+        'instructor_id' => $instructor->id,
+        'status' => CourseStatus::Active,
+    ]);
 
-    public function test_cannot_publish_already_active_course(): void
-    {
-        $instructor = User::factory()->instructor()->create();
-        $course = Course::factory()->create([
-            'instructor_id' => $instructor->id,
-            'status' => CourseStatus::Active,
-        ]);
+    $response = $this->actingAs($instructor)
+        ->patchJson("/api/courses/{$course->id}/publish");
 
-        $response = $this->actingAs($instructor)
-            ->patchJson("/api/courses/{$course->id}/publish");
+    $response->assertUnprocessable();
+});
 
-        $response->assertUnprocessable();
-    }
+test('他の講師の講座は公開できない', function () {
+    $instructor1 = User::factory()->instructor()->create();
+    $instructor2 = User::factory()->instructor()->create();
+    $course = Course::factory()->create([
+        'instructor_id' => $instructor1->id,
+        'status' => CourseStatus::Draft,
+    ]);
 
-    public function test_cannot_publish_other_instructors_course(): void
-    {
-        $instructor1 = User::factory()->instructor()->create();
-        $instructor2 = User::factory()->instructor()->create();
-        $course = Course::factory()->create([
-            'instructor_id' => $instructor1->id,
-            'status' => CourseStatus::Draft,
-        ]);
+    $response = $this->actingAs($instructor2)
+        ->patchJson("/api/courses/{$course->id}/publish");
 
-        $response = $this->actingAs($instructor2)
-            ->patchJson("/api/courses/{$course->id}/publish");
-
-        $response->assertForbidden();
-    }
-}
+    $response->assertForbidden();
+});
 ```
 
 Step 2 実装する

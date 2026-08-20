@@ -10,6 +10,10 @@
 - Job クラスを作成してキューに投入できる
 - 非同期処理の仕組みを理解する
 
+> このレッスンは2部構成です。
+> - Step 1〜5: Mailable・Job・キューの書き方を学ぶ座学パート（コマンドを実行してクラスを作りながら読み進めてOKです）
+> - Step 6〜8: 受講登録時に確認メールを送る処理を、Lesson 16 で作ったサービスクラスに組み込むハンズオンパート
+
 
 ## なぜ非同期処理が必要か？
 
@@ -201,7 +205,9 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Throwable;
 
 class SendAttendanceConfirmation implements ShouldQueue
 {
@@ -233,10 +239,10 @@ class SendAttendanceConfirmation implements ShouldQueue
     /**
      * 失敗時の処理
      */
-    public function failed(\Throwable $exception): void
+    public function failed(Throwable $exception): void
     {
         // 失敗をログに記録
-        \Log::error('メール送信失敗', [
+        Log::error('メール送信失敗', [
             'attendance_id' => $this->attendance->id,
             'error' => $exception->getMessage(),
         ]);
@@ -354,31 +360,34 @@ class SendAttendanceConfirmation implements ShouldQueue
 
 ## Step 6 実践 - 受講時のメール送信
 
-### AttendanceService の修正
+### AttendCourse サービスの修正
+
+Lesson 16 の練習問題2で作った `App\Services\Attendance\AttendCourse` に、確認メールのジョブ投入を追加します。
 
 ```php
 <?php
 
-namespace App\Services;
+namespace App\Services\Attendance;
 
+use App\Enums\AttendanceStatus;
 use App\Jobs\SendAttendanceConfirmation;
-use App\Models\Course;
 use App\Models\Attendance;
+use App\Models\Course;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
-class AttendanceService
+class AttendCourse
 {
-    public function attend(User $user, Course $course): Attendance
+    public function __invoke(User $user, Course $course): Attendance
     {
         $attendance = DB::transaction(function () use ($user, $course) {
-            // バリデーション
-            $this->validateAttendance($user, $course);
+            // 定員・重複のチェック（Lesson 16 で実装済み）
+            $this->validate($user, $course);
 
-            // 受講レコード作成
             return Attendance::create([
                 'user_id' => $user->id,
                 'course_id' => $course->id,
+                'status' => AttendanceStatus::Attending,
                 'attended_at' => now(),
             ]);
         });
@@ -390,6 +399,8 @@ class AttendanceService
     }
 }
 ```
+
+> なぜトランザクションの外でディスパッチするのか: トランザクション内でジョブを積むと、**まだコミットされていないレコード**をワーカーが処理しにいく可能性があります（ワーカーは別プロセスなので、コミット前のデータは見えません）。結果として「該当レコードが見つからない」でジョブが失敗します。次に説明する `afterCommit()` を使う方法でも同じ問題を回避できます。
 
 ### afterCommit でトランザクション完了後に実行
 
@@ -441,14 +452,20 @@ test('受講時にメールが送信される', function () {
     $course = Course::factory()->active()->create();
 
     $this->actingAs($user)
-        ->postJson("/api/courses/{$course->id}/attend")
+        ->postJson("/api/courses/{$course->id}/attendances")
         ->assertCreated();
 
-    Mail::assertQueued(AttendanceConfirmation::class, function ($mail) use ($user) {
+    Mail::assertSent(AttendanceConfirmation::class, function ($mail) use ($user) {
         return $mail->hasTo($user->email);
     });
 });
 ```
+
+> `assertSent` と `assertQueued` の使い分けに注意してください。
+> - `Mail::to($user)->send(...)` で送った → `assertSent`
+> - `Mail::to($user)->queue(...)` で積んだ → `assertQueued`
+>
+> 今回は Job の中で `send()` を呼んでおり、テスト環境の `QUEUE_CONNECTION` は `sync`（その場で実行）なので、ジョブが即座に実行されて `assertSent` で捕まえられます。`Queue::fake()` を併用するとジョブ自体が実行されなくなり、メールは送られない点にも注意してください。
 
 ### ジョブのテスト
 
@@ -463,7 +480,7 @@ test('受講時にジョブがキューに追加される', function () {
     $course = Course::factory()->active()->create();
 
     $this->actingAs($user)
-        ->postJson("/api/courses/{$course->id}/attend")
+        ->postJson("/api/courses/{$course->id}/attendances")
         ->assertCreated();
 
     Queue::assertPushed(SendAttendanceConfirmation::class, function ($job) use ($course) {
@@ -532,6 +549,7 @@ class AttendanceCancellation extends Mailable
 
 namespace App\Jobs;
 
+use App\Enums\AttendanceStatus;
 use App\Mail\CourseReminder;
 use App\Models\Course;
 use Illuminate\Bus\Queueable;
@@ -554,7 +572,7 @@ class SendCourseReminder implements ShouldQueue
     public function handle(): void
     {
         $attendees = $this->course->students()
-            ->wherePivot('status', 'attending')
+            ->wherePivot('status', AttendanceStatus::Attending)
             ->get();
 
         foreach ($attendees as $student) {
@@ -572,7 +590,8 @@ use App\Models\Course;
 use Illuminate\Support\Facades\Schedule;
 
 Schedule::call(function () {
-    $courses = Course::where('starts_at', now()->addDay()->toDateString())->get();
+    // starts_at は datetime のため、日付部分だけで比較する
+    $courses = Course::whereDate('starts_at', now()->addDay()->toDateString())->get();
 
     foreach ($courses as $course) {
         SendCourseReminder::dispatch($course);
