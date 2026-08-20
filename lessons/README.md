@@ -205,3 +205,9 @@ DB がおかしくなった・初期状態に戻したい場合は以下でリ�
 ```bash
 make fresh
 ```
+
+> 注意: `make fresh` が実行するのは `DatabaseSeeder` だけです。Lesson 9 以降で作る `CourseSeeder` は呼ばれないため、**講座データは 0 件に戻ります**。リセット後は以下を実行して講座データを復元してください。
+>
+> ```bash
+> docker compose exec app php artisan db:seed --class=CourseSeeder
+> ```

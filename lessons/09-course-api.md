@@ -370,6 +370,8 @@ class CourseController extends Controller
 
 `routes/api.php` に **以下のルートを追加** します（既存の UserController 系ルートはそのまま残します）。
 
+> 注意: 先頭の `use App\Http\Controllers\Api\CourseController;` は、**ファイル末尾ではなく先頭の既存の `use` ブロックに追加**してください。`use` はその宣言位置より後ろにしか効かないため、ファイル中盤に置くと、あとで `vendor/bin/pint` を実行したときに Pint が前方の完全修飾名を短縮名へ書き換え、`Class "DebugController" does not exist` のようなエラーになります。
+
 ```php
 use App\Http\Controllers\Api\CourseController;
 
@@ -464,15 +466,24 @@ class CourseSeeder extends Seeder
 {
     public function run(): void
     {
-        // 講師を作成
-        $instructor = User::factory()->create([
-            'name' => '山田講師',
-            'email' => 'instructor@example.com',
-            'role' => UserRole::Instructor,
-        ]);
+        // 講師を作成（既にいれば取得する）
+        $instructor = User::firstOrCreate(
+            ['email' => 'instructor@example.com'],
+            [
+                'name' => '山田講師',
+                'password' => 'password',
+                'email_verified_at' => now(),
+                'role' => UserRole::Instructor,
+            ]
+        );
+
+        // 既に作成済みなら何もしない
+        if (Course::where('instructor_id', $instructor->id)->exists()) {
+            return;
+        }
 
         // 講座を作成
-        Course::factory(10)
+        Course::factory(5)
             ->for($instructor, 'instructor')
             ->active()
             ->create();
@@ -486,7 +497,15 @@ class CourseSeeder extends Seeder
 php artisan db:seed --class=CourseSeeder
 ```
 
-> 全テーブルを初期化してシーダーを実行したい場合は `make fresh` が使えます。
+> `make fresh` を実行しても、この `CourseSeeder` は動きません。`make fresh` が呼ぶのは `DatabaseSeeder` で、そこから `CourseSeeder` が呼ばれていないためです。**`make fresh` のあとは講座データが 0 件になる**ので、上のコマンドを再度実行してください。
+>
+> 毎回実行するのが面倒な場合は、`database/seeders/DatabaseSeeder.php` の `run()` の末尾に以下を追記しておくと、`make fresh` だけで講座データまで復元できます。
+>
+> ```php
+> $this->call(CourseSeeder::class);
+> ```
+>
+> `firstOrCreate` と件数チェックを入れてあるので、このシーダーは何度実行しても安全です。
 
 
 ## Step 8 動作確認
