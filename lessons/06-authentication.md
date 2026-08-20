@@ -120,25 +120,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
 ### Controllerにメソッドを追加
 
-`app/Http/Controllers/Api/UserController.php`
+`app/Http/Controllers/Api/UserController.php` に `me()` を**追記**します。Lesson 4・5 で作った `index()` / `show()` / `update()` はそのまま残してください。
 
 ```php
-<?php
-
-namespace App\Http\Controllers\Api;
-
-use App\Http\Controllers\Controller;
-use App\Http\Resources\UserResource;
-use App\Models\User;
-use Illuminate\Http\Request;
-
-class UserController extends Controller
-{
-    public function show(User $user): UserResource
-    {
-        return new UserResource($user);
-    }
-
     /**
      * 認証済みユーザー自身の情報を返す
      */
@@ -147,8 +131,9 @@ class UserController extends Controller
         // $request->user() で認証済みユーザーを取得
         return new UserResource($request->user());
     }
-}
 ```
+
+`Illuminate\Http\Request` は Lesson 4 の時点で既に `use` 済みのはずです。もし外していた場合は追加してください。
 
 ### 動作確認
 

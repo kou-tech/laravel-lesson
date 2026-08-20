@@ -351,6 +351,7 @@ use App\Services\Course\CreateCourse;
 use App\Services\Course\DeleteCourse;
 use App\Services\Course\UpdateCourse;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
 class CourseController extends Controller
@@ -361,11 +362,19 @@ class CourseController extends Controller
         private DeleteCourse $deleteCourse,
     ) {}
 
-    public function index()
+    public function index(Request $request)
     {
-        $courses = Course::with('instructor')
-            ->withCount('attendances')
-            ->paginate();
+        $query = Course::with('instructor')
+            ->withCount('attendances');
+
+        // ステータスでフィルタリング
+        if ($request->has('status')) {
+            $query->where('status', $request->input('status'));
+        }
+
+        // ページネーション
+        $perPage = $request->input('per_page', 15);
+        $courses = $query->latest()->paginate($perPage);
 
         return CourseResource::collection($courses);
     }
@@ -411,7 +420,11 @@ class CourseController extends Controller
 
 コントローラーの各メソッドは「リクエストを受けてサービスを呼び、レスポンスを返す」だけになりました。
 
-> 書き換えるときの注意: Lesson 9 で入れた `$this->authorize(...)` は**残してください**。認可はHTTPレイヤーの関心事なのでControllerに置いたままにします（サービスクラスに移すと、コマンドラインやジョブから呼んだときに意図せず認可が走ってしまいます）。また `index` に Lesson 12 で入れた `withCount('attendances')` も引き継いでいます。
+> 書き換えるときの注意: このレッスンで変えるのは `store` / `update` / `destroy` の**3メソッドだけ**です。上のコードは全体像を示すために全文を載せていますが、**ファイルをまるごと貼り替えないでください**。
+>
+> - Lesson 9 で入れた `$this->authorize(...)` は**残してください**。認可はHTTPレイヤーの関心事なのでControllerに置いたままにします（サービスクラスに移すと、コマンドラインやジョブから呼んだときに意図せず認可が走ってしまいます）
+> - `index` は Lesson 9 のフィルタリング・ページネーションと Lesson 12 の `withCount('attendances')` をそのまま引き継いでいます。ここを削ると Lesson 17 で書く「ステータスでフィルタリングできる」テストが落ちます
+> - Lesson 9 の練習問題で追加した `stats()` や講師名検索など、上のコードに出てこないメソッドも消さずに残してください
 
 ### Before / After の比較
 
