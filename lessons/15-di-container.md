@@ -10,7 +10,7 @@
 - コンストラクタインジェクションを使える
 - インターフェースとバインディングを設定できる
 
-> このレッスンは仕組みを理解する座学中心のレッスンです。登場する `MailerInterface` / `SmtpMailer` / `FakeMailer` / `NotificationService` / `AttendanceService` / `AttendanceServiceInterface` は**説明用の仮の題材**で、プロジェクトのコードには反映しません（練習問題だけは、手を動かしたい人向けに実際に作ってみてOKです）。プロジェクトに実際にサービスクラスを導入するのは Lesson 16 です。
+> このレッスンは仕組みを理解する座学中心のレッスンです。登場する `MailerInterface` / `SmtpMailer` / `FakeMailer` / `NotificationService` / `AttendanceService` / `AttendanceServiceInterface` / `CapacityExceededException` は**説明用の仮の題材**で、プロジェクトのコードには反映しません（練習問題だけは、手を動かしたい人向けに実際に作ってみてOKです）。プロジェクトに実際にサービスクラスを導入するのは Lesson 16 です。
 >
 > 先に方針を示しておくと、**本コースが最終的に採用するのは「インターフェースを切らず、具象クラスをそのまま注入する」形**です（Lesson 16）。インターフェースは常に必要なものではなく、実装を差し替える必要が出たときの引き出しです。使い分けの基準はレッスン末尾の「いつインターフェースを切るか」にまとめています。
 
