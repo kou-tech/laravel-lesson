@@ -282,6 +282,53 @@ test('他人の受講はキャンセルできない', function () {
 
 これらのテストは既存の実装で通ります。
 
+### 気付きにくい落とし穴: キャンセルすると二度と申し込めない
+
+ここでもう1つテストを書いてみてください。「キャンセルしたあと、同じ講座に申し込み直せる」はずです。
+
+```php
+test('キャンセル後に同じ講座へ再登録できる', function () {
+    $student = User::factory()->student()->create();
+    $course = Course::factory()->active()->create([
+        'starts_at' => now()->addDays(7),
+        'capacity' => 20,
+    ]);
+
+    $this->actingAs($student)
+        ->postJson("/api/courses/{$course->id}/attendances")
+        ->assertCreated();
+
+    $this->actingAs($student)
+        ->deleteJson("/api/courses/{$course->id}/attendances")
+        ->assertOk();
+
+    // キャンセルしたので、もう一度申し込めるはず
+    $this->actingAs($student)
+        ->postJson("/api/courses/{$course->id}/attendances")
+        ->assertCreated();
+});
+```
+
+このテストは**失敗します**。
+
+```
+Expected response status code [201] but received 409.
+```
+
+原因は Lesson 11 で付けた複合ユニーク制約 `unique(['user_id', 'course_id'])` です。この制約は「キャンセル済み」の行も重複とみなすため、一度キャンセルした受講者はその講座に**恒久的に申し込めなくなります**。
+
+「キャンセル機能を足したら、意図せず別の機能が壊れた」という典型例です。テストを書いていなければ、実際に受講者から問い合わせが来るまで気付けなかったはずです。
+
+対処にはいくつかの方針があり、どれを選ぶかは要件次第です。
+
+| 方針 | 内容 | トレードオフ |
+|------|------|-------------|
+| キャンセル行を再利用する | 申込み時にキャンセル済みの行があれば `attending` に戻す | 実装が最も簡単。ただし「いつキャンセルしたか」の履歴が消える |
+| ユニーク制約に `status` を含める | `unique(['user_id', 'course_id', 'status'])` にする | 履歴は残るが、同じ講座を2回キャンセルできなくなる |
+| キャンセル行を論理削除する | `deleted_at` を追加し、部分ユニークインデックスにする | 履歴も残り制約も正しく効くが、SQLiteでは部分インデックスの扱いに注意が必要 |
+
+このレッスンでは制約はそのままにしておきます。どう直すかは末尾の練習問題で考えてみてください。
+
 
 ## Step 6 Refactor - コードを整理
 
@@ -464,7 +511,7 @@ public function __construct(
 
 ## 練習問題
 
-### 問題
+### 問題1
 以下の機能をTDDで実装してください。
 
 「講師は自分の講座を公開できる（status を active に変更）」
@@ -557,6 +604,74 @@ public function publish(Course $course)
     return new CourseResource($course);
 }
 ```
+</details>
+
+### 問題2
+
+Step 5 で見つけた「キャンセル後に同じ講座へ再登録できない」問題を、TDDで直してください。
+
+1. Step 5 に載せた `キャンセル後に同じ講座へ再登録できる` テストを追加する（Red）
+2. Step 5 の表から方針を1つ選んで実装する（Green）
+3. 既存のテストがすべて通ることを確認する
+
+<details>
+<summary>解答例（キャンセル行を再利用する方針）</summary>
+
+`AttendanceController@store` で、キャンセル済みの受講があれば作り直さずに `attending` へ戻します。
+
+```php
+public function store(Request $request, Course $course): JsonResponse
+{
+    if (!$request->user()->isStudent()) {
+        return response()->json([
+            'message' => '受講登録できるのは生徒のみです。',
+        ], 403);
+    }
+
+    if (!$course->hasCapacity()) {
+        return response()->json([
+            'message' => 'この講座は定員に達しています。',
+        ], 422);
+    }
+
+    // キャンセル済みの受講があれば再開する
+    $cancelled = Attendance::where('user_id', $request->user()->id)
+        ->where('course_id', $course->id)
+        ->where('status', AttendanceStatus::Cancelled)
+        ->first();
+
+    if ($cancelled !== null) {
+        $cancelled->update([
+            'status' => AttendanceStatus::Attending,
+            'attended_at' => now(),
+        ]);
+
+        $attendance = $cancelled;
+    } else {
+        try {
+            $attendance = Attendance::create([
+                'user_id' => $request->user()->id,
+                'course_id' => $course->id,
+                'status' => AttendanceStatus::Attending,
+                'attended_at' => now(),
+            ]);
+        } catch (UniqueConstraintViolationException) {
+            return response()->json([
+                'message' => 'すでにこの講座に登録済みです。',
+            ], 409);
+        }
+    }
+
+    $attendance->load(['user', 'course.instructor']);
+
+    return (new AttendanceResource($attendance))
+        ->response()
+        ->setStatusCode(201);
+}
+```
+
+`UniqueConstraintViolationException` の `catch` は**残しておいてください**。「キャンセル済みを探す」→「作成する」の間に別のリクエストが割り込む可能性があるためです（Lesson 14 で学んだ競合状態）。アプリ側のチェックとDB制約の二段構えにしておくのが定石です。
+
 </details>
 
 
