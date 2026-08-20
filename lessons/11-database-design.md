@@ -738,6 +738,13 @@ class AttendanceController extends Controller
      */
     public function store(Request $request, Course $course): JsonResponse
     {
+        // 受講できるのは生徒のみ（Lesson 7 で追加した isStudent() を使う）
+        if (!$request->user()->isStudent()) {
+            return response()->json([
+                'message' => '受講登録できるのは生徒のみです。',
+            ], 403);
+        }
+
         // 定員チェック
         if (!$course->hasCapacity()) {
             return response()->json([
@@ -769,6 +776,7 @@ class AttendanceController extends Controller
 ```
 
 ポイント
+- 講師が自分の講座に受講登録することは想定していないため、`isStudent()` で弾いて 403 を返す（[API仕様一覧](./api-spec.md) の「生徒のみ」に対応）
 - `hasCapacity()` で定員チェック（Step 7 で定義したメソッド）
 - 複合ユニーク制約違反は `UniqueConstraintViolationException` をキャッチして 409 Conflict を返す（DBドライバ非依存）
 - アプリ側チェックだけでなく、DB制約が最後の砦として機能する
