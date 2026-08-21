@@ -378,7 +378,7 @@ class CourseController extends Controller
 
 `routes/api.php` に **以下のルートを追加** します（既存の UserController 系ルートはそのまま残します）。
 
-> 注意: 先頭の `use App\Http\Controllers\Api\CourseController;` は、**ファイル末尾ではなく先頭の既存の `use` ブロックに追加**してください。`use` はその宣言位置より後ろにしか効かないため、ファイル中盤に置くと、あとで `vendor/bin/pint` を実行したときに Pint が前方の完全修飾名を短縮名へ書き換え、`Class "DebugController" does not exist` のようなエラーになります。
+> 注意: 先頭の `use App\Http\Controllers\Api\CourseController;` は、ファイル末尾ではなく先頭の既存の `use` ブロックに追加してください。`use` はその宣言位置より後ろにしか効かないため、ファイル中盤に置くと、あとで `vendor/bin/pint` を実行したときに Pint が前方の完全修飾名を短縮名へ書き換え、`Class "DebugController" does not exist` のようなエラーになります。
 
 ```php
 use App\Http\Controllers\Api\CourseController;
@@ -402,7 +402,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
 ### Factoryの作成
 
-`Course` モデルには最初から `HasFactory` トレイトが付いていますが、対応する `CourseFactory` はここで初めて作ります。**このStepより前に `Course::factory()` を呼ぶとエラーになります**ので注意してください。
+`Course` モデルには最初から `HasFactory` トレイトが付いていますが、対応する `CourseFactory` はここで初めて作ります。このStepより前に `Course::factory()` を呼ぶとエラーになるので注意してください。
 
 ```bash
 php artisan make:factory CourseFactory
@@ -507,7 +507,7 @@ class CourseSeeder extends Seeder
 php artisan db:seed --class=CourseSeeder
 ```
 
-> `make fresh` を実行しても、この `CourseSeeder` は動きません。`make fresh` が呼ぶのは `DatabaseSeeder` で、そこから `CourseSeeder` が呼ばれていないためです。**`make fresh` のあとは講座データが 0 件になる**ので、上のコマンドを再度実行してください。
+> `make fresh` を実行しても、この `CourseSeeder` は動きません。`make fresh` が呼ぶのは `DatabaseSeeder` で、そこから `CourseSeeder` が呼ばれていないためです。`make fresh` のあとは講座データが 0 件になるので、上のコマンドを再度実行してください。
 >
 > 毎回実行するのが面倒な場合は、`database/seeders/DatabaseSeeder.php` の `run()` の末尾に以下を追記しておくと、`make fresh` だけで講座データまで復元できます。
 >

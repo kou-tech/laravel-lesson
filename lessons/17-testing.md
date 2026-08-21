@@ -73,10 +73,10 @@ test('ステータスに対応する日本語ラベルを返す', function () {
 });
 ```
 
-> **`tests/Unit` では Laravel のアプリケーションが起動していません。**
-> `tests/Pest.php` で `Tests\TestCase` を束ねているのは `->in('Feature')` の行だけだからです。そのため `tests/Unit` に置けるのは、Enum やプレーンなクラスのように**フレームワークに依存しないコード**のテストに限られます。
+> `tests/Unit` では Laravel のアプリケーションが起動していません。
+> `tests/Pest.php` で `Tests\TestCase` を束ねているのは `->in('Feature')` の行だけだからです。そのため `tests/Unit` に置けるのは、Enum やプレーンなクラスのように、フレームワークに依存しないコードのテストに限られます。
 >
-> よくある失敗は、Unit テストでモデルの Factory を使ってしまうことです。`Course::factory()` はサービスコンテナを必要とするため `Target class [config] does not exist.` になりますし、`CourseFactory` は `'instructor_id' => User::factory()` を持っているので、保存しない `make()` でも講師を作るDBアクセスが発生します。**モデルの Factory を使うテストは `tests/Feature` に置いてください。**
+> よくある失敗は、Unit テストでモデルの Factory を使ってしまうことです。`Course::factory()` はサービスコンテナを必要とするため `Target class [config] does not exist.` になりますし、`CourseFactory` は `'instructor_id' => User::factory()` を持っているので、保存しない `make()` でも講師を作るDBアクセスが発生します。モデルの Factory を使うテストは `tests/Feature` に置いてください。
 >
 > どうしても `tests/Unit` でモデルを扱いたい場合は、そのファイルの先頭に以下を書けばコンテナとDBが使えますが、実質的に Feature テストと同じ重さになります。
 >

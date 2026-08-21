@@ -68,7 +68,7 @@ class User extends Authenticatable
 
 これにより、`role` や `is_verified` は `create()` や `update()` で無視されます。
 
-> このプロジェクトの `User` モデルがまさにこの形です。[Lesson 7](./07-authorization.md) で `role` を扱えるようにしたときも、`$fillable` には**あえて追加しませんでした**。役割の変更は `$user->role = ...; $user->save();` と明示的に書くことで、「権限の変更はリクエストのついでに起きない」ことをコードで保証しています。
+> このプロジェクトの `User` モデルがまさにこの形です。[Lesson 7](./07-authorization.md) で `role` を扱えるようにしたときも、`$fillable` にはあえて追加していません。役割の変更は `$user->role = ...; $user->save();` と明示的に書くことで、「権限の変更はリクエストのついでに起きない」ことをコードで保証しています。
 >
 > 実際に確かめると、`role` を混ぜても無視されることが分かります。
 >

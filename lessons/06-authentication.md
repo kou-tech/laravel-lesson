@@ -120,7 +120,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
 ### Controllerにメソッドを追加
 
-`app/Http/Controllers/Api/UserController.php` に `me()` を**追記**します。Lesson 4・5 で作った `index()` / `show()` / `update()` はそのまま残してください。
+`app/Http/Controllers/Api/UserController.php` に `me()` を追記します。Lesson 4・5 で作った `index()` / `show()` / `update()` はそのまま残してください。
 
 ```php
     /**
