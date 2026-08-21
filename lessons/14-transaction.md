@@ -11,7 +11,7 @@
 - 排他ロック（lockForUpdate）の必要性と仕組みを理解する
 - デッドロック対策ができる
 
-> サンプルコードは、講座に「受講者数を保持するカラム」`courses.attendance_count` がある前提で書いています。**このカラムは本プロジェクトには存在せず、このコースでも追加しません**（実際の残席チェックは Lesson 11 で作った `Course::hasCapacity()` が `attendances` を数える方式です）。「1つの処理で複数のテーブル／行を更新する」状況を分かりやすく示すための仮の題材として読んでください。
+> サンプルコードは、講座に「受講者数を保持するカラム」`courses.attendance_count` がある前提で書いています。このカラムは本プロジェクトには存在せず、このコースでも追加しません（実際の残席チェックは Lesson 11 で作った `Course::hasCapacity()` が `attendances` を数える方式です）。「1つの処理で複数のテーブル／行を更新する」状況を分かりやすく示すための仮の題材として読んでください。
 
 > このレッスンでは、Eloquentが内部で発行するSQLや、MySQLのロックの仕組みが説明のために登場します。生のSQLを読み書きできる必要はありません。「Eloquentのこのメソッドを呼ぶと、DB側でこういうことが起きる」という対応関係だけ掴めれば十分です。SQLの行は日本語の説明とセットで読んでください。
 
@@ -173,6 +173,19 @@ public function complexOperation()
 
 
 ## Step 3 排他制御（ロック）
+
+> 重要: このStepの説明は MySQL / PostgreSQL を前提としています。
+> 本プロジェクトのDBは SQLite で、SQLite のドライバでは `lockForUpdate()` は
+> 何も出力しません（`SELECT ... FOR UPDATE` は付かず、素の SELECT になります）。
+>
+> ```bash
+> php artisan tinker --execute 'echo Course::whereKey(1)->lockForUpdate()->toRawSql();'
+> # select * from "courses" where "courses"."id" = 1   ← FOR UPDATE が付かない
+> ```
+>
+> つまり、このStepのコードをそのまま書いても、この環境では排他制御は効きません。
+> 「実務でMySQLを使うときに何が起きるか」を理解するための座学パートとして読み進めてください。
+> SQLite はDB全体をロックする方式のため、そもそも行単位のロックという概念がありません。
 
 ### 競合状態の問題
 
@@ -369,7 +382,17 @@ DB::transaction(function () {
 ```
 
 
-## Step 5 実践 - 受講登録APIの実装
+## Step 5 サービスクラスへの切り出し（先取り）
+
+> このStepは、これから先のレッスンの完成形を先に見ておくためのサンプルです。この時点ではまだ作っていないクラスを参照しているため、そのまま写しても動きません。手を動かすのは以下のレッスンです。
+>
+> | 参照しているもの | 実際に作るレッスン |
+> |---|---|
+> | `App\Exceptions\CourseNotActiveException` など3つの例外 | Lesson 16（`BusinessException` を継承する形で作ります） |
+> | `App\Mail\AttendanceConfirmation` | Lesson 18 |
+> | `App\Services\` へのサービスクラスの切り出し | Lesson 16（講座）・Lesson 19（受講キャンセル） |
+>
+> いま読み取ってほしいのは、「DB操作は `DB::transaction()` の中に閉じ、メール送信はその外に出す」という構造だけです。受講登録API自体は Lesson 11 で実装済みのものがそのまま動いています。
 
 ### AttendanceService
 

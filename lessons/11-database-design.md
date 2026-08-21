@@ -486,7 +486,7 @@ class AttendanceFactory extends Factory
 
 ### User と Course にリレーションを追加
 
-Lesson 4 / 9 で作成済みの `app/Models/User.php` と `app/Models/Course.php` に、以下のメソッドを**追記**します（既存のメソッドは残したまま末尾に追加）。
+Lesson 4 / 9 で作成済みの `app/Models/User.php` と `app/Models/Course.php` に、以下のメソッドを追記します（既存のメソッドは残したまま末尾に追加）。
 
 ```php
 // app/Models/User.php に追記
@@ -587,7 +587,7 @@ return new class extends Migration
 
 Lesson 9 で作成した `Course` モデル・`CourseFactory`・`CourseResource`・`Course/StoreRequest`・`Course/UpdateRequest` にも `starts_at` を反映します。
 
-> ここを忘れると、`POST /api/courses` が「`starts_at` に値が入っていない」というDBエラー（500）になります。**NOT NULL カラムを増やしたら、そのカラムを作る側の経路（バリデーション → fillable → Factory）を一通り見直す**、というのが実務でのチェック手順です。
+> ここを忘れると、`POST /api/courses` が「`starts_at` に値が入っていない」というDBエラー（500）になります。「NOT NULL カラムを増やしたら、そのカラムを作る側の経路（バリデーション → fillable → Factory）を一通り見直す」、というのが実務でのチェック手順です。
 
 ```php
 // app/Models/Course.php
@@ -738,6 +738,13 @@ class AttendanceController extends Controller
      */
     public function store(Request $request, Course $course): JsonResponse
     {
+        // 受講できるのは生徒のみ（Lesson 7 で追加した isStudent() を使う）
+        if (!$request->user()->isStudent()) {
+            return response()->json([
+                'message' => '受講登録できるのは生徒のみです。',
+            ], 403);
+        }
+
         // 定員チェック
         if (!$course->hasCapacity()) {
             return response()->json([
@@ -769,6 +776,7 @@ class AttendanceController extends Controller
 ```
 
 ポイント
+- 講師が自分の講座に受講登録することは想定していないため、`isStudent()` で弾いて 403 を返す（[API仕様一覧](./api-spec.md) の「生徒のみ」に対応）
 - `hasCapacity()` で定員チェック（Step 7 で定義したメソッド）
 - 複合ユニーク制約違反は `UniqueConstraintViolationException` をキャッチして 409 Conflict を返す（DBドライバ非依存）
 - アプリ側チェックだけでなく、DB制約が最後の砦として機能する

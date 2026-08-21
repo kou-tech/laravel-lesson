@@ -68,6 +68,22 @@ class User extends Authenticatable
 
 これにより、`role` や `is_verified` は `create()` や `update()` で無視されます。
 
+> このプロジェクトの `User` モデルがまさにこの形です。[Lesson 7](./07-authorization.md) で `role` を扱えるようにしたときも、`$fillable` にはあえて追加していません。役割の変更は `$user->role = ...; $user->save();` と明示的に書くことで、「権限の変更はリクエストのついでに起きない」ことをコードで保証しています。
+>
+> 実際に確かめると、`role` を混ぜても無視されることが分かります。
+>
+> ```bash
+> php artisan tinker --execute '
+>   $u = App\Models\User::create([
+>     "name" => "テスト", "email" => "mass@example.com",
+>     "password" => "password", "role" => "instructor",
+>   ]);
+>   echo $u->role->value;   // student （instructor は無視される）
+> '
+> ```
+>
+> なお、シーダーとFactoryは `Model::unguarded()` の中で実行されるため、この制限を受けません。テストデータで自由に `role` を指定できるのはそのためです。
+
 ### 安全なコントローラー
 
 ```php
@@ -449,7 +465,7 @@ class Attendance extends Model
 }
 ```
 
-> Lesson 11 で作ったモデルからの変更点は、`$hidden` / `$appends` / アクセサ / スコープの追加だけです。`$fillable` の `attended_at` は**残したまま**にしてください。Lesson 11 の `AttendanceController` が `'attended_at' => now()` を渡しているため、ここから外すとその指定が無視されます（DB側の `useCurrent()` で値自体は入るので、エラーにならず気付きにくい種類の事故です）。`$fillable` を変えるときは、そのカラムを渡している箇所がないか必ず確認する習慣をつけてください。
+> Lesson 11 で作ったモデルからの変更点は、`$hidden` / `$appends` / アクセサ / スコープの追加だけです。`$fillable` の `attended_at` は残したままにしてください。Lesson 11 の `AttendanceController` が `'attended_at' => now()` を渡しているため、ここから外すとその指定が無視されます（DB側の `useCurrent()` で値自体は入るので、エラーにならず気付きにくい種類の事故です）。`$fillable` を変えるときは、そのカラムを渡している箇所がないか必ず確認する習慣をつけてください。
 
 ## 練習問題
 

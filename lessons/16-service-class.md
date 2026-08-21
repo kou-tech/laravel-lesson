@@ -10,9 +10,9 @@
 - カスタム例外クラスを作成できる
 - コントローラーを薄く保てる
 
-> このレッスンは**プロジェクトのコードを実際に書き換えるハンズオン**です。Step 1〜3 で作る `app/Services/Course/` と `app/Exceptions/` のクラス、および `CourseController` の書き換えは、実際にファイルを作成してください。
+> このレッスンは、プロジェクトのコードを実際に書き換えるハンズオンです。Step 1〜3 で作る `app/Services/Course/` と `app/Exceptions/` のクラス、および `CourseController` の書き換えは、実際にファイルを作成してください。
 >
-> Lesson 15 との関係: Lesson 15 ではインターフェース（`AttendanceServiceInterface` など）を紹介しましたが、**本コースの実装方針はインターフェースを切らず、具象クラス（`CreateCourse` など）をそのままコンストラクタに注入する形**です。実装が1つしかないうちはインターフェースを増やしても得るものが少ないためです（判断基準は Lesson 15 末尾の「いつインターフェースを切るか」）。Lesson 15 で登場した `AttendanceService` は説明用の仮の題材なので、ここでは使いません。
+> Lesson 15 との関係: Lesson 15 ではインターフェース（`AttendanceServiceInterface` など）を紹介しましたが、本コースの実装方針は、インターフェースを切らず、具象クラス（`CreateCourse` など）をそのままコンストラクタに注入する形です。実装が1つしかないうちはインターフェースを増やしても得るものが少ないためです（判断基準は Lesson 15 末尾の「いつインターフェースを切るか」）。Lesson 15 で登場した `AttendanceService` は説明用の仮の題材なので、ここでは使いません。
 
 
 ## Fat Controller の問題
@@ -118,7 +118,8 @@ app/
 └── Exceptions/
     ├── BusinessException.php
     ├── DuplicateCourseTitleException.php
-    └── CourseLimitExceededException.php
+    ├── CourseLimitExceededException.php
+    └── CourseHasAttendancesException.php
 ```
 
 操作ごとにファイルを分けることで、どのファイルに何が書いてあるか一目でわかります。
@@ -130,7 +131,6 @@ app/
 
 namespace App\Services\Course;
 
-use App\Enums\CourseStatus;
 use App\Exceptions\CourseLimitExceededException;
 use App\Exceptions\DuplicateCourseTitleException;
 use App\Models\Course;
@@ -150,7 +150,6 @@ class CreateCourse
             $course = Course::create([
                 ...$data,
                 'instructor_id' => $instructor->id,
-                'status' => CourseStatus::Draft,
             ]);
 
             Log::info('講座が作成されました', [
@@ -158,7 +157,7 @@ class CreateCourse
                 'instructor_id' => $instructor->id,
             ]);
 
-            return $course;
+            return $course->load('instructor');
         });
     }
 
@@ -185,6 +184,8 @@ class CreateCourse
 - `__invoke` がこのクラスの唯一のパブリックメソッド
 - バリデーションはプライベートメソッドで整理
 - 他のサービスへの依存がなく、このクラスだけで完結している
+- `status` は `Course/StoreRequest` で検証済みの値をそのまま使う。ここで `CourseStatus::Draft` に固定してしまうと、リクエストで必須にしている項目を無視することになり、APIの挙動と仕様が食い違う
+- 戻り値で `load('instructor')` しておくことで、`CourseResource` の `instructor` が Lesson 9 と同じように出力される
 
 ### UpdateCourse
 
@@ -213,7 +214,7 @@ class UpdateCourse
 
         $course->update($data);
 
-        return $course->fresh();
+        return $course->fresh()->load('instructor');
     }
 }
 ```
@@ -225,6 +226,7 @@ class UpdateCourse
 
 namespace App\Services\Course;
 
+use App\Exceptions\CourseHasAttendancesException;
 use App\Models\Course;
 
 class DeleteCourse
@@ -232,13 +234,15 @@ class DeleteCourse
     public function __invoke(Course $course): void
     {
         if ($course->attendances()->exists()) {
-            throw new \DomainException('受講者がいる講座は削除できません');
+            throw new CourseHasAttendancesException();
         }
 
         $course->delete();
     }
 }
 ```
+
+> 素の `\DomainException` を投げると `render()` を持たないため 500 Internal Server Error になってしまいます。「受講者がいるので消せない」のはリクエスト側の問題なので、次の Step で作る `BusinessException` を継承した例外にして 422 で返します。
 
 
 ## Step 2 カスタム例外クラス
@@ -306,6 +310,23 @@ class CourseLimitExceededException extends BusinessException
 }
 ```
 
+```php
+// app/Exceptions/CourseHasAttendancesException.php
+<?php
+
+namespace App\Exceptions;
+
+class CourseHasAttendancesException extends BusinessException
+{
+    protected $message = '受講者がいる講座は削除できません。';
+
+    public function getErrorCode(): string
+    {
+        return 'COURSE_HAS_ATTENDANCES';
+    }
+}
+```
+
 ### 例外の階層構造
 
 ```mermaid
@@ -313,7 +334,7 @@ classDiagram
     Exception <|-- BusinessException
     BusinessException <|-- DuplicateCourseTitleException
     BusinessException <|-- CourseLimitExceededException
-    BusinessException <|-- CapacityExceededException
+    BusinessException <|-- CourseHasAttendancesException
 
     class BusinessException {
         <<abstract>>
@@ -327,7 +348,7 @@ classDiagram
     class CourseLimitExceededException {
         +getErrorCode() string
     }
-    class CapacityExceededException {
+    class CourseHasAttendancesException {
         +getErrorCode() string
     }
 ```
@@ -351,6 +372,7 @@ use App\Services\Course\CreateCourse;
 use App\Services\Course\DeleteCourse;
 use App\Services\Course\UpdateCourse;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
 class CourseController extends Controller
@@ -361,11 +383,19 @@ class CourseController extends Controller
         private DeleteCourse $deleteCourse,
     ) {}
 
-    public function index()
+    public function index(Request $request)
     {
-        $courses = Course::with('instructor')
-            ->withCount('attendances')
-            ->paginate();
+        $query = Course::with('instructor')
+            ->withCount('attendances');
+
+        // ステータスでフィルタリング
+        if ($request->has('status')) {
+            $query->where('status', $request->input('status'));
+        }
+
+        // ページネーション
+        $perPage = $request->input('per_page', 15);
+        $courses = $query->latest()->paginate($perPage);
 
         return CourseResource::collection($courses);
     }
@@ -411,7 +441,11 @@ class CourseController extends Controller
 
 コントローラーの各メソッドは「リクエストを受けてサービスを呼び、レスポンスを返す」だけになりました。
 
-> 書き換えるときの注意: Lesson 9 で入れた `$this->authorize(...)` は**残してください**。認可はHTTPレイヤーの関心事なのでControllerに置いたままにします（サービスクラスに移すと、コマンドラインやジョブから呼んだときに意図せず認可が走ってしまいます）。また `index` に Lesson 12 で入れた `withCount('attendances')` も引き継いでいます。
+> 書き換えるときの注意: このレッスンで変えるのは `store` / `update` / `destroy` の3メソッドだけです。上のコードは全体像を示すために全文を載せていますが、ファイルをまるごと貼り替えないでください。
+>
+> - Lesson 9 で入れた `$this->authorize(...)` は残してください。認可はHTTPレイヤーの関心事なのでControllerに置いたままにします（サービスクラスに移すと、コマンドラインやジョブから呼んだときに意図せず認可が走ってしまいます）
+> - `index` は Lesson 9 のフィルタリング・ページネーションと Lesson 12 の `withCount('attendances')` をそのまま引き継いでいます。ここを削ると Lesson 17 で書く「ステータスでフィルタリングできる」テストが落ちます
+> - Lesson 9 の練習問題で追加した `stats()` や講師名検索など、上のコードに出てこないメソッドも消さずに残してください
 
 ### Before / After の比較
 

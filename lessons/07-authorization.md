@@ -39,22 +39,33 @@
 
 このStepでは以下を実装します。
 - UserRole Enumを作成
-- Userモデルに`role`フィールドのfillable・キャスト・便利メソッドを追加
+- Userモデルに`role`フィールドのキャスト・便利メソッドを追加
 
 > `users` テーブルの `role` カラムと、`test@example.com`（student）/`test2@example.com`（instructor）のテストユーザーは、初期マイグレーションと `DatabaseSeeder` で既に用意済みです。追加のマイグレーションは不要です。
 
-### Userモデルの修正
+### `role` は `$fillable` に追加しない
 
-`app/Models/User.php` に `role` を追加します。
+先に注意点を1つ。`app/Models/User.php` の `$fillable` はそのままにしておきます。
 
 ```php
 protected $fillable = [
     'name',
     'email',
     'password',
-    'role',  // 追加
+    // role は追加しない
 ];
 ```
+
+`$fillable` は「外部からのデータで一括設定してよいカラム」のリストです。ここに `role` を入れてしまうと、`User::create($request->all())` のようなコードを書いたときに、リクエストに `"role": "instructor"` を紛れ込ませるだけで誰でも講師になれてしまいます。権限を表すカラムは一括代入の対象にしない、というのが原則です（詳しくは [Lesson 13](./13-safe-model.md) で扱います）。
+
+役割を変更したいときは、次のように明示的に代入します。
+
+```php
+$user->role = UserRole::Instructor;
+$user->save();
+```
+
+> なお、シーダーとFactoryは `Model::unguarded()` の中で動くため、`$fillable` の制限を受けません。`DatabaseSeeder` が `role` を設定できているのはこのためです。
 
 ### 役割の定義（Enum）
 
@@ -333,6 +344,16 @@ public function update(UpdateRequest $request, User $user): UserResource
 ### 問題1
 UserPolicyに `updateRole` メソッドを追加し、「講師のみ生徒の役割を変更できる」という認可を実装してください。また、`PATCH /api/users/{user}/role` エンドポイントを追加して動作確認してください。
 
+> 動作確認の注意: この認可は「対象が生徒であること」を条件にしているため、一度成功すると対象は講師になり、同じリクエストをもう一度送ると 403 になります。実装ミスではありません。もう一度試したい場合は、対象ユーザーの役割を戻してから実行してください。
+>
+> ```bash
+> php artisan tinker --execute '
+>   $u = App\Models\User::find(1);
+>   $u->role = App\Enums\UserRole::Student;
+>   $u->save();
+> '
+> ```
+
 <details>
 <summary>解答例</summary>
 
@@ -360,7 +381,9 @@ public function updateRole(Request $request, User $user): UserResource
         'role' => ['required', Rule::enum(UserRole::class)],
     ]);
 
-    $user->update($validated);
+    // role は $fillable に入れていないため、明示的に代入する
+    $user->role = UserRole::from($validated['role']);
+    $user->save();
 
     return new UserResource($user);
 }

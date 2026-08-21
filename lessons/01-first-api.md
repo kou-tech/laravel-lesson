@@ -93,8 +93,10 @@ Route::get('/fruits/{id}', function (int $id) {
     }
 
     return $fruits[$id];
-});
+})->whereNumber('id');
 ```
+
+> `->whereNumber('id')` は「`{id}` は数字のときだけこのルートに一致させる」という制約です。これを付けないと `/api/fruits/abc` のような数字以外のURLもこのルートに入ってしまい、`int $id` の型宣言に違反して 500 エラーになります。制約を付けておけば、数字以外はルートに一致せず 404 が返ります。
 
 Postmanのコレクション内の `api > fruits > {fruitId} > fruits_id` で確認
 
@@ -266,7 +268,7 @@ Route::get('/status', function () {
 <summary>解答例</summary>
 
 ```php
-Route::delete('/fruits/{id}', function ($id) {
+Route::delete('/fruits/{id}', function (int $id) {
     $fruits = [
         1 => ['id' => 1, 'name' => 'りんご', 'price' => 150],
         2 => ['id' => 2, 'name' => 'みかん', 'price' => 100],
@@ -278,7 +280,7 @@ Route::delete('/fruits/{id}', function ($id) {
     }
 
     return response()->noContent(); // 204 No Content
-});
+})->whereNumber('id');
 ```
 </details>
 

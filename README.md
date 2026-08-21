@@ -4,7 +4,7 @@ Laravelの学習用プロジェクトです。
 
 ## レッスン
 
-レッスンの内容は [lessons/index.md](./lessons/index.md) を参照してください。
+レッスンの内容は [lessons/README.md](./lessons/README.md) を参照してください。
 
 ## 必要な環境
 
@@ -34,7 +34,7 @@ wsl --install
 
 これで WSL2 と Ubuntu がまとめてインストールされます。
 
-> **補足:** Windows 10（バージョン 2004 以降）または Windows 11 が必要です。BIOS で仮想化が有効になっていることを確認してください。
+> 補足: Windows 10（バージョン 2004 以降）または Windows 11 が必要です。BIOS で仮想化が有効になっていることを確認してください。
 
 #### 2. Docker Desktop をインストール
 

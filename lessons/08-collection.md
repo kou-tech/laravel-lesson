@@ -59,7 +59,7 @@ $users = collect([
 
 ### Eloquentコレクション
 
-Eloquentでクエリを実行すると、**複数件**の結果は `Eloquent\Collection` として返されます。
+Eloquentでクエリを実行すると、「複数件」の結果は `Eloquent\Collection` として返されます。
 
 ```php
 $courses = Course::all();  // Eloquent\Collection

@@ -64,16 +64,25 @@ test('講座一覧を取得できる', function () {
 クラスやメソッド単位でテストします。
 
 ```php
-// tests/Unit/CourseTest.php
-test('残席数を計算できる', function () {
-    $course = Course::factory()->make(['capacity' => 20]);
-    $course->attendances_count = 15;
+// tests/Unit/CourseStatusTest.php
+use App\Enums\CourseStatus;
 
-    expect($course->available_seats)->toBe(5);
+test('ステータスに対応する日本語ラベルを返す', function () {
+    expect(CourseStatus::Active->label())->toBe('公開中');
+    expect(CourseStatus::Draft->label())->toBe('下書き');
 });
 ```
 
-> Unit テストはDBに触れないため、`Course::factory()->make()`（保存しない）を使います。DBを使うテストは `tests/Feature` に置いてください（Step 0 で `RefreshDatabase` を有効にしたのは Feature 側だけです）。
+> `tests/Unit` では Laravel のアプリケーションが起動していません。
+> `tests/Pest.php` で `Tests\TestCase` を束ねているのは `->in('Feature')` の行だけだからです。そのため `tests/Unit` に置けるのは、Enum やプレーンなクラスのように、フレームワークに依存しないコードのテストに限られます。
+>
+> よくある失敗は、Unit テストでモデルの Factory を使ってしまうことです。`Course::factory()` はサービスコンテナを必要とするため `Target class [config] does not exist.` になりますし、`CourseFactory` は `'instructor_id' => User::factory()` を持っているので、保存しない `make()` でも講師を作るDBアクセスが発生します。モデルの Factory を使うテストは `tests/Feature` に置いてください。
+>
+> どうしても `tests/Unit` でモデルを扱いたい場合は、そのファイルの先頭に以下を書けばコンテナとDBが使えますが、実質的に Feature テストと同じ重さになります。
+>
+> ```php
+> uses(Tests\TestCase::class, Illuminate\Foundation\Testing\RefreshDatabase::class);
+> ```
 
 ### 使い分け
 
@@ -140,7 +149,7 @@ class CourseControllerTest extends TestCase
 }
 ```
 
-> **本コースで書くテストはすべて Pest 形式に統一します。** `php artisan make:test` もPest形式のファイルを生成します。この先のレッスン（18・19）のサンプルもPest形式です。
+> 本コースで書くテストはすべて Pest 形式に統一します。`php artisan make:test` もPest形式のファイルを生成します。この先のレッスン（18・19）のサンプルもPest形式です。
 
 
 ## Step 3 テストデータの準備
@@ -246,7 +255,7 @@ test('生徒は講座を作成できない', function () {
 });
 ```
 
-> リクエストボディに `status` と `starts_at` を入れているのは、`Course/StoreRequest` で必須にしているためです（Lesson 9・11）。**バリデーションは認可より先に走る**ので、ここを省くと「403を期待していたのに422が返る」というテスト失敗になります。認可のテストをするときは、**バリデーションを通過する正しいボディ**を送るのがコツです。
+> リクエストボディに `status` と `starts_at` を入れているのは、`Course/StoreRequest` で必須にしているためです（Lesson 9・11）。「バリデーションは認可より先に走る」ので、ここを省くと「403を期待していたのに422が返る」というテスト失敗になります。認可のテストをするときは、「バリデーションを通過する正しいボディ」を送るのがコツです。
 
 
 ## Step 5 レスポンスのアサーション

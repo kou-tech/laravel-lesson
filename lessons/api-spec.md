@@ -29,6 +29,7 @@
 | メソッド | エンドポイント | 説明 | 認証 | 認可 |
 |---------|---------------|------|------|------|
 | GET | /api/courses | 講座一覧 | 不要 | - |
+| GET | /api/courses/stats | ステータス別の講座件数 | 不要 | - |
 | GET | /api/courses/{id} | 講座詳細 | 不要 | - |
 | POST | /api/courses | 講座作成 | 必要 | 講師のみ |
 | PATCH | /api/courses/{id} | 講座更新 | 必要 | 担当講師のみ |
@@ -36,11 +37,13 @@
 
 ## 受講関連
 
-| メソッド | エンドポイント | 説明 | 認証 | 認可 |
-|---------|---------------|------|------|------|
-| GET | /api/courses/{id}/attendances | 講座の受講者一覧 | 必要 | 担当講師のみ |
-| POST | /api/courses/{id}/attendances | 講座に申し込む | 必要 | 生徒のみ |
-| DELETE | /api/courses/{id}/attendances | 受講をキャンセル | 必要 | 自分のみ |
-| GET | /api/me/attendances | 自分の受講一覧 | 必要 | - |
+| メソッド | エンドポイント | 説明 | 認証 | 認可 | 実装 |
+|---------|---------------|------|------|------|------|
+| POST | /api/courses/{id}/attendances | 講座に申し込む | 必要 | 生徒のみ | Lesson 11 |
+| DELETE | /api/courses/{id}/attendances | 受講をキャンセル | 必要 | 自分のみ | Lesson 19 |
+| GET | /api/courses/{id}/attendances | 講座の受講者一覧 | 必要 | 担当講師のみ | 発展課題 |
+| GET | /api/me/attendances | 自分の受講一覧 | 必要 | - | 発展課題 |
 
-> 受講の申込み・キャンセルは、同じURL（`/api/courses/{id}/attendances`）に対して HTTP メソッドを変えて表現します。Lesson 3 で学んだ「URLは名詞、操作はHTTPメソッド」の原則に沿った形です。実装は Lesson 11（申込み）と Lesson 19（キャンセル）で行います。
+> 受講の申込み・キャンセルは、同じURL（`/api/courses/{id}/attendances`）に対して HTTP メソッドを変えて表現します。Lesson 3 で学んだ「URLは名詞、操作はHTTPメソッド」の原則に沿った形です。
+>
+> 「発展課題」の2つは本コースでは実装しません。Lesson 19 まで終えたあとの練習として、ここまでに学んだ Policy・API Resource・Eager Loading を使って自分で実装してみてください。

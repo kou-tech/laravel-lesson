@@ -69,7 +69,7 @@ git switch -c yamada
 vendor/bin/pint --dirty
 ```
 
-各レッスンのサンプルコードは説明を優先して短く書いているため、Pintを実行すると差分が出ることがあります。代表的なのは以下です。**サンプルとの差分が出ても間違いではありません。**
+各レッスンのサンプルコードは説明を優先して短く書いているため、Pintを実行すると差分が出ることがあります。代表的なのは以下です。サンプルとの差分が出ても間違いではありません。
 
 - ファイル先頭に `declare(strict_types=1);` が追加される（型の暗黙変換を禁止する宣言）
 - `use` 文の並び替え、クラス名の完全修飾からのインポート化
@@ -205,3 +205,9 @@ DB がおかしくなった・初期状態に戻したい場合は以下でリ�
 ```bash
 make fresh
 ```
+
+> 注意: `make fresh` が実行するのは `DatabaseSeeder` だけです。Lesson 9 以降で作る `CourseSeeder` は呼ばれないため、講座データは 0 件に戻ります。リセット後は以下を実行して講座データを復元してください。
+>
+> ```bash
+> docker compose exec app php artisan db:seed --class=CourseSeeder
+> ```

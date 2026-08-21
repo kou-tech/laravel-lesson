@@ -10,11 +10,15 @@ build: ## イメージをビルド
 	docker compose build
 
 init: up ## 依存インストール・マイグレーション
-	@until docker compose exec app php artisan --version > /dev/null 2>&1; do \
-		echo "⏳ 準備中... 10秒後にリトライ"; \
+	@echo "⏳ 依存パッケージのインストールとビルドを待っています（初回は5分ほどかかります）"
+	@until docker compose exec -T app test -f public/build/manifest.json > /dev/null 2>&1; do \
 		sleep 10; \
 	done
 	docker compose exec app php artisan migrate:fresh --seed
+	@echo "⏳ アプリケーションの起動を待っています"
+	@until curl -sf http://localhost:8000/up > /dev/null 2>&1; do \
+		sleep 5; \
+	done
 	@echo "✅ http://localhost:8000"
 
 # コンテナ操作
