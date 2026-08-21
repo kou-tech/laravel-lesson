@@ -370,13 +370,13 @@ class CourseController extends Controller
 ```
 
 > ステータスコードの補足
-> - API Resource をそのまま `return` すると **200** になります。Lesson 1 で学んだ通り、作成成功は **201 Created** を返すべきなので、`store` だけは `->response()->setStatusCode(201)` で明示しています。Lesson 17 でこのAPIのテストを書くとき、`assertCreated()`（201期待）が通る前提になります。
-> - 削除は本文なしの **204 No Content** です。`response()->noContent()` が同じ意味のショートカットです。`Response` 型を使うので `use Illuminate\Http\Response;` も追加してください。
+> - API Resource をそのまま `return` すると 200 になります。Lesson 1 で学んだ通り、作成成功は 201 Created を返すべきなので、`store` だけは `->response()->setStatusCode(201)` で明示しています。Lesson 17 でこのAPIのテストを書くとき、`assertCreated()`（201期待）が通る前提になります。
+> - 削除は本文なしの 204 No Content です。`response()->noContent()` が同じ意味のショートカットです。`Response` 型を使うので `use Illuminate\Http\Response;` も追加してください。
 
 
 ## Step 6 ルーティングの設定
 
-`routes/api.php` に **以下のルートを追加** します（既存の UserController 系ルートはそのまま残します）。
+`routes/api.php` に以下のルートを追加します（既存の UserController 系ルートはそのまま残します）。
 
 > 注意: 先頭の `use App\Http\Controllers\Api\CourseController;` は、ファイル末尾ではなく先頭の既存の `use` ブロックに追加してください。`use` はその宣言位置より後ろにしか効かないため、ファイル中盤に置くと、あとで `vendor/bin/pint` を実行したときに Pint が前方の完全修飾名を短縮名へ書き換え、`Class "DebugController" does not exist` のようなエラーになります。
 
@@ -572,7 +572,7 @@ public function index(Request $request)
 ### 問題2
 コレクションメソッドを使って、講座を status ごとにグループ化し、各ステータスの件数を取得するAPIエンドポイントを作成してください。
 
-> 注意: ルートは**定義した順に**照合されます。`/courses/stats` を `/courses/{course}` より後に定義すると、`stats` が `{course}` の値として解釈され、Route Model Binding が「ID = stats の講座」を探して 404 になります。固定文字列のルートは、パラメータ付きルートより**先**に定義してください。
+> 注意: ルートは「定義した順に」照合されます。`/courses/stats` を `/courses/{course}` より後に定義すると、`stats` が `{course}` の値として解釈され、Route Model Binding が「ID = stats の講座」を探して 404 になります。固定文字列のルートは、パラメータ付きルートよりも先に定義してください。
 
 <details>
 <summary>解答例</summary>

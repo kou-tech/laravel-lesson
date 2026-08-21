@@ -10,9 +10,9 @@
 - カスタム例外クラスを作成できる
 - コントローラーを薄く保てる
 
-> このレッスンは**プロジェクトのコードを実際に書き換えるハンズオン**です。Step 1〜3 で作る `app/Services/Course/` と `app/Exceptions/` のクラス、および `CourseController` の書き換えは、実際にファイルを作成してください。
+> このレッスンは、プロジェクトのコードを実際に書き換えるハンズオンです。Step 1〜3 で作る `app/Services/Course/` と `app/Exceptions/` のクラス、および `CourseController` の書き換えは、実際にファイルを作成してください。
 >
-> Lesson 15 との関係: Lesson 15 ではインターフェース（`AttendanceServiceInterface` など）を紹介しましたが、**本コースの実装方針はインターフェースを切らず、具象クラス（`CreateCourse` など）をそのままコンストラクタに注入する形**です。実装が1つしかないうちはインターフェースを増やしても得るものが少ないためです（判断基準は Lesson 15 末尾の「いつインターフェースを切るか」）。Lesson 15 で登場した `AttendanceService` は説明用の仮の題材なので、ここでは使いません。
+> Lesson 15 との関係: Lesson 15 ではインターフェース（`AttendanceServiceInterface` など）を紹介しましたが、本コースの実装方針は、インターフェースを切らず、具象クラス（`CreateCourse` など）をそのままコンストラクタに注入する形です。実装が1つしかないうちはインターフェースを増やしても得るものが少ないためです（判断基準は Lesson 15 末尾の「いつインターフェースを切るか」）。Lesson 15 で登場した `AttendanceService` は説明用の仮の題材なので、ここでは使いません。
 
 
 ## Fat Controller の問題

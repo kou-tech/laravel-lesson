@@ -486,7 +486,7 @@ class AttendanceFactory extends Factory
 
 ### User と Course にリレーションを追加
 
-Lesson 4 / 9 で作成済みの `app/Models/User.php` と `app/Models/Course.php` に、以下のメソッドを**追記**します（既存のメソッドは残したまま末尾に追加）。
+Lesson 4 / 9 で作成済みの `app/Models/User.php` と `app/Models/Course.php` に、以下のメソッドを追記します（既存のメソッドは残したまま末尾に追加）。
 
 ```php
 // app/Models/User.php に追記
@@ -587,7 +587,7 @@ return new class extends Migration
 
 Lesson 9 で作成した `Course` モデル・`CourseFactory`・`CourseResource`・`Course/StoreRequest`・`Course/UpdateRequest` にも `starts_at` を反映します。
 
-> ここを忘れると、`POST /api/courses` が「`starts_at` に値が入っていない」というDBエラー（500）になります。**NOT NULL カラムを増やしたら、そのカラムを作る側の経路（バリデーション → fillable → Factory）を一通り見直す**、というのが実務でのチェック手順です。
+> ここを忘れると、`POST /api/courses` が「`starts_at` に値が入っていない」というDBエラー（500）になります。「NOT NULL カラムを増やしたら、そのカラムを作る側の経路（バリデーション → fillable → Factory）を一通り見直す」、というのが実務でのチェック手順です。
 
 ```php
 // app/Models/Course.php

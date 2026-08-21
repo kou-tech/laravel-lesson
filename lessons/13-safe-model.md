@@ -465,7 +465,7 @@ class Attendance extends Model
 }
 ```
 
-> Lesson 11 で作ったモデルからの変更点は、`$hidden` / `$appends` / アクセサ / スコープの追加だけです。`$fillable` の `attended_at` は**残したまま**にしてください。Lesson 11 の `AttendanceController` が `'attended_at' => now()` を渡しているため、ここから外すとその指定が無視されます（DB側の `useCurrent()` で値自体は入るので、エラーにならず気付きにくい種類の事故です）。`$fillable` を変えるときは、そのカラムを渡している箇所がないか必ず確認する習慣をつけてください。
+> Lesson 11 で作ったモデルからの変更点は、`$hidden` / `$appends` / アクセサ / スコープの追加だけです。`$fillable` の `attended_at` は残したままにしてください。Lesson 11 の `AttendanceController` が `'attended_at' => now()` を渡しているため、ここから外すとその指定が無視されます（DB側の `useCurrent()` で値自体は入るので、エラーにならず気付きにくい種類の事故です）。`$fillable` を変えるときは、そのカラムを渡している箇所がないか必ず確認する習慣をつけてください。
 
 ## 練習問題
 
