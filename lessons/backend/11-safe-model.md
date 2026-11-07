@@ -1,8 +1,8 @@
-# Lesson 13 安全なモデルの記述
+# Lesson 11 安全なモデルの記述
 
 ## 学習目標
 
-このレッスンでは、Mass Assignment脆弱性を理解し、安全なモデル設計を行います。
+このレッスンでは、Mass Assignment脆弱性を理解し、安全なモデル設計を行います。最後の Step 7 で、Lesson 10 で作った Attendance モデルを仕上げます。
 
 ### 到達目標
 - Mass Assignment脆弱性を理解する
@@ -417,8 +417,21 @@ class Course extends Model
 }
 ```
 
+`attendances_count` は、講座を取得するときに `withCount('attendances')` を付けると入る値です。`withCount` は関連するレコードの件数を数え、`リレーション名_count` という名前の属性に入れます。
+
+```php
+$course = Course::withCount('attendances')->find(1);
+$course->attendances_count;  // 例: 15
+```
+
+Lesson 10 の練習問題1で使った `loadCount()` は、取得済みのモデルに後から同じ件数を読み込むメソッドです。`withCount` を付けずに取得すると `attendances_count` は null になり、`available_seats` も `is_full` も正しい値になりません。`withCount` の詳しい使い方と、キャンセル済みを除いて数える書き方は Lesson 16 で学びます。
+
+> 補足: この Step の Course は `$appends` を説明するための例です。このプロジェクトの Course モデルには追加しないでください。講座詳細のように `withCount` を付けずに取得する箇所では、上のとおり値がずれます。
+
 
 ## Step 7 Attendanceモデルの完成
+
+ここまでの内容を使って、Lesson 10 で作った `app/Models/Attendance.php` を仕上げます。JSON に変換するときに作成日時・更新日時を隠し、ステータスの日本語ラベルを足し、受講中の受講だけを取り出すスコープを用意します。
 
 ```php
 <?php
@@ -486,7 +499,22 @@ class Attendance extends Model
 }
 ```
 
-> Lesson 11 で作ったモデルからの変更点は、`$hidden` / `$appends` / アクセサ / スコープの追加だけです。`$fillable` の `attended_at` は残したままにしてください。Lesson 11 の `AttendanceController` が `'attended_at' => now()` を渡しているため、ここから外すとその指定が無視されます（DB側の `useCurrent()` で値自体は入るので、エラーにならず気付きにくい種類の事故です）。`$fillable` を変えるときは、そのカラムを渡している箇所がないか必ず確認する習慣をつけてください。
+> Lesson 10 で作ったモデルからの変更点は、`$hidden` / `$appends` / アクセサ / スコープの追加だけです。`$fillable` の `attended_at` は残したままにしてください。Lesson 10 の `AttendanceController` が `'attended_at' => now()` を渡しているため、ここから外すとその指定が無視されます（DB側の `useCurrent()` で値自体は入るので、エラーにならず気付きにくい種類の事故です）。`$fillable` を変えるときは、そのカラムを渡している箇所がないか必ず確認する習慣をつけてください。
+
+### 動作確認
+
+`make app` でコンテナに入り、Lesson 10 の動作確認で登録した受講を1件取り出して確かめます。受講が1件もない場合は、Lesson 10 の手順で1件登録してから試してください。
+
+```bash
+php artisan tinker --execute '
+  print_r(App\Models\Attendance::first()->toArray());
+  echo App\Models\Attendance::active()->count();
+'
+```
+
+`toArray()` の結果に `status_label`（例: `受講中`）が含まれ、`created_at` と `updated_at` が含まれていなければ成功です。最後の行には、キャンセル済みを除いた受講の件数が表示されます。`active` スコープは、Lesson 16 で自分の受講一覧を作るときに使います。
+
+> 補足: 受講登録APIのレスポンスは、Postman で見ても変わりません。`AttendanceResource` が返すキーを自分で並べているためです。`$hidden` と `$appends` の設定が使われるのは、モデルをそのまま `toArray()` や `response()->json()` に渡したときです。
 
 ## 練習問題
 
@@ -544,4 +572,4 @@ $course->save();
 
 ## 次のレッスン
 
-[Lesson 14 トランザクション処理](./14-transaction.md) では、データの整合性を保つためのトランザクション処理を学びます。
+[Lesson 12 自動テストの書き方](./12-testing.md) では、Pest で自動テストを書き、Lesson 10 で作った受講登録APIの動きをテストで確かめます。

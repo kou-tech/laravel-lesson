@@ -101,7 +101,7 @@ class Course extends Model
 }
 ```
 
-> 補足: Laravel 13 の公式ドキュメントでは、ローカルスコープを `#[Scope]` 属性で定義する書き方を紹介しています。メソッド名の先頭に `scope` を付ける上の書き方も引き続き使え、呼び出し方（`Course::active()`）はどちらも同じです。本コースは Lesson 13 でも `scope` を付ける書き方を使うため、ここでもそちらに揃えています。
+> 補足: Laravel 13 の公式ドキュメントでは、ローカルスコープを `#[Scope]` 属性で定義する書き方を紹介しています。メソッド名の先頭に `scope` を付ける上の書き方も引き続き使え、呼び出し方（`Course::active()`）はどちらも同じです。本コースは Lesson 11 でも `scope` を付ける書き方を使うため、ここでもそちらに揃えています。
 >
 > ```php
 > use Illuminate\Database\Eloquent\Attributes\Scope;
@@ -617,4 +617,6 @@ public function stats()
 
 ## 次のレッスン
 
-[Lesson 10 良いコードを書く](./10-clean-code.md) では、可読性の高い保守しやすいコードを書くための原則を学びます。
+Part 1 はこれで終わりです。次は [ボス戦1 講座のステータスを切り替えるAPI](./boss-1-course-status.md) に挑戦してください。コードは載せず仕様だけを渡すので、Part 1 で学んだ Controller・FormRequest・Policy・API Resource を自分で組み合わせて作ります。
+
+ボス戦1をクリアしたら、[Lesson 10 受講登録APIを作る](./10-attendance-api.md) に進みます。

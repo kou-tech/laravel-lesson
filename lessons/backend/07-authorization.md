@@ -56,7 +56,7 @@ protected $fillable = [
 ];
 ```
 
-`$fillable` は「外部からのデータで一括設定してよいカラム」のリストです。ここに `role` を入れてしまうと、`User::create($request->all())` のようなコードを書いたときに、リクエストに `"role": "instructor"` を紛れ込ませるだけで誰でも講師になれてしまいます。権限を表すカラムは一括代入の対象にしない、というのが原則です（詳しくは [Lesson 13](./13-safe-model.md) で扱います）。
+`$fillable` は「外部からのデータで一括設定してよいカラム」のリストです。ここに `role` を入れてしまうと、`User::create($request->all())` のようなコードを書いたときに、リクエストに `"role": "instructor"` を紛れ込ませるだけで誰でも講師になれてしまいます。権限を表すカラムは一括代入の対象にしない、というのが原則です（詳しくは [Lesson 11](./11-safe-model.md) で扱います）。
 
 役割を変更したいときは、次のように明示的に代入します。
 
@@ -121,7 +121,7 @@ public function isStudent(): bool
 
 ### UserFactory に role の state を追加
 
-テストで「生徒のユーザー」「講師のユーザー」を作れるように、`database/factories/UserFactory.php` に state を追加します。Lesson 17 以降のテストで多用するので、ここで用意しておきます。
+テストで「生徒のユーザー」「講師のユーザー」を作れるように、`database/factories/UserFactory.php` に state を追加します。Lesson 12 以降のテストで多用するので、ここで用意しておきます。
 
 ```php
 use App\Enums\UserRole;

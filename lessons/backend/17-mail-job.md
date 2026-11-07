@@ -1,4 +1,4 @@
-# Lesson 18 メールとジョブ機能
+# Lesson 17 メールとジョブ機能
 
 ## 学習目標
 
@@ -9,10 +9,11 @@
 - メールを送信できる
 - Job クラスを作成してキューに投入できる
 - 非同期処理の仕組みを理解する
+- `Mail::fake()`・`Queue::fake()` を使ってメールとジョブのテストを書ける
 
 > このレッスンは2部構成です。
 > - Step 1〜5: Mailable・Job・キューの書き方を学ぶ座学パート（コマンドを実行してクラスを作りながら読み進めてOKです）
-> - Step 6〜8: 受講登録時に確認メールを送る処理を、Lesson 16 で作ったサービスクラスに組み込むハンズオンパート
+> - Step 6〜8: 受講登録時に確認メールを送る処理を、Lesson 14 で作り Lesson 15 でトランザクションとロックを足した `AttendCourse` に組み込み、テストで確かめるハンズオンパート
 
 
 ## なぜ非同期処理が必要か？
@@ -367,7 +368,7 @@ class SendAttendanceConfirmation implements ShouldQueue
 
 ### AttendCourse サービスの修正
 
-Lesson 16 の練習問題2で作った `App\Services\Attendance\AttendCourse` に、確認メールのジョブ投入を追加します。
+Lesson 14 で作り、Lesson 15 でトランザクションとロックを足した `App\Services\Attendance\AttendCourse` に、確認メールのジョブ投入を追加します。足すのは `use App\Jobs\SendAttendanceConfirmation;` と、`DB::transaction()` のあとの `dispatch` の行だけです。それ以外は Lesson 15 のままにしてください。
 
 ```php
 <?php
@@ -375,10 +376,13 @@ Lesson 16 の練習問題2で作った `App\Services\Attendance\AttendCourse` �
 namespace App\Services\Attendance;
 
 use App\Enums\AttendanceStatus;
-use App\Jobs\SendAttendanceConfirmation;
+use App\Exceptions\AlreadyAttendingException;
+use App\Exceptions\CapacityExceededException;
+use App\Jobs\SendAttendanceConfirmation;  // 追加
 use App\Models\Attendance;
 use App\Models\Course;
 use App\Models\User;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 
 class AttendCourse
@@ -386,26 +390,52 @@ class AttendCourse
     public function __invoke(User $user, Course $course): Attendance
     {
         $attendance = DB::transaction(function () use ($user, $course) {
-            // 定員・重複のチェック（Lesson 16 で実装済み）
-            $this->validate($user, $course);
+            // ロックを付けて取り直す。受け取った $course の件数（withCount など）は使わない
+            $lockedCourse = Course::lockForUpdate()->findOrFail($course->id);
 
-            return Attendance::create([
-                'user_id' => $user->id,
-                'course_id' => $course->id,
-                'status' => AttendanceStatus::Attending,
-                'attended_at' => now(),
-            ]);
+            $this->validate($user, $lockedCourse);
+
+            try {
+                return Attendance::create([
+                    'user_id' => $user->id,
+                    'course_id' => $lockedCourse->id,
+                    'status' => AttendanceStatus::Attending,
+                    'attended_at' => now(),
+                ]);
+            } catch (UniqueConstraintViolationException) {
+                throw new AlreadyAttendingException();
+            }
         });
 
-        // トランザクション外でジョブをディスパッチ
+        // トランザクションの外でジョブをディスパッチ（追加）
         SendAttendanceConfirmation::dispatch($attendance);
 
-        return $attendance;
+        return $attendance->load(['user', 'course.instructor']);
+    }
+
+    private function validate(User $user, Course $course): void
+    {
+        if (! $course->hasCapacity()) {
+            throw new CapacityExceededException();
+        }
+
+        $isAttending = $user->attendances()
+            ->where('course_id', $course->id)
+            ->where('status', '!=', AttendanceStatus::Cancelled)
+            ->exists();
+
+        if ($isAttending) {
+            throw new AlreadyAttendingException();
+        }
     }
 }
 ```
 
-> なぜトランザクションの外でディスパッチするのか: トランザクション内でジョブを積むと、まだコミットされていないレコードをワーカーが処理しにいく可能性があります（ワーカーは別プロセスなので、コミット前のデータは見えません）。結果として「該当レコードが見つからない」でジョブが失敗します。次に説明する `afterCommit()` を使う方法でも同じ問題を回避できます。
+`dispatch` を呼ぶのは、`DB::transaction()` が返ったあと、つまりコミットが終わってからです。定員に達していたり、すでに登録していたりして例外が投げられたときは、`DB::transaction()` がロールバックして例外を投げ直すので、`dispatch` の行まで進みません。確認メールが送られるのは、受講の登録に成功したときだけです。
+
+> なぜトランザクションの外でディスパッチするのか: トランザクション内でジョブを積むと、まだコミットされていないレコードをワーカーが処理しにいく可能性があります（ワーカーは別プロセスなので、コミット前のデータは見えません）。結果として「該当レコードが見つからない」でジョブが失敗します。Lesson 15 の Step 1「メール送信はトランザクションの外で」と同じ考え方です。次に説明する `afterCommit()` を使う方法でも同じ問題を回避できます。
+
+> 補足: ジョブに渡した `$attendance` は、キューには ID だけが入ります（`SerializesModels` の働きです）。ワーカーはジョブを処理するときに、その ID で受講を DB から読み直します。メールの中で `$this->attendance->user` や `course` を読むと遅延ロードになりますが、読み直す受講は1件だけなので、Lesson 16 で有効にした `preventLazyLoading()` の違反にはなりません。
 
 ### afterCommit でトランザクション完了後に実行
 
@@ -413,6 +443,10 @@ class AttendCourse
 SendAttendanceConfirmation::dispatch($attendance)
     ->afterCommit();  // トランザクションがコミットされてから実行
 ```
+
+### コントローラーは変えない
+
+`AttendanceController` は書き換えません。`AttendCourse` を書き換えたら `php artisan test` を実行し、Lesson 12 で書いた受講登録のテストが緑のままであることを確かめてください。テストではキューが `sync` なので、ジョブはその場で実行され、メールは `phpunit.xml` の `MAIL_MAILER=array` の設定により、どこにも送られずにメモリに残るだけです。
 
 
 ## Step 7 メールのプレビュー
@@ -450,11 +484,29 @@ MAIL_PORT=1025
 
 ## Step 8 テスト
 
+確認メールを送ることを、テストで確かめます。書き方は Lesson 12 Step 9 で書いた受講登録のテスト（`tests/Feature/Api/AttendanceStoreTest.php`）と同じで、`actingAs()` で生徒としてログインし、`postJson()` で申し込みます。違いは、テストの最初に `Mail::fake()` や `Queue::fake()` を呼ぶことです。
+
+`Mail::fake()` を呼ぶと、そのテストの間だけ、メールの送信が「送ったことを記録するだけの偽物」に差し替わります。メールは実際には送られず、あとから `Mail::assertSent()` で「このメールが、この宛先に送られたか」を確かめられます。`Queue::fake()` も同じで、ジョブを実行せずに「積まれたこと」だけを記録します。Lesson 14 の `$this->mock()` と同じく、テストの間だけ本物を偽物に入れ替える仕組みです。
+
+`make app` でコンテナに入ってから、テストファイルを作ります。
+
+```bash
+php artisan make:test Api/AttendanceConfirmationTest
+```
+
+以下の2つのテストを、`tests/Feature/Api/AttendanceConfirmationTest.php` に書きます。
+
 ### メール送信のテスト
 
 ```php
+// tests/Feature/Api/AttendanceConfirmationTest.php
+
+use App\Jobs\SendAttendanceConfirmation;
 use App\Mail\AttendanceConfirmation;
+use App\Models\Course;
+use App\Models\User;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Queue;
 
 test('受講時にメールが送信される', function () {
     Mail::fake();
@@ -480,10 +532,9 @@ test('受講時にメールが送信される', function () {
 
 ### ジョブのテスト
 
-```php
-use App\Jobs\SendAttendanceConfirmation;
-use Illuminate\Support\Facades\Queue;
+同じファイルに続けて書きます。`use` はファイルの先頭にまとめてあります。
 
+```php
 test('受講時にジョブがキューに追加される', function () {
     Queue::fake();
 
@@ -500,67 +551,82 @@ test('受講時にジョブがキューに追加される', function () {
 });
 ```
 
+`Queue::assertPushed()` の第2引数のクロージャには、積まれたジョブが渡されます。ここでは、申し込んだ講座の受講がジョブに渡されていることを確かめています。
+
+テストを実行して、2つとも通ることを確かめます。
+
+```bash
+php artisan test tests/Feature/Api/AttendanceConfirmationTest.php
+```
+
 ## 練習問題
 
 ### 問題1
-講座キャンセル時に送信する `AttendanceCancellation` メールを作成してください。
+定員に達している講座に申し込んだとき（422）と、すでに登録している講座にもう一度申し込んだとき（409）には、確認メールのジョブが積まれないことを確かめるテストを、`tests/Feature/Api/AttendanceConfirmationTest.php` に追加してください。
+
+> ヒント: Step 6 で、ジョブを積むのはトランザクションが成功したあとにしました。`Queue::fake()` を呼んだうえで、何も積まれていないことは `Queue::assertNothingPushed()` で確かめられます。受講のデータは Lesson 12 と同じく `Attendance::factory()` で作ります。
 
 <details>
 <summary>解答例</summary>
 
 ```php
-<?php
-
-namespace App\Mail;
-
 use App\Models\Attendance;
-use Illuminate\Bus\Queueable;
-use Illuminate\Mail\Mailable;
-use Illuminate\Mail\Mailables\Content;
-use Illuminate\Mail\Mailables\Envelope;
-use Illuminate\Queue\SerializesModels;
 
-class AttendanceCancellation extends Mailable
-{
-    use Queueable, SerializesModels;
+test('定員に達しているときはジョブが積まれない', function () {
+    Queue::fake();
 
-    public function __construct(
-        public Attendance $attendance
-    ) {}
+    $student = User::factory()->student()->create();
+    $course = Course::factory()->active()->create(['capacity' => 1]);
 
-    public function envelope(): Envelope
-    {
-        return new Envelope(
-            subject: '【キャンセル完了】' . $this->attendance->course->title,
-        );
-    }
+    // 先に1人登録して定員を埋める
+    Attendance::factory()->create(['course_id' => $course->id]);
 
-    public function content(): Content
-    {
-        return new Content(
-            view: 'emails.attendance-cancellation',
-            with: [
-                'userName' => $this->attendance->user->name,
-                'courseName' => $this->attendance->course->title,
-            ],
-        );
-    }
-}
+    $this->actingAs($student)
+        ->postJson("/api/courses/{$course->id}/attendances")
+        ->assertUnprocessable();
+
+    Queue::assertNothingPushed();
+});
+
+test('すでに登録しているときはジョブが積まれない', function () {
+    Queue::fake();
+
+    $student = User::factory()->student()->create();
+    $course = Course::factory()->active()->create();
+
+    Attendance::factory()->create([
+        'user_id' => $student->id,
+        'course_id' => $course->id,
+    ]);
+
+    $this->actingAs($student)
+        ->postJson("/api/courses/{$course->id}/attendances")
+        ->assertStatus(409);
+
+    Queue::assertNothingPushed();
+});
 ```
+
+`use App\Models\Attendance;` はファイルの先頭の `use` に足します。`AttendanceFactory` の既定の状態は受講中（`attending`）なので、`status` を指定しなくても定員に数えられ、重複の判定にもかかります。
+
+Step 6 のコードなら、どちらのテストもそのまま通ります。`validate()` が例外を投げると `DB::transaction()` から例外が投げ直され、`dispatch` の行まで進まないためです。あとで `AttendCourse` に手を入れたときに、失敗した申し込みでも確認メールが送られるようになっていないかを、このテストで確かめられます。
 </details>
 
 ### 問題2
-講座の開始1日前にリマインドメールを送信するジョブを作成してください。
+講座の開始1日前にリマインドメールを送信するジョブを作成してください。送る相手は、その講座を受講中（キャンセル済みを除く）の受講者です。
+
+> ヒント: 受講中の受講は、Lesson 11 で作った `active()` スコープで絞れます。受講者のユーザーを読むときは、Lesson 16 で学んだとおり `with()` で読み込んでおきます。
 
 <details>
 <summary>解答例</summary>
+
+`CourseReminder` は、Step 1 と同じ手順（`php artisan make:mail CourseReminder`）で作るメールです。ここでは中身を省略します。
 
 ```php
 <?php
 
 namespace App\Jobs;
 
-use App\Enums\AttendanceStatus;
 use App\Mail\CourseReminder;
 use App\Models\Course;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -579,16 +645,19 @@ class SendCourseReminder implements ShouldQueue
 
     public function handle(): void
     {
-        $attendees = $this->course->students()
-            ->wherePivot('status', AttendanceStatus::Attending)
+        $attendances = $this->course->attendances()
+            ->active()
+            ->with('user')
             ->get();
 
-        foreach ($attendees as $student) {
-            Mail::to($student)->send(new CourseReminder($this->course));
+        foreach ($attendances as $attendance) {
+            Mail::to($attendance->user)->send(new CourseReminder($this->course));
         }
     }
 }
 ```
+
+`with('user')` を書き忘れると、受講者が2人以上いる講座では、ループの中の `$attendance->user` が Lesson 16 の `preventLazyLoading()` の違反になり、ジョブが失敗します。ジョブの中でも、コントローラーと同じように Eager Loading が必要です。
 
 スケジューラーからの呼び出し例（`routes/console.php`）
 
@@ -606,6 +675,8 @@ Schedule::call(function () {
     }
 })->dailyAt('09:00');
 ```
+
+> 補足: このプロジェクトの Docker コンテナは、キューのワーカーは起動していますが、スケジューラーは起動していません。本番では、`php artisan schedule:run` を1分ごとに実行するよう cron に登録します。手元で試すときは、`php artisan schedule:test` を実行し、一覧から選ぶとその場で1回だけ実行できます。
 </details>
 
 ## 参考資料
@@ -615,4 +686,4 @@ Schedule::call(function () {
 
 ## 次のレッスン
 
-[Lesson 19 TDDで機能を追加する](./19-tdd.md) では、テスト駆動開発（TDD）のサイクルを体験します。
+[Lesson 18 TDDで機能を追加する](./18-tdd.md) では、テスト駆動開発（TDD）のサイクルで受講キャンセル機能を作ります。キャンセルしたときに送るメールも、そこで作ります。

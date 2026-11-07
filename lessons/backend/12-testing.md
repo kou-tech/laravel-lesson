@@ -1,14 +1,14 @@
-# Lesson 17 自動テストの書き方
+# Lesson 12 自動テストの書き方
 
 ## 学習目標
 
-このレッスンでは、PHPUnit/Pestを使った自動テストを書き、品質を担保できるようになります。
+このレッスンでは、Pest を使って自動テストを書き、これまで作ったAPIの動きをテストで確かめられるようになります。
 
 ### 到達目標
 - Feature テストと Unit テストの違いを理解する
 - APIのテストを書ける
 - Factory を使ったテストデータ作成ができる
-- モック/スタブを活用できる
+- 受講登録APIの成功・失敗の動きをテストで固定できる
 
 
 ## なぜテストを書くか？
@@ -19,6 +19,12 @@
 2. リファクタリングの安心感として、テストがあれば大胆に書き換えられます
 3. ドキュメント代わりとして、テストコードが仕様書になります
 4. 設計の改善として、テストしづらいコード = 設計が悪いことがわかります
+
+### このあとのレッスンとの関係
+
+Lesson 13〜15 は、動きを変えずにコードを良くするレッスンです。とくに Lesson 10 で作った受講登録APIは、Lesson 14 でサービスクラスに切り出し、Lesson 15 でトランザクションを足します。実務では、こうした書き換えの前に今の動きをテストで固定しておき、テストが通るままであることを確かめながら手を入れます。
+
+このレッスンでは、前半でテストの書き方を学び、後半の Step 8・9 で Course API と受講登録APIのテストを書きます。ここで書くテストは、Lesson 14 以降でコードを書き換えるたびに実行します。
 
 
 ## Step 0 準備 - RefreshDatabase を有効にする
@@ -149,7 +155,7 @@ class CourseControllerTest extends TestCase
 }
 ```
 
-> 本コースで書くテストはすべて Pest 形式に統一します。`php artisan make:test` もPest形式のファイルを生成します。この先のレッスン（18・19）のサンプルもPest形式です。
+> 本コースで書くテストはすべて Pest 形式に統一します。`php artisan make:test` もPest形式のファイルを生成します。Lesson 13 以降のサンプルもPest形式です。
 
 
 ## Step 3 テストデータの準備
@@ -175,15 +181,19 @@ $course = Course::factory()->make();
 
 ### Factory の状態（State）
 
+これまでのレッスンで、次の state を作ってきました。
+
+| state | 作ったレッスン | 作られるデータ |
+|---|---|---|
+| `User::factory()->student()` | Lesson 7 | 生徒のユーザー |
+| `User::factory()->instructor()` | Lesson 7 | 講師のユーザー |
+| `Course::factory()->active()` / `draft()` | Lesson 9 | 公開中 / 下書きの講座 |
+| `Attendance::factory()->cancelled()` | Lesson 10 | キャンセル済みの受講 |
+
+state は自分で足すこともできます。たとえば `CourseFactory` に、定員0の講座を作る `full()` を足すと次のようになります。
+
 ```php
 // database/factories/CourseFactory.php
-
-public function active(): static
-{
-    return $this->state(fn (array $attributes) => [
-        'status' => CourseStatus::Active,
-    ]);
-}
 
 public function full(): static
 {
@@ -199,7 +209,7 @@ public function full(): static
 // 公開中の講座
 Course::factory()->active()->create();
 
-// 定員いっぱいの講座
+// 定員0の講座
 Course::factory()->full()->create();
 
 // 組み合わせ
@@ -214,14 +224,19 @@ $course = Course::factory()
     ->for(User::factory()->instructor(), 'instructor')
     ->create();
 
-// 受講者を持つ講座
+// 受講者を5人持つ講座（Lesson 10 で足した Course::attendances() を使う）
 $course = Course::factory()
     ->has(Attendance::factory()->count(5))
     ->create();
+
+// 特定の講座に、キャンセル済みの受講を1件作る
+Attendance::factory()->cancelled()->create([
+    'course_id' => $course->id,
+]);
 ```
 
 
-## Step 4 認証のテスト
+## Step 4 認証と認可のテスト
 
 ### actingAs() でログイン状態をシミュレート
 
@@ -255,7 +270,44 @@ test('生徒は講座を作成できない', function () {
 });
 ```
 
-> リクエストボディに `status` と `starts_at` を入れているのは、`Course/StoreRequest` で必須にしているためです（Lesson 9・11）。「バリデーションは認可より先に走る」ので、ここを省くと「403を期待していたのに422が返る」というテスト失敗になります。認可のテストをするときは、「バリデーションを通過する正しいボディ」を送るのがコツです。
+> リクエストボディに `status` と `starts_at` を入れているのは、`Course/StoreRequest` で必須にしているためです（Lesson 9・10）。「バリデーションは認可より先に走る」ので、ここを省くと「403を期待していたのに422が返る」というテスト失敗になります。認可のテストをするときは、「バリデーションを通過する正しいボディ」を送るのがコツです。
+
+### 他人のデータを変更できないことを確かめる
+
+Lesson 7 で `UserPolicy` を使って保護したユーザー更新API（`PATCH /api/users/{user}`）も、同じ書き方でテストできます。自分は更新でき、他人は更新できないことを、2つのテストで確かめます。
+
+```php
+test('自分のユーザー情報は更新できる', function () {
+    $user = User::factory()->create();
+
+    $response = $this->actingAs($user)
+        ->patchJson("/api/users/{$user->id}", [
+            'name' => '新しい名前',
+        ]);
+
+    $response->assertOk()
+        ->assertJsonPath('data.name', '新しい名前');
+});
+
+test('他人のユーザー情報は更新できない', function () {
+    $user = User::factory()->create();
+    $other = User::factory()->create(['name' => '元の名前']);
+
+    $response = $this->actingAs($user)
+        ->patchJson("/api/users/{$other->id}", [
+            'name' => '書き換えた名前',
+        ]);
+
+    $response->assertForbidden();
+
+    $this->assertDatabaseHas('users', [
+        'id' => $other->id,
+        'name' => '元の名前',
+    ]);
+});
+```
+
+403 が返ったことに加えて、DBの値が変わっていないことも確かめています。認可のチェックをうっかり保存の後ろに書いてしまうと、403 は返るのにデータは書き換わっている、という不具合になるためです。
 
 
 ## Step 5 レスポンスのアサーション
@@ -323,97 +375,67 @@ $this->assertDatabaseMissing('courses', [
 $this->assertDatabaseCount('courses', 3);
 ```
 
-### ソフトデリート
+### モデル単位の確認
+
+手元にあるモデルの行が、DBに残っているか消えたかを確かめるときは、モデルを渡すアサーションが便利です。削除APIのテストでよく使います。
 
 ```php
-$this->assertSoftDeleted('courses', [
-    'id' => $course->id,
-]);
+// $course の行がDBから消えている
+$this->assertModelMissing($course);
+
+// $course の行がDBに残っている
+$this->assertModelExists($course);
 ```
 
+> 補足: `SoftDeletes` トレイトを使うモデル（論理削除）では、削除しても行は消えず、`deleted_at` に日時が入ります。そのようなモデルでは `$this->assertSoftDeleted($course)` で「論理削除されたこと」を確かめます。このプロジェクトの Course と Attendance は `SoftDeletes` を使っていないので、`assertModelMissing` で確かめます。
 
-## Step 7 モックの活用
 
-### サービスをモック
+## Step 7 テストの実行
 
-Lesson 16 で作った `CreateCourse` を、偽物（モック）に差し替えてテストします。`CourseController` はコンストラクタで `CreateCourse` を受け取っているので、サービスコンテナにモックを登録しておくと、コントローラーにはモックが渡されます。
+全テストの実行は `make test` で行えます。特定のテストだけ実行したい場合は、`make app` でコンテナに入ってから実行してください。
 
-```php
-use App\Models\Course;
-use App\Models\User;
-use App\Services\Course\CreateCourse;
-use Mockery\MockInterface;
+### 全テスト実行
 
-test('講座作成APIは CreateCourse に処理を任せる', function () {
-    $instructor = User::factory()->instructor()->create();
-    $course = Course::factory()->for($instructor, 'instructor')->create();
-
-    $this->mock(CreateCourse::class, function (MockInterface $mock) use ($course) {
-        $mock->shouldReceive('__invoke')
-            ->once()
-            ->andReturn($course);
-    });
-
-    $this->actingAs($instructor)
-        ->postJson('/api/courses', [
-            'title' => 'テスト講座',
-            'capacity' => 20,
-            'status' => 'draft',
-            'starts_at' => now()->addWeek()->toDateTimeString(),
-        ])
-        ->assertCreated()
-        ->assertJsonPath('data.id', $course->id);
-});
+```bash
+make test
 ```
 
-`$this->mock()` は、Mockery でモックを作ってサービスコンテナに登録するところまでをまとめて行うメソッドです。`CreateCourse` は `__invoke` で呼び出すクラスなので、`shouldReceive('__invoke')` で呼ばれ方を指定します。このテストで確かめているのは、コントローラーが `CreateCourse` を1回だけ呼び、その戻り値をレスポンスに使っていることです。重複チェックなど `CreateCourse` 自身の中身は、別のテストで確かめます。
+### 特定のファイルのみ
 
-### Mail のフェイク
-
-```php
-use Illuminate\Support\Facades\Mail;
-use App\Mail\AttendanceConfirmation;
-
-test('受講時にメールが送信される', function () {
-    Mail::fake();
-
-    $user = User::factory()->student()->create();
-    $course = Course::factory()->active()->create();
-
-    $this->actingAs($user)
-        ->postJson("/api/courses/{$course->id}/attendances")
-        ->assertCreated();
-
-    Mail::assertSent(AttendanceConfirmation::class, function ($mail) use ($user) {
-        return $mail->hasTo($user->email);
-    });
-});
+```bash
+php artisan test tests/Feature/Api/CourseControllerTest.php
 ```
 
-### Queue のフェイク
+### 特定のテストのみ
 
-```php
-use Illuminate\Support\Facades\Queue;
-use App\Jobs\SendAttendanceConfirmation;
-
-test('受講時にジョブがキューに追加される', function () {
-    Queue::fake();
-
-    // ... テスト処理 ...
-
-    Queue::assertPushed(SendAttendanceConfirmation::class);
-});
+```bash
+php artisan test --filter="講師は講座を作成できる"
 ```
 
+### カバレッジ
 
-## Step 8 実践的なテスト例
+カバレッジは、テストを実行したときに、アプリのコードの何行が実際に通ったかの割合です。どこがテストされていないかを探すのに使います。
 
-### CourseController のテスト
+```bash
+php artisan test --coverage
+```
+
+このプロジェクトのコンテナには、カバレッジを計測する PHP の拡張機能 PCOV が入っているので、`--coverage` をそのまま使えます。
+
+> 補足: 「No code coverage driver is available.」と表示された場合は、PCOV が入る前のコンテナのイメージを使っています。README の案内に従ってイメージを作り直してから、もう一度実行してください。
+
+
+## Step 8 Course API のテストを書く
+
+ここからは、これまでに作ったAPIのテストを実際にファイルに書きます。まず Lesson 9 の Course API です。コンテナの中で次のコマンドを実行してファイルを作り、中身を下のコードに置き換えます。
+
+```bash
+php artisan make:test Api/CourseControllerTest
+```
 
 ```php
 // tests/Feature/Api/CourseControllerTest.php
 
-use App\Enums\CourseStatus;
 use App\Models\Course;
 use App\Models\User;
 
@@ -435,7 +457,7 @@ describe('GET /api/courses', function () {
 
     test('ステータスでフィルタリングできる', function () {
         Course::factory()->active()->count(2)->create();
-        Course::factory()->create(['status' => CourseStatus::Draft]);
+        Course::factory()->draft()->create();
 
         $response = $this->getJson('/api/courses?status=active');
 
@@ -486,57 +508,151 @@ describe('POST /api/courses', function () {
 });
 ```
 
+`describe()` は、関係するテストをまとめる Pest の書き方です。実行結果にも `GET /api/courses` のようなまとまりで表示されるので、どのAPIのテストが落ちたのかが読みやすくなります。
 
-## Step 9 テストの実行
-
-全テストの実行は `make test` で行えます。特定のテストだけ実行したい場合は、`make app` でコンテナに入ってから実行してください。
-
-### 全テスト実行
-
-```bash
-make test
-```
-
-### 特定のファイルのみ
+書けたら、Step 7 の手順でこのファイルだけを実行し、すべて緑（PASS）になることを確かめてください。
 
 ```bash
 php artisan test tests/Feature/Api/CourseControllerTest.php
 ```
 
-### 特定のテストのみ
+
+## Step 9 受講登録APIのテストを書く
+
+次に、Lesson 10 で作った受講登録API（`POST /api/courses/{course}/attendances`）のテストを書きます。このAPIは Lesson 14 でサービスクラスに切り出し、Lesson 15 でトランザクションを足します。そのたびにこのテストを実行し、次の4つの動きが変わっていないことを確かめます。
+
+| 状況 | ステータス | message |
+|---|---|---|
+| 生徒が申し込む | 201 | （AttendanceResource） |
+| 生徒以外が申し込む | 403 | Policy の既定のメッセージ |
+| 定員に達している | 422 | この講座は定員に達しています。 |
+| すでに登録している | 409 | すでにこの講座に登録済みです。 |
 
 ```bash
-php artisan test --filter="講師は講座を作成できる"
+php artisan make:test Api/AttendanceStoreTest
 ```
-
-### カバレッジ
-
-```bash
-php artisan test --coverage
-```
-
-> カバレッジの計測には、PHP の拡張機能 Xdebug か PCOV が必要です。どちらも入っていない環境では「No code coverage driver is available.」と表示されて計測できません。
-
-## 練習問題
-
-### 問題1
-受講登録APIのテストを書いてください。以下のケースをカバーしてください。
-- 生徒は受講登録できる
-- 定員オーバー時は登録できない
-- 既に登録済みの場合はエラー
-
-<details>
-<summary>解答例</summary>
 
 ```php
-use App\Enums\AttendanceStatus;
+// tests/Feature/Api/AttendanceStoreTest.php
+
 use App\Models\Attendance;
 use App\Models\Course;
 use App\Models\User;
 
-test('生徒は受講登録できる', function () {
+describe('POST /api/courses/{course}/attendances', function () {
+    test('生徒は受講登録できる', function () {
+        $student = User::factory()->student()->create();
+        $course = Course::factory()->active()->create(['capacity' => 20]);
+
+        $response = $this->actingAs($student)
+            ->postJson("/api/courses/{$course->id}/attendances");
+
+        $response->assertCreated()
+            ->assertJsonPath('data.user.id', $student->id)
+            ->assertJsonPath('data.course.id', $course->id)
+            ->assertJsonPath('data.status', 'attending');
+
+        $this->assertDatabaseHas('attendances', [
+            'user_id' => $student->id,
+            'course_id' => $course->id,
+            'status' => 'attending',
+        ]);
+    });
+
+    test('生徒以外は受講登録できない', function () {
+        $instructor = User::factory()->instructor()->create();
+        $course = Course::factory()->active()->create(['capacity' => 20]);
+
+        $response = $this->actingAs($instructor)
+            ->postJson("/api/courses/{$course->id}/attendances");
+
+        $response->assertForbidden();
+
+        $this->assertDatabaseCount('attendances', 0);
+    });
+
+    test('定員に達している講座には登録できない', function () {
+        $student = User::factory()->student()->create();
+        $course = Course::factory()->active()->create(['capacity' => 1]);
+
+        // ほかの生徒が1人登録して、定員を埋めておく
+        Attendance::factory()->create(['course_id' => $course->id]);
+
+        $response = $this->actingAs($student)
+            ->postJson("/api/courses/{$course->id}/attendances");
+
+        $response->assertUnprocessable()
+            ->assertJsonPath('message', 'この講座は定員に達しています。');
+
+        $this->assertDatabaseMissing('attendances', [
+            'user_id' => $student->id,
+        ]);
+    });
+
+    test('同じ講座に2回申し込むと 409 になる', function () {
+        $student = User::factory()->student()->create();
+        $course = Course::factory()->active()->create(['capacity' => 20]);
+
+        Attendance::factory()->create([
+            'user_id' => $student->id,
+            'course_id' => $course->id,
+        ]);
+
+        $response = $this->actingAs($student)
+            ->postJson("/api/courses/{$course->id}/attendances");
+
+        $response->assertStatus(409)
+            ->assertJsonPath('message', 'すでにこの講座に登録済みです。');
+
+        $this->assertDatabaseCount('attendances', 1);
+    });
+});
+```
+
+どのテストも、ステータスコードに加えて、DBに受講の行ができたか、できなかったかを確かめています。失敗したときに行が増えていないことまで確かめておけば、処理の順番を入れ替える書き換えで「エラーを返したのに行だけ残る」不具合が出ても気付けます。
+
+確かめる中身は、変わらないものだけに絞っています。
+
+- 403 の message は確かめません。Policy の既定のメッセージ（`This action is unauthorized.`）は Laravel が決めている文言で、受講登録の仕様として決めたものではないためです
+- Lesson 14 でサービスクラスに切り出すと、422 と 409 のレスポンスに `error_code` が加わります。今の受講登録APIはまだ `error_code` を返さないので、このテストでは確かめません
+
+書けたら実行して、4つとも緑になることを確かめてください。
+
+```bash
+php artisan test tests/Feature/Api/AttendanceStoreTest.php
+```
+
+> 補足: テストが本当に動きを守っているかは、わざとコードを壊して試すと分かります。たとえば `Course::hasCapacity()` の `<` を `<=` に書き換えて実行すると、定員の人数より1人多く申し込めるようになり、「定員に達している講座には登録できない」が落ちます。落ちることを確かめたら、`<` に戻しておいてください。
+
+
+## フェイクとモックについて
+
+テストでは、メールの送信や別のクラスの処理を、本物の代わりに偽物へ差し替えることがあります。Laravel には、そのための道具が2種類あります。
+
+1つ目はフェイクです。`Mail::fake()` や `Queue::fake()` のように呼ぶと、メールやジョブを実際には送らずに「送ろうとしたか」だけを記録する状態に切り替わります。使い方は、Lesson 17 でメールとジョブを作るときに学びます。
+
+2つ目はモックです。Laravel には Mockery というライブラリが入っていて、テストの中で `$this->mock(クラス名::class, ...)` と書くと、そのクラスの偽物を作り、本物の代わりにコントローラーへ渡されるように登録できます。差し替える対象になるサービスクラスは Lesson 14 で作るので、モックを使ったテストも Lesson 14 で書きます。
+
+
+## 練習問題
+
+### 問題1
+受講登録APIで、キャンセル済みの受講は定員に数えないことを確かめるテストを、`tests/Feature/Api/AttendanceStoreTest.php` に追加してください。定員1の講座にキャンセル済みの受講が1件だけあるとき、生徒が申し込むと 201 になることを確かめます。
+
+> ヒント: Step 3 で紹介した `Attendance::factory()->cancelled()` を使います。
+
+<details>
+<summary>解答例</summary>
+
+`describe()` の中に、次のテストを足します。
+
+```php
+test('キャンセル済みの受講は定員に数えない', function () {
     $student = User::factory()->student()->create();
-    $course = Course::factory()->active()->create(['capacity' => 20]);
+    $course = Course::factory()->active()->create(['capacity' => 1]);
+
+    // ほかの生徒が申し込んだあとキャンセルした受講
+    Attendance::factory()->cancelled()->create(['course_id' => $course->id]);
 
     $response = $this->actingAs($student)
         ->postJson("/api/courses/{$course->id}/attendances");
@@ -546,41 +662,57 @@ test('生徒は受講登録できる', function () {
     $this->assertDatabaseHas('attendances', [
         'user_id' => $student->id,
         'course_id' => $course->id,
+        'status' => 'attending',
     ]);
-});
-
-test('定員オーバー時は登録できない', function () {
-    $student = User::factory()->student()->create();
-    $course = Course::factory()->active()->create(['capacity' => 1]);
-
-    // 先に1人登録して定員を埋める
-    Attendance::factory()->create([
-        'course_id' => $course->id,
-        'status' => AttendanceStatus::Attending,
-    ]);
-
-    $response = $this->actingAs($student)
-        ->postJson("/api/courses/{$course->id}/attendances");
-
-    $response->assertUnprocessable();
-});
-
-test('既に登録済みの場合はエラー', function () {
-    $student = User::factory()->student()->create();
-    $course = Course::factory()->active()->create(['capacity' => 20]);
-
-    Attendance::factory()->create([
-        'user_id' => $student->id,
-        'course_id' => $course->id,
-        'status' => AttendanceStatus::Attending,
-    ]);
-
-    $response = $this->actingAs($student)
-        ->postJson("/api/courses/{$course->id}/attendances");
-
-    $response->assertStatus(409);
 });
 ```
+
+`hasCapacity()` はこのあとのレッスンでも書き換えます。そのときに「受講中だけを数える」条件をうっかり落とすと、このテストが落ちて気付けます。
+</details>
+
+### 問題2
+Course API の削除（`DELETE /api/courses/{course}`）のテストを、`tests/Feature/Api/CourseControllerTest.php` に追加してください。次の2つを確かめます。
+
+- 担当講師は講座を削除でき、204 が返って講座がDBから消える
+- ほかの講師が削除しようとすると 403 が返り、講座はDBに残る
+
+受講者のいる講座を削除したときの動きは Lesson 14 で決めるので、ここでは受講者のいない講座で確かめます。
+
+> ヒント: Step 6 の `assertModelMissing` と `assertModelExists` を使います。
+
+<details>
+<summary>解答例</summary>
+
+```php
+describe('DELETE /api/courses/{course}', function () {
+    test('担当講師は講座を削除できる', function () {
+        $instructor = User::factory()->instructor()->create();
+        $course = Course::factory()->for($instructor, 'instructor')->create();
+
+        $response = $this->actingAs($instructor)
+            ->deleteJson("/api/courses/{$course->id}");
+
+        $response->assertNoContent();
+
+        $this->assertModelMissing($course);
+    });
+
+    test('ほかの講師は講座を削除できない', function () {
+        $owner = User::factory()->instructor()->create();
+        $course = Course::factory()->for($owner, 'instructor')->create();
+        $otherInstructor = User::factory()->instructor()->create();
+
+        $response = $this->actingAs($otherInstructor)
+            ->deleteJson("/api/courses/{$course->id}");
+
+        $response->assertForbidden();
+
+        $this->assertModelExists($course);
+    });
+});
+```
+
+`Course::factory()->for($instructor, 'instructor')` は、Step 3 の「講師と一緒に作成」と同じ書き方で、作った講師をその講座の担当講師にします。2つ目のテストでは、担当講師の `$owner` とは別に講師をもう1人作り、その講師で削除を試しています。
 </details>
 
 
@@ -593,4 +725,4 @@ test('既に登録済みの場合はエラー', function () {
 
 ## 次のレッスン
 
-[Lesson 18 メールとジョブ機能](./18-mail-job.md) では、メール送信とキュー処理を実装し、非同期処理の基本を学びます。
+[Lesson 13 良いコードを書く](./13-clean-code.md) では、早期リターンや名前の付け方など、動きを変えずにコードを読みやすく整える書き方を学びます。

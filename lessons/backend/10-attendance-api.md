@@ -1,289 +1,20 @@
-# Lesson 11 データベース設計の基礎
+# Lesson 10 受講登録APIを作る
 
 ## 学習目標
 
-このレッスンでは、堅牢なデータベース設計の原則を理解し、適切なマイグレーションを書けるようになります。
+このレッスンでは、受講（attendances）テーブルを設計し、生徒が講座に申し込む受講登録API（`POST /api/courses/{course}/attendances`）を作ります。Lesson 4 の User API、Lesson 9 の Course API に続く3本目のAPIです。Part 2 のレッスンは、どれもこのAPIを題材にして進めます。
 
 ### 到達目標
-- 外部キー制約を正しく設定できる
-- インデックスの役割と追加タイミングを理解する
-- NULL許可のデメリットを理解し適切に設計できる
-- attendances（受講）テーブルを設計できる
+- 外部キー制約を付け、参照先が削除されたときの動き（onDelete）を選べる
+- 複合ユニーク制約で重複登録を防ぎ、違反したときに 409 を返せる
+- データが入っているテーブルに、NOT NULL のカラムを段階を踏んで追加できる
+- Policy で「生徒だけが申し込める」という認可を書ける
 
-> このレッスンは2部構成です。
-> - 第1部（Step 1〜5）: DB設計の原則を学ぶ座学パート。サンプルコードには `phone` / `nickname` など仮の題材が含まれます
-> - 第2部（Step 6〜9）: 第1部で学んだ原則を使って attendances テーブル・受講登録APIを実装するハンズオンパート
+> このレッスンでは、テーブル設計の考え方を使う場面ごとに短く説明します。インデックスの選び方や NULL を避ける理由、マイグレーションの書き方などをもっと詳しく知りたいときは、[発展 A1 データベース設計の原則](./A1-database-design.md) を読んでください。A1 を読んでいなくても、このレッスンは最後まで進められます。
 
-## データベース設計の重要性
+## このレッスンで作るもの
 
-データベースはアプリケーションの土台です。
-
-設計を間違えると、データの整合性が崩れたり、パフォーマンスが悪化したり、後からの修正が困難になります。
-
----
-
-# 第1部 DB設計の原則（座学）
-
-ここからは理論の解説です。サンプルコードは `phone` / `nickname` などプロジェクトにない仮の題材を含みます。プロジェクトへの適用は第2部で行います。
-
-## Step 1 外部キー制約
-
-### 外部キー制約とは
-
-外部キー制約は、テーブル間の参照整合性を保証する仕組みです。
-
-```php
-$table->foreignIdFor(User::class)->constrained();
-```
-
-これにより、`user_id` に存在しないユーザーIDを入れようとするとエラーになり、データの整合性が保証されます。
-
-### onDelete オプション
-
-参照先が削除された時の動作を指定します。
-
-```php
-// CASCADE: 親が削除されたら子も削除
-$table->foreignIdFor(User::class)
-    ->constrained()
-    ->onDelete('cascade');
-
-// SET NULL: 親が削除されたらNULLに
-$table->foreignIdFor(User::class, 'instructor_id')
-    ->nullable()
-    ->constrained('users')
-    ->onDelete('set null');
-
-// RESTRICT: 子がいる場合は削除を拒否（デフォルト）
-$table->foreignIdFor(Category::class)
-    ->constrained()
-    ->onDelete('restrict');
-```
-
-### 使い分けの指針
-
-| オプション | 用途例 |
-|-----------|--------|
-| cascade | 親が消えたら子も不要（受講情報、コメントなど） |
-| set null | 参照は消えるが履歴は残したい（担当者の退職など） |
-| restrict | 削除させたくない（カテゴリに商品があれば削除不可） |
-
-## Step 2 インデックス
-
-### インデックスとは
-
-インデックスは、検索を高速化するための索引です。
-
-本の索引をイメージしてください。索引がない場合は本を最初から読んで探す必要がありますが（フルスキャン）、索引があれば該当箇所を特定してジャンプできます。
-
-### インデックスが必要な場面
-
-```php
-// WHERE句で頻繁に使うカラム
-$table->string('status')->index();
-
-// 検索・ソートに使うカラム
-$table->datetime('attended_at')->index();
-
-// 外部キー（自動的にインデックスが作成される）
-$table->foreignIdFor(User::class)->constrained();
-```
-
-### 複合インデックス
-
-複数カラムを組み合わせた検索に有効です。
-
-```php
-// user_id と status の組み合わせで検索することが多い場合
-$table->index(['user_id', 'status']);
-```
-
-### インデックスのデメリット
-
-インデックスには書き込みが遅くなる（INSERT/UPDATE時にインデックスも更新）、ストレージを消費する（インデックス分の容量が必要）というデメリットがあります。
-
-原則として、検索に使うカラムにのみ追加してください。
-
-## Step 3 NULL許可のデメリット
-
-### NULLとは
-
-`NULL` は「値がない」状態を表します。空文字 `''` とは異なります。
-
-### NULLの問題点
-
-#### 1. 比較が直感的でない
-
-`NULL` は「＝」で比較できず、専用の書き方が必要です。
-
-```sql
--- NULL は等価比較できない
-SELECT * FROM users WHERE email = NULL;  -- 結果は常に0件
-SELECT * FROM users WHERE email IS NULL; -- これが正しい
-```
-
-Eloquent で書くと以下に対応します。SQLを書けるようになる必要はありませんが、「`where('email', null)` ではなく `whereNull('email')` を使う」という対応関係だけ押さえてください。
-
-```php
-User::where('email', null)->get(); // 期待通りに動かない
-User::whereNull('email')->get();   // これが正しい
-```
-
-#### 2. コードが複雑になる
-
-```php
-// NULLチェックが必要
-if ($user->phone !== null) {
-    // 電話番号がある場合の処理
-}
-
-// NULLセーフな書き方
-$phone = $user->phone ?? 'なし';
-```
-
-### NULL vs NOT NULL + デフォルト値
-
-```php
-// ❌ NULLを許可
-$table->string('nickname')->nullable();
-
-// ✅ NOT NULL + デフォルト値
-$table->string('nickname')->default('');
-
-// ❌ NULLを許可
-$table->integer('login_count')->nullable();
-
-// ✅ NOT NULL + デフォルト値
-$table->integer('login_count')->default(0);
-```
-
-### NULLが適切なケース
-
-- 「未設定」と「空」を区別する必要がある
-- 外部キーで「関連なし」を表現する
-
-## Step 4 複合ユニーク制約
-
-### 問題（重複登録を防ぐ）
-
-同じユーザーが同じ講座に2回登録することを防ぎたい。
-
-### アプリケーションレベルでの対策
-
-```php
-// ❌ 不十分（競合状態で漏れる可能性）
-if (Attendance::where('user_id', $userId)->where('course_id', $courseId)->exists()) {
-    throw new AlreadyAttendedException();
-}
-Attendance::create([...]);
-```
-
-### データベースレベルでの対策
-
-```php
-// ✅ 複合ユニーク制約
-$table->unique(['user_id', 'course_id']);
-```
-
-これにより、重複挿入時にDBがエラーを返します。
-
-### 例外処理
-
-複合ユニーク制約違反は、Laravel 10.x の途中で追加された `UniqueConstraintViolationException` でキャッチできます（本プロジェクトは Laravel 13）。DB ドライバ（MySQL / SQLite など）に依存せずに判定できるのが利点です。
-
-```php
-use Illuminate\Database\UniqueConstraintViolationException;
-
-try {
-    Attendance::create([
-        'user_id' => $userId,
-        'course_id' => $courseId,
-    ]);
-} catch (UniqueConstraintViolationException) {
-    throw new AlreadyAttendedException();
-}
-```
-
-> 以前はドライバごとのエラーコード（MySQL なら `1062`）を `QueryException::errorInfo` で判定していましたが、SQLite では別のコードが返るため非可搬でした。`UniqueConstraintViolationException` に寄せるのがおすすめです。
-
-## Step 5 マイグレーションのベストプラクティス
-
-### 1. 小さな単位で作成
-
-```bash
-# ✅ 1つの変更 = 1つのマイグレーション
-php artisan make:migration add_phone_to_users_table
-php artisan make:migration add_index_to_attendances_status
-
-# ❌ 複数の無関係な変更を1つに
-php artisan make:migration update_multiple_tables
-```
-
-### 2. down() メソッドを実装
-
-```php
-public function up(): void
-{
-    Schema::table('users', function (Blueprint $table) {
-        $table->string('phone')->nullable()->after('email');
-    });
-}
-
-public function down(): void
-{
-    Schema::table('users', function (Blueprint $table) {
-        $table->dropColumn('phone');
-    });
-}
-```
-
-### 3. 本番データがある場合の変更
-
-```php
-// NOT NULL カラムを追加する場合
-public function up(): void
-{
-    Schema::table('users', function (Blueprint $table) {
-        // 一旦nullable で追加
-        $table->string('nickname')->nullable();
-    });
-
-    // デフォルト値を設定
-    DB::table('users')->whereNull('nickname')->update(['nickname' => '']);
-
-    // NOT NULLに変更
-    Schema::table('users', function (Blueprint $table) {
-        $table->string('nickname')->nullable(false)->change();
-    });
-}
-```
-
-### 4. 破壊的変更は慎重に
-
-本番環境でのカラム削除・リネームには注意が必要です。
-
-```php
-// ❌ いきなり削除
-$table->dropColumn('old_column');
-
-// ✅ 段階的に
-// 1. 新カラム追加
-// 2. データ移行
-// 3. アプリケーション更新
-// 4. 旧カラム削除
-```
-
----
-
-# 第2部 実践 - attendancesテーブルの設計と受講登録API
-
-ここからは第1部で学んだ原則を実際に適用していきます。attendances（受講）テーブルを作り、最後に受講登録APIで動作確認します。
-
-## Step 6 Attendancesテーブルの設計
-
-### エンティティ分析
-
-受講（Attendance）は、ユーザーと講座の多対多の関係を表します。
+受講（Attendance）は、ユーザーと講座の多対多の関係を表します。1人のユーザーは複数の講座を受講でき、1つの講座には複数の受講者がいます。
 
 ```mermaid
 erDiagram
@@ -291,7 +22,60 @@ erDiagram
     Course ||--o{ Attendance : "受講される"
 ```
 
-1人のユーザーは複数の講座を受講でき、1つの講座には複数の受講者がいます。
+Step 1〜3 で attendances テーブル、Attendance モデル、courses テーブルの `starts_at` カラムを用意し、Step 4〜6 で Policy と受講登録APIを作って動きを確かめます。
+
+## Step 1 attendances テーブルを設計する
+
+マイグレーションを書く前に、このテーブルで使う3つの制約を確認します。
+
+### 外部キー制約と onDelete
+
+`user_id` と `course_id` には外部キー制約を付けます。外部キー制約を付けると、存在しないユーザーIDや講座IDを入れようとしたときに DB がエラーを返すので、どこにもつながらない受講データが残りません。
+
+```php
+$table->foreignIdFor(User::class)->constrained();
+```
+
+参照先（ユーザーや講座）が削除されたときの動きは、`onDelete()` で選びます。よく使うのは次の3種類です。
+
+| オプション | 親が削除されたとき | 向いている例 |
+|-----------|------------------|-------------|
+| cascade | 子も一緒に削除する | 親がなくなれば意味のないデータ（コメントなど） |
+| set null | 子の外部キーを NULL にする | 参照は外れても行は残したいデータ（退職した担当者など） |
+| restrict | 子がいる間は親を削除させない | 消えると困るデータ（受講履歴など） |
+
+受講は「誰がいつ申し込んだか、修了したか」を残す履歴なので、このレッスンでは `restrict` を選びます。`cascade` にすると、講座を消しただけで受講履歴も気付かないうちに消えてしまいます。`restrict` にしておけば、受講履歴が残っている講座やユーザーは削除できず、「履歴があるのに消そうとしている」ことにエラーで気付けます。
+
+> 補足: 検索を速くするインデックスは、外部キー制約や unique 制約を付けたときに一緒に張られる場合があります（DB の種類によって違います）。どのカラムにインデックスを足すべきかは、発展 A1 で扱います。
+
+### NOT NULL とデフォルト値
+
+受講の状態を表す `status` は、NULL を許さず、デフォルト値に `attending`（受講中）を入れます。NULL を許すと、読み出すたびに「値がない場合」の分岐が必要になり、`where('status', null)` が期待どおりに動かないといった落とし穴も増えます。必ず値が入るカラムは、NOT NULL にしてデフォルト値を決めておきます。
+
+### 複合ユニーク制約
+
+同じ生徒が同じ講座に2回申し込めないようにします。アプリ側で「すでに登録しているか」を確かめるだけでは、この重複を防ぎきれません。
+
+```php
+// アプリ側のチェックだけでは不十分
+$isAttending = Attendance::where('user_id', $userId)
+    ->where('course_id', $courseId)
+    ->exists();
+
+if ($isAttending) {
+    return response()->json(['message' => 'すでにこの講座に登録済みです。'], 409);
+}
+
+Attendance::create([...]);
+```
+
+同じ生徒のリクエストがほぼ同時に2つ届くと、どちらも `exists()` の時点ではまだ登録がないので確認を通り抜け、2件とも保存されてしまいます。そこで、`user_id` と `course_id` の組み合わせに複合ユニーク制約を付け、DB に重複を拒否させます。
+
+```php
+$table->unique(['user_id', 'course_id']);
+```
+
+制約に違反すると、Laravel は `Illuminate\Database\UniqueConstraintViolationException` を投げます。MySQL でも SQLite でも同じ例外になるので、DB ごとのエラーコードを調べる必要はありません。Step 5 のコントローラーでこの例外を catch し、409 Conflict を返します。
 
 ### マイグレーションの作成
 
@@ -303,16 +87,16 @@ php artisan make:migration create_attendances_table
 
 ### マイグレーションの実装
 
-以下のコードには第1部で学んだ要素がすべて含まれています。どこが外部キー制約・複合ユニーク制約かを意識しながら実装してください。
+ここまでの3つの制約が、それぞれどこに書かれているかを確かめながら実装してください。
 
 ```php
 <?php
 
+use App\Models\Course;
+use App\Models\User;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use App\Models\User;
-use App\Models\Course;
 
 return new class extends Migration
 {
@@ -321,7 +105,7 @@ return new class extends Migration
         Schema::create('attendances', function (Blueprint $table) {
             $table->id();
 
-            // 外部キー（Step 1: 受講履歴は残したいので restrict）
+            // 外部キー（受講履歴は残したいので restrict）
             $table->foreignIdFor(User::class)
                 ->constrained()
                 ->onDelete('restrict');
@@ -330,7 +114,7 @@ return new class extends Migration
                 ->constrained()
                 ->onDelete('restrict');
 
-            // 受講状態（Step 3: NOT NULL + デフォルト値）
+            // 受講状態（NOT NULL + デフォルト値）
             $table->string('status')->default('attending');
 
             // 受講日時（timestamp 型は 2038 年問題があるので datetime を使う）
@@ -339,7 +123,7 @@ return new class extends Migration
             // 同上の理由で timestamps() ではなく datetimes() を使う
             $table->datetimes();
 
-            // 複合ユニーク制約（Step 4: 同じ講座に2回登録できない）
+            // 複合ユニーク制約（同じ講座に2回登録できない）
             $table->unique(['user_id', 'course_id']);
         });
     }
@@ -351,8 +135,6 @@ return new class extends Migration
 };
 ```
 
-> `restrict` を選ぶ理由 ： 受講履歴は「誰がいつ受けた／修了した」という監査データ的な性質があるため、ユーザーや講座を削除したら紐づく履歴が静かに消えると問題になります。`restrict` にしておくと、受講履歴が残っている限り親レコード（user / course）を削除できず、「履歴があるのに消そうとしている」ことに気付けます。
-
 ### マイグレーションの実行
 
 作成したマイグレーションを適用します。
@@ -363,7 +145,7 @@ php artisan migrate
 
 > 既存データを保持したまま差分適用するのが `migrate` です。何かおかしくなったら `make fresh` で全テーブル作り直し＋シーダーが走ります。
 
-## Step 7 Attendanceモデルの作成
+## Step 2 Attendance モデルを作る
 
 ### モデルの作成
 
@@ -371,9 +153,9 @@ php artisan migrate
 php artisan make:model Attendance --factory
 ```
 
-`--factory` を付けると、モデルと同時に `database/factories/AttendanceFactory.php` も生成されます。Lesson 17 以降のテストで使います。
+`--factory` を付けると、モデルと同時に `database/factories/AttendanceFactory.php` も生成されます。Lesson 12 以降のテストで使います。
 
-### Attendanceモデルの実装
+### Attendance モデルの実装
 
 生成された `app/Models/Attendance.php` を以下の内容に書き換えます。
 
@@ -517,26 +299,41 @@ public function students(): BelongsToMany
         ->withTimestamps();
 }
 
+/**
+ * まだ空いている席があるか
+ */
 public function hasCapacity(): bool
 {
-    return $this->attendances()->count() < $this->capacity;
+    return $this->attendances()
+        ->where('status', AttendanceStatus::Attending)
+        ->count() < $this->capacity;
 }
 ```
 
-`HasMany` / `BelongsToMany` の `use` 文も忘れずに追加してください。
+`HasMany` / `BelongsToMany` の `use` 文と、Course.php では `use App\Enums\AttendanceStatus;` も忘れずに追加してください。
 
-> `hasCapacity()` は現在の実装だと毎回 `attendances` を COUNT するため、講座を多数扱うときにN+1問題の温床になります。Lesson 12でこのコードを Eager Loading と `withCount` で改善します。今はひとまずこの形で進めてOK。
+`hasCapacity()` は、受講中（`attending`）の受講だけを数えます。キャンセルした受講まで数えると、Lesson 18 でキャンセルの機能を足したときに、キャンセルしても席が空かなくなるためです。
 
-## Step 8 既存テーブルへのカラム追加を実践する
+> `hasCapacity()` は呼ぶたびに COUNT のクエリを1回発行します。講座を1件ずつ扱ういまは問題ありませんが、一覧の中で講座ごとに呼ぶとクエリが講座の数だけ増えます（N+1問題）。Lesson 16 で `withCount` を使って改善します。
 
-ここまで学んだことを使って、`courses` テーブルに「講座開始日時（`starts_at`）」を追加してみましょう。このカラムは後続のレッスン（Lesson 18 / 19）で使います。
+## Step 3 courses テーブルに starts_at を追加する
+
+`courses` テーブルに「講座開始日時（`starts_at`）」を追加します。このカラムは Lesson 17・18 で使います。
 
 ### 要件
 
 - 既存の `courses` テーブルに `starts_at`（NOT NULL）を追加する
 - 既存データには「今日の日付」を暫定値として入れる
 
-既にデータが入っているテーブルにいきなり NOT NULL カラムを追加するとエラーになるため、Step 5-3 で学んだ「一旦 nullable で追加 → データ移行 → NOT NULL に変更」の流れで進めます。
+### データが入っているテーブルに NOT NULL のカラムを足す
+
+すでに行があるテーブルに、デフォルト値のない NOT NULL カラムをいきなり追加すると、既存の行に入れる値がないのでエラーになります。そこで、1つのマイグレーションの中で次の3段階を踏みます。
+
+1. nullable で追加する
+2. 既存の行に暫定値を入れる
+3. NOT NULL に変更する
+
+あわせて `down()` も必ず書きます。`down()` は `php artisan migrate:rollback` で変更を取り消すときに呼ばれ、ここでは追加したカラムを削除します。
 
 ### マイグレーションの作成
 
@@ -587,7 +384,7 @@ return new class extends Migration
 
 Lesson 9 で作成した `Course` モデル・`CourseFactory`・`CourseResource`・`Course/StoreRequest`・`Course/UpdateRequest` にも `starts_at` を反映します。
 
-> ここを忘れると、`POST /api/courses` が「`starts_at` に値が入っていない」というDBエラー（500）になります。「NOT NULL カラムを増やしたら、そのカラムを作る側の経路（バリデーション → fillable → Factory）を一通り見直す」、というのが実務でのチェック手順です。
+> ここを忘れると、`POST /api/courses` が「`starts_at` に値が入っていない」というDBエラー（500）になります。NOT NULL のカラムを増やしたら、そのカラムに値を入れる経路（バリデーション → fillable → Factory）を一通り見直すのが、実務でのチェックの手順です。
 
 ```php
 // app/Models/Course.php
@@ -671,12 +468,43 @@ php artisan migrate
 
 > 開発環境で壊れても問題なければ `make fresh` で全テーブルを作り直してもOKです。本番では必ず上記の段階的マイグレーションで対応します。
 
+## Step 4 AttendancePolicy を作る
 
-## Step 9 受講登録APIで動作確認
+受講登録できるのは生徒だけです（[API仕様一覧](../reference/api-spec.md) の「生徒のみ」）。講師が自分の講座に申し込むことは想定していません。この認可は、Lesson 7 で学んだ Policy に書きます。
 
-ここまでで設計したテーブル・モデル・制約が正しく機能するか、実際にAPIを1つ作って確認しましょう。
+### Policy の作成
 
-> 動作確認の前提として、`CourseSeeder` で作られる講座データが必要です。`make fresh` では `DatabaseSeeder` が実行されますが、`CourseSeeder` は個別に `php artisan db:seed --class=CourseSeeder` で実行するか、`DatabaseSeeder::run` の末尾に `$this->call(CourseSeeder::class);` を追記してください。
+```bash
+php artisan make:policy AttendancePolicy --model=Attendance
+```
+
+`app/Policies/AttendancePolicy.php` が作成されます。`viewAny` や `update` などのメソッドもまとめて生成されますが、いま使うのは `create` だけなので、以下の内容に書き換えます。
+
+```php
+<?php
+
+namespace App\Policies;
+
+use App\Models\User;
+
+class AttendancePolicy
+{
+    /**
+     * 受講登録できるか
+     */
+    public function create(User $user): bool
+    {
+        // 生徒のみ申し込める（Lesson 7 で追加した isStudent() を使う）
+        return $user->isStudent();
+    }
+}
+```
+
+Lesson 7 で学んだとおり、`app/Policies` に置いた「モデル名 + `Policy`」のクラスは自動で見つかるので、登録のコードは要りません。`Attendance` モデルには `AttendancePolicy` が紐づきます。
+
+`create` が受け取るのはログイン中のユーザーだけです。申し込む時点では受講のデータがまだないので、Lesson 9 の `CoursePolicy::create` と同じく、コントローラーからはモデルのインスタンスではなくクラス名（`Attendance::class`）を渡して呼び出します。
+
+## Step 5 受講登録APIを作る
 
 ### AttendanceResource の作成
 
@@ -738,15 +566,11 @@ class AttendanceController extends Controller
      */
     public function store(Request $request, Course $course): JsonResponse
     {
-        // 受講できるのは生徒のみ（Lesson 7 で追加した isStudent() を使う）
-        if (!$request->user()->isStudent()) {
-            return response()->json([
-                'message' => '受講登録できるのは生徒のみです。',
-            ], 403);
-        }
+        // 生徒以外は 403（AttendancePolicy@create）
+        $this->authorize('create', Attendance::class);
 
         // 定員チェック
-        if (!$course->hasCapacity()) {
+        if (! $course->hasCapacity()) {
             return response()->json([
                 'message' => 'この講座は定員に達しています。',
             ], 422);
@@ -776,105 +600,118 @@ class AttendanceController extends Controller
 ```
 
 ポイント
-- 講師が自分の講座に受講登録することは想定していないため、`isStudent()` で弾いて 403 を返す（[API仕様一覧](../reference/api-spec.md) の「生徒のみ」に対応）
-- `hasCapacity()` で定員チェック（Step 7 で定義したメソッド）
-- 複合ユニーク制約違反は `UniqueConstraintViolationException` をキャッチして 409 Conflict を返す（DBドライバ非依存）
-- アプリ側チェックだけでなく、DB制約が最後の砦として機能する
-- 受講レコードを新規作成するので、成功時は 201 Created を返す（Lesson 9 の `CourseController@store` と同じ方針）
+- 最初に `$this->authorize('create', Attendance::class)` で `AttendancePolicy@create` を呼び、生徒以外は 403 にします。メッセージは Lesson 7 で見た既定のもの（`This action is unauthorized.`）のままです
+- 定員は Step 2 で作った `hasCapacity()` で確かめ、満員なら 422 を返します
+- 重複の判定は、Step 1 の複合ユニーク制約に任せます。`UniqueConstraintViolationException` を catch して 409 Conflict を返すので、同時に2回申し込まれても2件目は保存されません
+- 受講のデータを新しく作るので、成功時は 201 Created を返します（Lesson 9 の `CourseController@store` と同じ方針）
+
+> 定員の確認にも、Step 1 の `exists()` と同じ競合の問題があります。残り1席の講座に2人がほぼ同時に申し込むと、2人とも `hasCapacity()` を通り抜けて定員を1人超えることがあります。この問題は Lesson 15 でトランザクションとロックを使って直します。
 
 ### ルート追加
 
-`routes/api.php` の `auth:sanctum` グループ内に追加します。
+`routes/api.php` の `auth:sanctum` グループ内に追加します。Lesson 9 と同じく、`use` 文はファイル先頭の既存の `use` ブロックに足してください。
 
 ```php
+use App\Http\Controllers\Api\AttendanceController;
+
 Route::middleware('auth:sanctum')->group(function () {
     // ...既存のルート...
 
     // 受講登録
-    Route::post('/courses/{course}/attendances', [\App\Http\Controllers\Api\AttendanceController::class, 'store']);
+    Route::post('/courses/{course}/attendances', [AttendanceController::class, 'store']);
 });
 ```
 
-### 動作確認
+## Step 6 動作確認
 
-Postmanのコレクションで以下の手順で確認してください。
+> 動作確認の前提として、`CourseSeeder` で作られる講座データが必要です。`make fresh` では `DatabaseSeeder` が実行されますが、`CourseSeeder` は個別に `php artisan db:seed --class=CourseSeeder` で実行するか、`DatabaseSeeder::run` の末尾に `$this->call(CourseSeeder::class);` を追記してください。
+
+Postman のコレクションで、以下の手順で確認してください。
 
 #### 1. 生徒でログイン
-`login > ログイン` を実行します。Body には `test@example.com` / `password` が事前設定されています。
+`login > ログイン` を実行します。Body には生徒の `test@example.com` / `password` が事前設定されています。
 
 #### 2. 受講登録（成功）
-`api > courses > {courseId} > attendances > 受講登録`（POST）を実行します。
+`api > courses > {courseId} > attendances > 受講登録`（POST）を実行し、201 が返ることを確認します。
 
 > - `Params > Path Variables` の `courseId` には初期値 `27` が入っています。既存の講座IDに書き換えてから送信してください。
 > - このエンドポイントはリクエストボディ不要のため、Body は未設定のままで構いません。
 
 #### 3. 同じ講座に再度登録（重複エラー）
-同じリクエストをもう一度送信し、409エラーが返ることを確認します。
+同じリクエストをもう一度送信し、409 が返ることを確認します。
 
-#### 4. 定員オーバー確認
-定員が1の講座を用意し、別のユーザーで受講登録を試みて422エラーが返ることを確認します。別ユーザーでのログインは `login > ログイン` の Body の `email` を切り替えてから再送信してください。
+#### 4. 講師で申し込む（認可エラー）
+`login > ログイン` の Body の `email` を講師の `test2@example.com` に変えてログインし直し、受講登録を送信して 403 が返ることを確認します。確認が終わったら、`email` を `test@example.com` に戻してログインし直してください。
+
+#### 5. 定員オーバー
+定員1の講座を作り、別の生徒で1席を埋めておきます。
+
+```bash
+php artisan tinker --execute '
+  $course = App\Models\Course::factory()->active()->create(["capacity" => 1]);
+  App\Models\Attendance::factory()->create(["course_id" => $course->id]);
+  echo $course->id;
+'
+```
+
+表示された講座IDを `courseId` に入れて、生徒の `test@example.com` で受講登録を送信し、422 が返ることを確認します。
 
 ## 練習問題
 
 ### 問題1
-以下の要件を満たすマイグレーションを作成してください。
+Lesson 9 で作った講座詳細API（`GET /api/courses/{course}`）のレスポンスに、残席数 `remaining_seats`（定員 − 受講中の人数）を追加してください。キャンセル済みの受講は数えません。講座一覧API（`GET /api/courses`）のレスポンスは変えずに、詳細だけに出すこととします。
 
-- `course_reviews` テーブル
-- 講座に対するレビュー（1講座につき1ユーザー1レビュー）
-- 評価（1-5の整数、必須）
-- コメント（任意）
+> 動作確認には Postman の `api > courses > {courseId} > 講座詳細` を使います。Step 6 で受講登録した講座を指定すると、残席数が定員より1少なくなっているはずです。
 
-<details>
-<summary>解答例</summary>
-
-```php
-Schema::create('course_reviews', function (Blueprint $table) {
-    $table->id();
-    $table->foreignIdFor(User::class)->constrained()->onDelete('cascade');
-    $table->foreignIdFor(Course::class)->constrained()->onDelete('cascade');
-    $table->unsignedTinyInteger('rating');  // 1-5
-    $table->text('comment')->nullable();
-    $table->dateTime('created_at');
-
-    $table->unique(['user_id', 'course_id']);
-    $table->index('course_id');  // 講座ごとのレビュー取得用
-});
-```
-</details>
-
-### 問題2
-既存の `courses` テーブルに `thumbnail_url` カラム（NOT NULL、文字列）を追加するマイグレーションを作成してください。既存データには空文字を設定します。Step 5-3で学んだ「一旦nullableで追加 → データ移行 → NOT NULLに変更」の手順を使ってください。
+> ヒント: `CourseResource` の中で講座ごとに `attendances()->...->count()` を呼ぶと、詳細では動きますが、同じ `CourseResource` を使う一覧でも講座の数だけ COUNT のクエリが発行されます。件数はコントローラーの `show` で先に読み込んでおき、`CourseResource` では「件数が読み込まれているときだけ」出すようにしてみてください。`loadCount()` と `whenCounted()` が使えます。
 
 <details>
 <summary>解答例</summary>
 
+`show` で、受講中の件数だけを `loadCount()` で読み込みます。読み込んだ件数は `attendances_count` という属性に入ります。
+
 ```php
-public function up(): void
+// app/Http/Controllers/Api/CourseController.php
+use App\Enums\AttendanceStatus;
+
+public function show(Course $course): CourseResource
 {
-    Schema::table('courses', function (Blueprint $table) {
-        $table->string('thumbnail_url')->nullable()->after('description');
-    });
+    $course->load('instructor');
+    $course->loadCount([
+        'attendances' => fn ($query) => $query->where('status', AttendanceStatus::Attending),
+    ]);
 
-    // 既存データにデフォルト値を設定
-    DB::table('courses')
-        ->whereNull('thumbnail_url')
-        ->update(['thumbnail_url' => '']);
-
-    // NOT NULLに変更
-    Schema::table('courses', function (Blueprint $table) {
-        $table->string('thumbnail_url')->nullable(false)->change();
-    });
-}
-
-public function down(): void
-{
-    Schema::table('courses', function (Blueprint $table) {
-        $table->dropColumn('thumbnail_url');
-    });
+    return new CourseResource($course);
 }
 ```
+
+`CourseResource` では `whenCounted()` を使います。`attendances_count` が読み込まれていないとき（一覧の `index` など）は、`remaining_seats` のキーそのものがレスポンスから外れます。
+
+```php
+// app/Http/Resources/CourseResource.php
+return [
+    'id' => $this->resource->id,
+    // ...既存のフィールド
+    'capacity' => $this->resource->capacity,
+    'remaining_seats' => $this->whenCounted(
+        'attendances',
+        fn ($count) => max($this->resource->capacity - $count, 0),
+    ),
+    // ...既存のフィールド
+];
+```
+
+`max(..., 0)` は、講師が定員を受講者の数より少なく変更した場合に、残席数がマイナスにならないようにするためです。
+
+> 補足: Lesson 16 で講座一覧の `index` に同じ条件の `withCount` を足すと、一覧でも `attendances_count` が読み込まれるので、追加のクエリなしで一覧にも `remaining_seats` が出るようになります。
 </details>
+
+## 参考資料
+
+- [Laravel 公式ドキュメント - Migrations（Foreign Key Constraints）](https://laravel.com/docs/migrations#foreign-key-constraints)
+- [Laravel 公式ドキュメント - Authorization（Policies）](https://laravel.com/docs/authorization#creating-policies)
+- [発展 A1 データベース設計の原則](./A1-database-design.md)
 
 ## 次のレッスン
 
-[Lesson 12 N+1問題を解決する](./12-n-plus-one.md) では、パフォーマンスを低下させるN+1問題とその解決方法を学びます。
+[Lesson 11 安全なモデルの記述](./11-safe-model.md) では、Mass Assignment の脆弱性を防ぐ書き方や、キャスト・アクセサの使い方を学び、このレッスンで作った Attendance モデルを仕上げます。

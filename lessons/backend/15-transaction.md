@@ -1,4 +1,4 @@
-# Lesson 14 トランザクション処理
+# Lesson 15 トランザクション処理
 
 ## 学習目標
 
@@ -10,8 +10,10 @@
 - 例外発生時のロールバックを理解する
 - 排他ロック（lockForUpdate）の必要性と仕組みを理解する
 - デッドロック対策ができる
+- Lesson 14 で作った `AttendCourse` にトランザクションとロックを足せる
+- ロールバックされることをテストで確かめられる
 
-> サンプルコードは、講座に「受講者数を保持するカラム」`courses.attendance_count` がある前提で書いています。このカラムは本プロジェクトには存在せず、このコースでも追加しません（実際の残席チェックは Lesson 11 で作った `Course::hasCapacity()` が `attendances` を数える方式です）。「1つの処理で複数のテーブル／行を更新する」状況を分かりやすく示すための仮の題材として読んでください。
+> サンプルコードは、講座に「受講者数を保持するカラム」`courses.attendance_count` がある前提で書いています。このカラムは本プロジェクトには存在せず、このコースでも追加しません（実際の残席チェックは Lesson 10 で作った `Course::hasCapacity()` が `attendances` を数える方式です）。「1つの処理で複数のテーブル／行を更新する」状況を分かりやすく示すための仮の題材として読んでください。
 
 > このレッスンでは、Eloquentが内部で発行するSQLや、MySQLのロックの仕組みが説明のために登場します。生のSQLを読み書きできる必要はありません。「Eloquentのこのメソッドを呼ぶと、DB側でこういうことが起きる」という対応関係だけ掴めれば十分です。SQLの行は日本語の説明とセットで読んでください。
 
@@ -49,6 +51,8 @@ public function attend(User $user, Course $course)
 - メールは送信されていない ✗
 
 このようにデータの不整合が発生します。
+
+> このレッスンのメール送信（`Mail::to(...)->send(...)` と `AttendanceConfirmation`）は、「DB以外の処理が途中で失敗する」場面を示すための説明用の例です。メールの送り方は Lesson 17 で学ぶので、ここでは書かなくて構いません。
 
 
 ## Step 1 DB::transaction() で解決
@@ -362,84 +366,95 @@ DB::transaction(function () use ($user, $course) {
 > 注意: `try` / `catch` でやり直しを自前で書く場合、`Illuminate\Database\DeadlockException` を `catch` しても、一番外側のトランザクションで起きたデッドロックは捕まえられません。Laravel が `DeadlockException` を投げるのは、トランザクションを入れ子にしたときの内側だけです。外側では、元の `Illuminate\Database\QueryException` がそのまま投げられます。自前で書くより、第2引数を使ってください。
 
 
-## Step 5 サービスクラスへの切り出し（先取り）
+## Step 5 AttendCourse にトランザクションとロックを足す
 
-> このStepは、これから先のレッスンの完成形を先に見ておくためのサンプルです。この時点ではまだ作っていないクラスを参照しているため、そのまま写しても動きません。手を動かすのは以下のレッスンです。
->
-> | 参照しているもの | 実際に作るレッスン |
-> |---|---|
-> | `App\Exceptions\CourseNotActiveException` など3つの例外 | Lesson 16（`BusinessException` を継承する形で作ります） |
-> | `App\Mail\AttendanceConfirmation` | Lesson 18 |
-> | `App\Services\` へのサービスクラスの切り出し | Lesson 16（講座）・Lesson 19（受講キャンセル） |
->
-> いま読み取ってほしいのは、「DB操作は `DB::transaction()` の中に閉じ、メール送信はその外に出す」という構造だけです。受講登録API自体は Lesson 11 で実装済みのものがそのまま動いています。
+Lesson 14 で作った `AttendCourse` は、定員を確かめてから受講を作ります。Step 3 で見た競合は、このコードでもそのまま起きます。
 
-### AttendanceService
+```
+ユーザーA: hasCapacity() → 残り1席 → Attendance::create()
+ユーザーB: hasCapacity() → 残り1席 → Attendance::create()
+→ 定員1の講座に2人が登録される
+```
+
+同じ受講者が2回申し込んだ場合は、Lesson 10 で付けた複合ユニーク制約が止めてくれます。しかし、別々の受講者が同時に申し込んで定員を超える場合は、今のコードでは止められません。Step 3 と同じように、講座の行にロックを取ってから定員を確かめる形に書き換えます。
+
+### 書き換えたコード
+
+`app/Services/Attendance/AttendCourse.php` の `__invoke` を、以下のように書き換えます。`validate()` は Lesson 14 のままです。
 
 ```php
 <?php
 
-namespace App\Services;
+namespace App\Services\Attendance;
 
 use App\Enums\AttendanceStatus;
 use App\Exceptions\AlreadyAttendingException;
 use App\Exceptions\CapacityExceededException;
-use App\Exceptions\CourseNotActiveException;
-use App\Models\Course;
 use App\Models\Attendance;
+use App\Models\Course;
 use App\Models\User;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 
-class AttendanceService
+class AttendCourse
 {
-    public function attend(User $user, int $courseId): Attendance
+    public function __invoke(User $user, Course $course): Attendance
     {
-        return DB::transaction(function () use ($user, $courseId) {
-            // 講座をロック付きで取得
-            $course = Course::lockForUpdate()->findOrFail($courseId);
+        $attendance = DB::transaction(function () use ($user, $course) {
+            // ロックを付けて取り直す。受け取った $course の件数（withCount など）は使わない
+            $lockedCourse = Course::lockForUpdate()->findOrFail($course->id);
 
-            // バリデーション
-            $this->validateAttendance($user, $course);
+            $this->validate($user, $lockedCourse);
 
-            // 受講レコードを作成
-            $attendance = Attendance::create([
-                'user_id' => $user->id,
-                'course_id' => $course->id,
-                'status' => AttendanceStatus::Attending,
-                'attended_at' => now(),
-            ]);
+            try {
+                return Attendance::create([
+                    'user_id' => $user->id,
+                    'course_id' => $lockedCourse->id,
+                    'status' => AttendanceStatus::Attending,
+                    'attended_at' => now(),
+                ]);
+            } catch (UniqueConstraintViolationException) {
+                throw new AlreadyAttendingException();
+            }
+        });
 
-            return $attendance;
-        }, 3);  // デッドロックなどの競合が起きたら、合計3回まで試す
+        return $attendance->load(['user', 'course.instructor']);
     }
 
-    private function validateAttendance(User $user, Course $course): void
+    private function validate(User $user, Course $course): void
     {
-        // 講座が公開中か確認
-        if (!$course->isActive()) {
-            throw new CourseNotActiveException();
-        }
-
-        // 定員確認
-        if (!$course->hasCapacity()) {
-            throw new CapacityExceededException();
-        }
-
-        // 重複登録確認
-        $exists = Attendance::where('user_id', $user->id)
-            ->where('course_id', $course->id)
-            ->exists();
-
-        if ($exists) {
-            throw new AlreadyAttendingException();
-        }
+        // Lesson 14 のまま
     }
 }
 ```
 
+ポイントは以下の通りです。
+
+講座は、トランザクションの中で `Course::lockForUpdate()->findOrFail($course->id)` を使って取り直します。引数で受け取った `$course` は、ルートモデルバインディングがロックを取る前に読み込んだものです。同じ講座に申し込むリクエストは、どれもこの行のロックを取ろうとするので、Step 3 のシーケンス図のように1つずつ順番に処理されます。
+
+定員のチェックには、取り直した `$lockedCourse` を渡します。受け取った `$course` の件数は使いません。Lesson 16 では、講座一覧を速くするために `withCount` で数えた件数（`attendances_count`）を `hasCapacity()` が使うように改善します。ロックを取る前に数えた件数が `$course` に残っていると、それを使って判定してしまい、ロックを取った意味がなくなります。ロックを取ってから読み直した講座には、この件数が入っていないので、`hasCapacity()` はその場で数え直します。
+
+一意制約の違反の `catch` は、トランザクションの中に置いたままにします。`AlreadyAttendingException` がクロージャの外に投げられると、`DB::transaction()` はロールバックしてから例外を投げ直すので、コントローラーには Lesson 14 と同じ 409 が返ります。
+
+`load()` はトランザクションの外で呼びます。関連のユーザーや講師を読み込むのにロックは要らないので、コミットしてロックを手放してから読み込みます。ロックを持っている時間が短いほど、ほかのリクエストの待ち時間も短くなります。
+
+> Step 4 の第2引数（試行回数）は、ここでは付けていません。このコードがロックを取るのは講座の1行だけなので、Step 4 で見たロックの順番によるデッドロックは起きにくいためです。付ける場合は `DB::transaction(function () { ... }, 3)` のように書きます。
+
+### コントローラーは変えない
+
+`AttendanceController` は Lesson 14 のままで、書き換える必要はありません。トランザクションとロックはサービスの中に閉じているので、呼び出す側は何も知らなくて構いません。ここがサービスクラスに切り出しておいた利点です。
+
+書き換えたら `make test` を実行し、Lesson 12 で書いた受講登録のテストが緑のままであることを確かめてください。
+
+### SQLite で確かめられること
+
+Step 3 の冒頭で見たとおり、このプロジェクトの SQLite では `lockForUpdate()` は SQL に何も足しません。上のコードは、本番で MySQL や PostgreSQL を使うときに正しく動くように書いておくものです。同時に申し込まれても定員を超えないことを確かめるには、MySQL のような行ロックのあるデータベースで、2つの接続から同時にリクエストを送る必要があります。このコースの環境ではそこまでは行いません。テストも SQLite で動くので、ロックが効いていることは自動テストでは確かめられません。
+
+一方、トランザクションのロールバックは SQLite でも動きます。次の Step では、こちらをテストで確かめます。
+
 ### TIPS: リレーション経由の作成で外部キーの指定を省略する
 
-上記の `attend` メソッドでは `Attendance::create()` に `user_id` を明示的に渡していますが、Lesson 11 で定義した `attendances()` リレーションを使うとよりシンプルに書けます。
+`AttendCourse` では `Attendance::create()` に `user_id` を明示的に渡していますが、Lesson 10 で定義した `attendances()` リレーションを使うと、もう少し短く書けます。
 
 ```php
 // Before
@@ -458,68 +473,40 @@ $attendance = $user->attendances()->create([
 ]);
 ```
 
-HasMany リレーションの `create()` は親モデルの外部キーを自動的にセットするため、`user_id` の指定が不要になります。外部キーの書き間違いも防げるので、リレーションが定義されている場合は積極的に活用しましょう。
-
-### AttendanceController
-
-```php
-<?php
-
-namespace App\Http\Controllers\Api;
-
-use App\Http\Controllers\Controller;
-use App\Http\Resources\AttendanceResource;
-use App\Mail\AttendanceConfirmation;
-use App\Models\Course;
-use App\Services\AttendanceService;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Mail;
-
-class AttendanceController extends Controller
-{
-    public function __construct(
-        private AttendanceService $attendanceService
-    ) {}
-
-    public function store(Request $request, Course $course)
-    {
-        // トランザクション内でDB操作
-        $attendance = $this->attendanceService->attend(
-            $request->user(),
-            $course->id
-        );
-
-        // トランザクション外でメール送信
-        Mail::to($request->user())->send(
-            new AttendanceConfirmation($attendance)
-        );
-
-        return new AttendanceResource($attendance);
-    }
-}
-```
+HasMany リレーションの `create()` は親モデルの外部キーを自動的にセットするため、`user_id` の指定が不要になります。外部キーの書き間違いも防げます。どちらで書いても動きは同じなので、`AttendCourse` を書き換えるかどうかは自由です。
 
 
 ## Step 6 トランザクションのテスト
 
-### テストでのトランザクション確認
+Lesson 12 で学んだ書き方で、トランザクションが効いていることをテストで確かめます。`RefreshDatabase` は Lesson 12 の Step 0 で有効にしてあるので、テストごとに空のDBから始まります。
+
+`make app` でコンテナに入ってから、テストファイルを作ります。
+
+```bash
+php artisan make:test Api/AttendCourseTransactionTest
+```
+
+### 失敗したリクエストがデータを残さないこと
+
+`tests/Feature/Api/AttendCourseTransactionTest.php` を以下の内容にします。
 
 ```php
+<?php
+
+use App\Models\Attendance;
 use App\Models\Course;
 use App\Models\User;
 
-test('定員オーバー時は受講レコードが作られない', function () {
-    $user = User::factory()->student()->create();
-    $course = Course::factory()->active()->create(['capacity' => 1]);
+test('定員オーバーのときは受講レコードが増えない', function () {
+    $course = Course::factory()->create(['capacity' => 1]);
 
     // 1人目は成功
-    $this->actingAs($user)
+    $this->actingAs(User::factory()->student()->create())
         ->postJson("/api/courses/{$course->id}/attendances")
         ->assertCreated();
 
     // 2人目は失敗（定員オーバー）
-    $anotherUser = User::factory()->student()->create();
-    $this->actingAs($anotherUser)
+    $this->actingAs(User::factory()->student()->create())
         ->postJson("/api/courses/{$course->id}/attendances")
         ->assertUnprocessable();
 
@@ -528,7 +515,41 @@ test('定員オーバー時は受講レコードが作られない', function ()
 });
 ```
 
-> テストの書き方そのものは Lesson 17 で学びます。ここでは「失敗したリクエストが中途半端なデータを残していないこと」を、レコード件数で確認できる、という点だけ押さえてください。
+このテストは、トランザクションがなくても通ります。定員のチェックは受講を作る前に行うので、2人目のリクエストではそもそも書き込みが起きないためです。トランザクションが効いていることを確かめるには、書き込んだあとで失敗させる必要があります。
+
+### 書き込んだあとで失敗させる
+
+同じファイルに、以下のテストを足します。
+
+```php
+test('受講を作った直後に例外が起きると、受講レコードは残らない', function () {
+    $student = User::factory()->student()->create();
+    $course = Course::factory()->create(['capacity' => 20]);
+
+    // テストのためだけに、受講が作られた直後に例外を投げる処理を登録する
+    Attendance::created(function () {
+        throw new RuntimeException('テスト用の失敗');
+    });
+
+    $this->actingAs($student)
+        ->postJson("/api/courses/{$course->id}/attendances")
+        ->assertStatus(500);
+
+    $this->assertDatabaseCount('attendances', 0);
+});
+```
+
+`Attendance::created()` は、`Attendance` がDBに保存された直後に呼ばれる処理を登録するメソッドです（モデルイベントと呼びます）。ここでは、`AttendCourse` の `Attendance::create()` が INSERT を終えた直後に `RuntimeException` が投げられます。`BusinessException` ではないので、レスポンスは 500 になります。
+
+INSERT はすでに終わっているので、トランザクションがなければ受講レコードが1件残ります。`DB::transaction()` の中で例外が起きたのでロールバックされ、件数は0件になります。登録した処理は、このテストの中だけで有効です。次のテストでは、受講を作っても例外は投げられません。
+
+```bash
+php artisan test tests/Feature/Api/AttendCourseTransactionTest.php
+```
+
+2つとも緑になったら、試しに `AttendCourse` を Lesson 14 の形（`DB::transaction()` を使わない形）に戻して、もう一度実行してみてください。2つ目のテストが「attendances に1件ある」という理由で落ちます。テストが本当にトランザクションを確かめていることが分かったら、`DB::transaction()` を使う形に戻しておきます。
+
+> ロックについては、Step 5 で書いたとおり SQLite のテストでは確かめられません。このテストで確かめているのはロールバックだけです。
 
 ## 練習問題
 
@@ -562,6 +583,8 @@ public function transfer(User $from, User $to, int $amount)
 ### 問題2
 受講キャンセル処理を実装してください。受講ステータスを `cancelled` に変更し、講座の `attendance_count` を減らします。
 
+> `attendance_count` は、冒頭の注記にある仮のカラムです。実際の受講キャンセルは Lesson 18 で作ります。そこでは更新するのが `attendances` の1行だけなので、トランザクションは使いません。
+
 <details>
 <summary>解答例</summary>
 
@@ -593,4 +616,6 @@ public function cancel(User $user, Course $course): void
 
 ## 次のレッスン
 
-[Lesson 15 サービスコンテナとDI](./15-di-container.md) では、Laravelのサービスコンテナの仕組みと依存性注入（DI）を学びます。
+次は [ボス戦2 不具合の入った受講登録を直す](./boss-2-buggy-attendance.md) です。Lesson 14 と 15 で学んだことを使い、不具合の入った受講登録のクラスを、テストを書きながら直します。
+
+ボス戦2 をクリアしたら、[Lesson 16 N+1問題を解決する](./16-n-plus-one.md) に進みます。

@@ -1,4 +1,4 @@
-# Lesson 15 サービスコンテナとDI
+# 発展 A2 サービスコンテナとDI
 
 ## 学習目標
 
@@ -10,9 +10,11 @@
 - コンストラクタインジェクションを使える
 - インターフェースとバインディングを設定できる
 
-> このレッスンは仕組みを理解する座学中心のレッスンです。登場する `MailerInterface` / `SmtpMailer` / `FakeMailer` / `NotificationService` / `AttendanceService` / `AttendanceServiceInterface` / `CapacityExceededException` は説明用の仮の題材で、プロジェクトのコードには反映しません（練習問題だけは、手を動かしたい人向けに実際に作ってみてOKです）。プロジェクトに実際にサービスクラスを導入するのは Lesson 16 です。
+> この発展レッスンは本線のレッスンとは独立していて、読まなくても本線は進められます。Lesson 14 を終えたあとに読むと理解が深まります。Lesson 14 では、`AttendanceController` のコンストラクタに `AttendCourse` の型を書くだけで Laravel がインスタンスを作って渡してくれること、テストでは `$this->mock()` で差し替えられることを使いました。このレッスンでは、その裏で働いているサービスコンテナの仕組みを詳しく扱います。
 >
-> 先に方針を示しておくと、本コースが最終的に採用するのは「インターフェースを切らず、具象クラスをそのまま注入する」形です（Lesson 16）。インターフェースは常に必要なものではなく、実装を差し替える必要が出たときの引き出しです。使い分けの基準はレッスン末尾の「いつインターフェースを切るか」にまとめています。
+> 仕組みを理解する座学中心のレッスンです。登場する `MailerInterface` / `SmtpMailer` / `FakeMailer` / `NotificationService` / `AttendanceService` / `AttendanceServiceInterface` は説明用の仮の題材で、プロジェクトのコードには反映しません（練習問題だけは、手を動かしたい人向けに実際に作ってみてOKです）。
+>
+> 先に方針を示しておくと、本コースが採用しているのは「インターフェースを切らず、具象クラスをそのまま注入する」形です（Lesson 14 の `AttendCourse` など）。インターフェースは常に必要なものではなく、実装を差し替える必要が出たときの引き出しです。使い分けの基準はレッスン末尾の「いつインターフェースを切るか」にまとめています。
 
 
 ## 依存性とは？
@@ -69,9 +71,9 @@ class AttendanceController extends Controller
 
 ## Step 1 サービスコンテナとは？
 
-### Laravelの「依存性解決マシン」
+### インスタンスを作って渡す仕組み
 
-サービスコンテナは、クラスのインスタンス化と依存関係の解決を自動で行います。
+サービスコンテナは、クラスのインスタンス化と依存関係の解決を自動で行います。Lesson 14 で `AttendanceController` のコンストラクタに `AttendCourse` を書いただけで動いたのは、サービスコンテナが `AttendCourse` を作ってコントローラーに渡していたためです。
 
 ```php
 // サービスコンテナに「AttendanceService が欲しい」と伝える
@@ -137,6 +139,8 @@ class CourseController extends Controller
     }
 }
 ```
+
+Lesson 14 の `CourseController` が `CreateCourse` を受け取っているのも、この書き方です。
 
 ### メソッドインジェクション
 
@@ -299,6 +303,8 @@ public function register(): void
 
 ## Step 5 実践 - AttendanceService のリファクタリング
 
+Lesson 14 では、受講登録の処理を `AttendCourse` に切り出し、具象クラスのままコントローラーに注入しました。ここでは同じ受講登録を、仮の `AttendanceService` とインターフェースを使って書くとどうなるかを見ます。
+
 ### Before（密結合）
 
 ```php
@@ -408,6 +414,7 @@ use App\Contracts\AttendanceServiceInterface;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\AttendanceResource;
 use App\Models\Course;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class AttendanceController extends Controller
@@ -416,14 +423,16 @@ class AttendanceController extends Controller
         private AttendanceServiceInterface $attendanceService
     ) {}
 
-    public function store(Request $request, Course $course)
+    public function store(Request $request, Course $course): JsonResponse
     {
         $attendance = $this->attendanceService->attend(
             $request->user(),
             $course
         );
 
-        return new AttendanceResource($attendance);
+        return (new AttendanceResource($attendance))
+            ->response()
+            ->setStatusCode(201);
     }
 }
 ```
@@ -450,7 +459,7 @@ public function register(): void
 
 ### DIのメリット（テスト容易性）
 
-本コースのテストは Pest 形式で書きます（Lesson 17 で詳しく学びます）。
+Lesson 12 で学んだ Pest 形式で書きます。
 
 ```php
 use App\Contracts\AttendanceServiceInterface;
@@ -477,7 +486,21 @@ test('受講登録はサービスに処理を委譲する', function () {
 });
 ```
 
-コントローラーが `new AttendanceService()` していたら、この差し替えはできません。DIの一番わかりやすい見返りがここです。
+コントローラーが `new AttendanceService()` していたら、この差し替えはできません。コンストラクタで受け取っておけば、テストのときだけサービスコンテナに別のものを登録して、コントローラーに渡るものを変えられます。
+
+Lesson 14 で使った `$this->mock()` は、上の `Mockery::mock()` でモックを作る処理と、`$this->app->instance()` でサービスコンテナに登録する処理を、まとめて行うメソッドです。上のテストは次のようにも書けます。
+
+```php
+use Mockery\MockInterface;
+
+$this->mock(AttendanceServiceInterface::class, function (MockInterface $mock) {
+    $mock->shouldReceive('attend')
+        ->once()
+        ->andReturn(Attendance::factory()->make());
+});
+```
+
+Lesson 14 では `CreateCourse` という具象クラスを `$this->mock()` で差し替えました。サービスコンテナは、インターフェースでも具象クラスでも、登録された名前で差し替えるので、どちらでも同じように使えます。
 
 ## いつインターフェースを切るか
 
@@ -490,9 +513,11 @@ test('受講登録はサービスに処理を委譲する', function () {
 | 外部サービス（決済、SMS送信など）に依存する | インターフェースを切る。差し替え・モックがしやすくなる |
 | 単にビジネスロジックをControllerから追い出したいだけ | インターフェース不要 |
 
-本コースの `CreateCourse` などのサービスクラス（Lesson 16）は最後のケースにあたるため、インターフェースは切りません。テストでモックしたくなったときに、後から切っても遅くありません。
+本コースの `CreateCourse` や `AttendCourse` などのサービスクラス（Lesson 14）は最後のケースにあたるため、インターフェースは切りません。Step 6 で見たとおり、具象クラスのままでも `$this->mock()` で差し替えられるので、テストのためだけにインターフェースを切る必要もありません。実装を差し替える理由ができたときに、後から切っても遅くありません。
 
 ## 練習問題
+
+> 練習問題は、手を動かしたい人向けです。問題1の解答例が使う `AttendanceConfirmation` は Lesson 17 で作るメールです。まだ作っていない場合は、メールを送る行の代わりに `Log::info('受講確認', ['attendance_id' => $attendance->id]);` と書いておけば、バインドの動きを確かめられます。ここで作ったクラスは本線のコードからは呼ばれないので、残しておいても本線の進行には影響しません。
 
 ### 問題1
 `NotificationServiceInterface` とその実装 `EmailNotificationService` を作成し、AppServiceProviderでバインドしてください。
@@ -599,4 +624,4 @@ public function register(): void
 
 ## 次のレッスン
 
-[Lesson 16 サービスクラスの設計](./16-service-class.md) では、ビジネスロジックをサービスクラスに分離する設計を学びます。
+本線のレッスンに戻りましょう。[レッスン一覧](./README.md) から、読む前に進めていたレッスンの続きを選んでください。
