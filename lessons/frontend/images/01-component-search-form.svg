@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="224" viewBox="0 0 720 224" font-family="Hiragino Sans, 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', 'Yu Gothic', Meiryo, sans-serif">
+<rect x="0.5" y="0.5" width="719" height="223" rx="16" fill="#FBFBFC" stroke="#E6E8EB"/>
+<rect x="40" y="28" width="640" height="168" rx="14" fill="#E9F0F9"/>
+<text x="64" y="60" font-size="15" font-weight="600" fill="#4A5361">SearchForm</text>
+<text x="174" y="60" font-size="13" fill="#7A828E">Molecule（分子）</text>
+<text x="64" y="92" font-size="13" fill="#7A828E">Atoms（原子）</text>
+<rect x="64" y="104" width="140" height="64" rx="10" fill="#FFFFFF" stroke="#9DB8DC" stroke-width="2"/>
+<text x="134" y="131.9" font-size="15" fill="#4A5361" text-anchor="middle">SearchIcon</text>
+<text x="134" y="151.2" font-size="13" fill="#7A828E" text-anchor="middle">虫眼鏡アイコン</text>
+<rect x="220" y="104" width="260" height="64" rx="10" fill="#FFFFFF" stroke="#9DB8DC" stroke-width="2"/>
+<text x="350" y="131.9" font-size="15" fill="#4A5361" text-anchor="middle">TextInput</text>
+<text x="350" y="151.2" font-size="13" fill="#7A828E" text-anchor="middle">入力欄</text>
+<rect x="496" y="104" width="160" height="64" rx="10" fill="#FFFFFF" stroke="#9DB8DC" stroke-width="2"/>
+<text x="576" y="131.9" font-size="15" fill="#4A5361" text-anchor="middle">Button</text>
+<text x="576" y="151.2" font-size="13" fill="#7A828E" text-anchor="middle">検索ボタン</text>
+</svg>

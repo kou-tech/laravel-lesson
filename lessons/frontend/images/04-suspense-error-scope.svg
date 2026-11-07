@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="372" viewBox="0 0 720 372" font-family="Hiragino Sans, 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', 'Yu Gothic', Meiryo, sans-serif">
+<rect x="0.5" y="0.5" width="719" height="371" rx="16" fill="#FBFBFC" stroke="#E6E8EB"/>
+<rect x="40" y="28" width="640" height="316" rx="12" fill="#FFFFFF" stroke="#C9CDD3" stroke-width="2"/>
+<text x="60" y="58" font-size="15" font-weight="600" fill="#4A5361">アプリ全体</text>
+<rect x="64" y="80" width="400" height="48" rx="10" fill="#FFFFFF" stroke="#9DCBB0" stroke-width="2"/>
+<text x="264.0" y="108.95" font-size="15" fill="#4A5361" text-anchor="middle">ヘッダー</text>
+<line x1="470" y1="104" x2="498" y2="104" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-dasharray="2 6"/>
+<rect x="504" y="86" width="152" height="36" rx="18" fill="#E8F4ED"/>
+<text x="580.0" y="109" font-size="15" font-weight="600" fill="#4A5361" text-anchor="middle">動作中</text>
+<rect x="64" y="144" width="400" height="120" rx="12" fill="#F8EEE4" stroke="#E3BC94" stroke-width="2"/>
+<text x="84" y="174" font-size="15" font-weight="600" fill="#4A5361">Error Boundary</text>
+<rect x="84" y="196" width="220" height="48" rx="10" fill="#FFFFFF" stroke="#C9CDD3" stroke-width="2"/>
+<text x="194.0" y="224.95" font-size="15" fill="#4A5361" text-anchor="middle">メインコンテンツ</text>
+<rect x="320" y="196" width="124" height="48" rx="10" fill="#FFFFFF" stroke="#E3BC94" stroke-width="3"/>
+<text x="382.0" y="224.95" font-size="15" font-weight="600" fill="#4A5361" text-anchor="middle">エラー発生</text>
+<line x1="470" y1="204.0" x2="498" y2="204.0" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-dasharray="2 6"/>
+<rect x="504" y="186.0" width="152" height="36" rx="18" fill="#F8EEE4"/>
+<text x="580.0" y="209.0" font-size="15" font-weight="600" fill="#4A5361" text-anchor="middle">影響範囲</text>
+<rect x="64" y="280" width="400" height="48" rx="10" fill="#FFFFFF" stroke="#9DCBB0" stroke-width="2"/>
+<text x="264.0" y="308.95" font-size="15" fill="#4A5361" text-anchor="middle">フッター</text>
+<line x1="470" y1="304" x2="498" y2="304" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-dasharray="2 6"/>
+<rect x="504" y="286" width="152" height="36" rx="18" fill="#E8F4ED"/>
+<text x="580.0" y="309" font-size="15" font-weight="600" fill="#4A5361" text-anchor="middle">動作中</text>
+</svg>

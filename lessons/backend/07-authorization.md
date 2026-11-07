@@ -24,15 +24,7 @@
 
 認証だけでは不十分なケースがあります。
 
-```
-シナリオ: ユーザー情報の編集API
-
-❌ 認証のみ
-→ ログインしていれば誰でも他人の情報を編集できてしまう
-
-✅ 認証 + 認可
-→ ログインしている かつ 自分自身の情報のみ編集可能
-```
+![ユーザー情報の編集APIでの、認証のみと認証 + 認可の違い](./images/07-authorization-scenario.svg)
 
 
 ## Step 1 ユーザーに役割を追加する
@@ -421,14 +413,7 @@ Gate は、特定のモデルに紐づかない汎用的なアクションの認
 
 #### GateとPolicyの使い分け
 
-```mermaid
-flowchart TD
-    A[認可が必要] --> B{モデルに紐づく?}
-    B -->|Yes| C[Policy]
-    B -->|No| D[Gate]
-    C --> E[UserPolicy, CoursePolicy...]
-    D --> F[manage-courses, create-course...]
-```
+![GateとPolicyの使い分け](./images/07-authorization-gate-policy.svg)
 
 #### Gateの定義
 

@@ -24,24 +24,7 @@ SWRは「Stale-While-Revalidate」の頭文字を取った名前です。
 
 ### 身近な例 ニュースアプリ
 
-```mermaid
-sequenceDiagram
-    participant User as ユーザー
-    participant App as アプリ
-    participant Cache as キャッシュ<br/>(保存済みデータ)
-    participant Server as サーバー
-
-    User->>App: ニュースを見たい
-    App->>Cache: 保存済みデータある？
-    Cache-->>App: あるよ（5分前のデータ）
-    App-->>User: とりあえず表示！
-    Note over User: すぐ読める！
-
-    App->>Server: 最新データちょうだい
-    Server-->>App: はい、最新データ
-    App->>Cache: 保存しておく
-    App-->>User: 新しい記事に更新！
-```
+![SWR でニュースを表示するときの流れ](./images/03-swr-news-flow.svg)
 
 従来の方法
 1. サーバーにデータを要求
@@ -263,27 +246,7 @@ function App({ fallback }) {
 
 ### 従来のデータ取得の課題
 
-```mermaid
-graph TD
-    subgraph "従来の課題"
-        P1[毎回コードを書く必要がある]
-        P2[キャッシュを自分で管理]
-        P3[状態管理が複雑]
-        P4[パフォーマンス最適化が難しい]
-    end
-
-    subgraph "SWRが解決"
-        S1[宣言的なデータ取得]
-        S2[自動キャッシュ]
-        S3[シンプルなAPI]
-        S4[最適化が組み込み済み]
-    end
-
-    P1 --> S1
-    P2 --> S2
-    P3 --> S3
-    P4 --> S4
-```
+![従来の課題と SWR が解決すること](./images/03-swr-problems.svg)
 
 ### HTTP Cache-Control ヘッダーからの着想
 

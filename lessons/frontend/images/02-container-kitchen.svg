@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="192" viewBox="0 0 960 192" font-family="Hiragino Sans, 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', 'Yu Gothic', Meiryo, sans-serif">
+<rect x="0.5" y="0.5" width="959" height="191" rx="16" fill="#FBFBFC" stroke="#E6E8EB"/>
+<rect x="32" y="28" width="496" height="136" rx="14" fill="#E9F0F9"/>
+<text x="52" y="58" font-size="15" font-weight="600" fill="#4A5361">Container（厨房）</text>
+<rect x="596" y="28" width="332" height="136" rx="14" fill="#E8F4ED"/>
+<text x="616" y="58" font-size="15" font-weight="600" fill="#4A5361">Presentational（ホール）</text>
+<rect x="52" y="76" width="92" height="64" rx="10" fill="#FFFFFF" stroke="#9DB8DC" stroke-width="2"/>
+<text x="98" y="103.9" font-size="15" fill="#4A5361" text-anchor="middle">冷蔵庫</text>
+<text x="98" y="123.2" font-size="13" fill="#7A828E" text-anchor="middle">データ</text>
+<rect x="252" y="76" width="92" height="64" rx="10" fill="#FFFFFF" stroke="#9DB8DC" stroke-width="2"/>
+<text x="298" y="113.4" font-size="15" fill="#4A5361" text-anchor="middle">シェフ</text>
+<rect x="416" y="76" width="92" height="64" rx="10" fill="#FFFFFF" stroke="#9DB8DC" stroke-width="2"/>
+<text x="462" y="113.4" font-size="15" fill="#4A5361" text-anchor="middle">料理</text>
+<rect x="616" y="76" width="92" height="64" rx="10" fill="#FFFFFF" stroke="#9DCBB0" stroke-width="2"/>
+<text x="662" y="113.4" font-size="15" fill="#4A5361" text-anchor="middle">ウェイター</text>
+<rect x="816" y="76" width="92" height="64" rx="10" fill="#FFFFFF" stroke="#9DCBB0" stroke-width="2"/>
+<text x="862" y="103.9" font-size="15" fill="#4A5361" text-anchor="middle">テーブル</text>
+<text x="862" y="123.2" font-size="13" fill="#7A828E" text-anchor="middle">お客様</text>
+<path d="M152 108 L244 108 M236 114 L244 108 L236 102" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="198" y="98" font-size="13" fill="#7A828E" text-anchor="middle">材料を取り出す</text>
+<path d="M352 108 L408 108 M400 114 L408 108 L400 102" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="380" y="98" font-size="13" fill="#7A828E" text-anchor="middle">調理する</text>
+<path d="M516 108 L608 108 M600 114 L608 108 L600 102" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="562" y="98" font-size="13" fill="#7A828E" text-anchor="middle">料理を渡す</text>
+<path d="M716 108 L808 108 M800 114 L808 108 L800 102" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="762" y="98" font-size="13" fill="#7A828E" text-anchor="middle">盛り付けて提供</text>
+</svg>

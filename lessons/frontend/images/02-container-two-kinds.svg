@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="300" viewBox="0 0 960 300" font-family="Hiragino Sans, 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', 'Yu Gothic', Meiryo, sans-serif">
+<rect x="0.5" y="0.5" width="959" height="299" rx="16" fill="#FBFBFC" stroke="#E6E8EB"/>
+<rect x="40" y="28" width="340" height="244" rx="14" fill="#E9F0F9"/>
+<text x="64" y="60" font-size="15" font-weight="600" fill="#4A5361">Container Component</text>
+<rect x="580" y="28" width="340" height="244" rx="14" fill="#E8F4ED"/>
+<text x="604" y="60" font-size="15" font-weight="600" fill="#4A5361">Presentational Component</text>
+<rect x="64" y="80" width="292" height="48" rx="10" fill="#FFFFFF" stroke="#9DB8DC" stroke-width="2"/>
+<text x="210" y="109.4" font-size="15" fill="#4A5361" text-anchor="middle">データを取得する</text>
+<rect x="604" y="80" width="292" height="48" rx="10" fill="#FFFFFF" stroke="#9DCBB0" stroke-width="2"/>
+<text x="750" y="109.4" font-size="15" fill="#4A5361" text-anchor="middle">受け取ったデータを表示する</text>
+<rect x="64" y="140" width="292" height="48" rx="10" fill="#FFFFFF" stroke="#9DB8DC" stroke-width="2"/>
+<text x="210" y="169.4" font-size="15" fill="#4A5361" text-anchor="middle">状態を管理する</text>
+<rect x="604" y="140" width="292" height="48" rx="10" fill="#FFFFFF" stroke="#9DCBB0" stroke-width="2"/>
+<text x="750" y="169.4" font-size="15" fill="#4A5361" text-anchor="middle">スタイルを適用する</text>
+<rect x="64" y="200" width="292" height="48" rx="10" fill="#FFFFFF" stroke="#9DB8DC" stroke-width="2"/>
+<text x="210" y="229.4" font-size="15" fill="#4A5361" text-anchor="middle">イベント処理を定義する</text>
+<rect x="604" y="200" width="292" height="48" rx="10" fill="#FFFFFF" stroke="#9DCBB0" stroke-width="2"/>
+<text x="750" y="229.4" font-size="15" fill="#4A5361" text-anchor="middle">ユーザー操作を親に伝える</text>
+<path d="M364 104 L596 104 M588 110 L596 104 L588 98" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="480" y="94" font-size="13" fill="#7A828E" text-anchor="middle">propsでデータを渡す</text>
+<path d="M364 224 L596 224 M588 230 L596 224 L588 218" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="480" y="214" font-size="13" fill="#7A828E" text-anchor="middle">propsで関数を渡す</text>
+</svg>

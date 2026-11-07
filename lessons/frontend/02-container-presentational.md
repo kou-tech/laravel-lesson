@@ -19,23 +19,7 @@ Container/Presentationalパターン は、コンポーネントの役割を2つ
 
 このパターンは、レストランの仕組みに例えるとわかりやすいです。
 
-```mermaid
-graph LR
-    subgraph "Container（厨房）"
-        Chef[シェフ]
-        Fridge[冷蔵庫<br/>データ]
-        Chef --> |材料を取り出す| Fridge
-        Chef --> |調理する| Dish[料理]
-    end
-
-    subgraph "Presentational（ホール）"
-        Waiter[ウェイター]
-        Table[テーブル<br/>お客様]
-    end
-
-    Dish --> |料理を渡す| Waiter
-    Waiter --> |盛り付けて提供| Table
-```
+![厨房（Container）とホール（Presentational）の役割分担](./images/02-container-kitchen.svg)
 
 - 厨房（Container）：材料（データ）を冷蔵庫から取り出し、調理（処理）する
 - ホール（Presentational）：できた料理を受け取り、きれいに盛り付けてお客様に見せる
@@ -46,23 +30,7 @@ graph LR
 
 ### 2種類のコンポーネント
 
-```mermaid
-graph TB
-    subgraph "Container Component"
-        C1[データを取得する]
-        C2[状態を管理する]
-        C3[イベント処理を定義する]
-    end
-
-    subgraph "Presentational Component"
-        P1[受け取ったデータを表示する]
-        P2[スタイルを適用する]
-        P3[ユーザー操作を親に伝える]
-    end
-
-    C1 --> |propsでデータを渡す| P1
-    C3 --> |propsで関数を渡す| P3
-```
+![Container Component と Presentational Component の役割と、props で渡すもの](./images/02-container-two-kinds.svg)
 
 ### Presentational Component（見た目担当）
 
@@ -189,21 +157,7 @@ export default UserCardContainer;
 
 ### データの流れ
 
-```mermaid
-sequenceDiagram
-    participant API as サーバー(API)
-    participant Container as Container<br/>(UserCardContainer)
-    participant Presentational as Presentational<br/>(UserCard)
-    participant User as ユーザー
-
-    Container->>API: データを要求
-    API-->>Container: ユーザー情報を返す
-    Container->>Presentational: propsでデータを渡す
-    Presentational->>User: 画面に表示
-    User->>Presentational: ボタンをクリック
-    Presentational->>Container: onClickProfileを呼び出す
-    Container->>Container: 処理を実行
-```
+![サーバー、Container、Presentational、ユーザーの間のデータの流れ](./images/02-container-data-flow.svg)
 
 ---
 
@@ -211,15 +165,7 @@ sequenceDiagram
 
 ### 1. 役割が明確になる
 
-```mermaid
-graph LR
-    subgraph "責任の分離"
-        C[Container<br/>何を表示するか]
-        P[Presentational<br/>どう表示するか]
-    end
-
-    C -.-> |データ| P
-```
+![Container は何を表示するか、Presentational はどう表示するかを担当する](./images/02-container-separation.svg)
 
 「このコンポーネントは何をしているのか」がすぐにわかります。
 
@@ -341,14 +287,7 @@ function UserList() {
 
 ### どちらを使うべきか
 
-```mermaid
-graph TD
-    Q{どちらを使う?}
-
-    Q --> |データ取得ロジックを<br/>複数箇所で使い回したい| H[Custom Hooks]
-    Q --> |見た目を様々な<br/>データソースで使い回したい| CP[Container/Presentational]
-    Q --> |シンプルな機能| S[分けなくてもOK]
-```
+![Custom Hooks、Container/Presentational、分けないのどれを使うかの判断](./images/02-container-which-to-use.svg)
 
 Container/Presentationalパターンが向いている場合
 - 同じ見た目を、異なるデータソースで使いたい

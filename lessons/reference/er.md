@@ -1,38 +1,6 @@
 # エンティティ関係図（ER図）
 
-```mermaid
-erDiagram
-    users ||--o{ attendances : "受講する"
-    courses ||--o{ attendances : "受講される"
-    users ||--o{ courses : "講師として担当"
-
-    users {
-        int id PK
-        string name
-        string email
-        string password
-        string role
-    }
-
-    courses {
-        int id PK
-        string title
-        string description
-        int instructor_id FK
-        int capacity
-        string status
-        datetime starts_at
-        datetime created_at
-    }
-
-    attendances {
-        int id PK
-        int user_id FK
-        int course_id FK
-        datetime attended_at
-        string status
-    }
-```
+![全テーブルとカラムの関係](./images/er-tables.svg)
 
 講師（instructor）もUserテーブルの一員です。
 

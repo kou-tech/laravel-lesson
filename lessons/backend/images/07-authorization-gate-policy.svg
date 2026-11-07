@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="356" viewBox="0 0 720 356" font-family="Hiragino Sans, 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', 'Yu Gothic', Meiryo, sans-serif">
+<rect x="0.5" y="0.5" width="719" height="355" rx="16" fill="#FBFBFC" stroke="#E6E8EB"/>
+<rect x="270" y="28" width="180" height="48" rx="10" fill="#FFFFFF" stroke="#C9CDD3" stroke-width="2"/>
+<text x="360" y="57" font-size="15" fill="#4A5361" text-anchor="middle">認可が必要</text>
+<path d="M360 84 V112" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M354 104 l6 8 l6 -8" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="240" y="120" width="240" height="48" rx="24" fill="#FFFFFF" stroke="#9DB8DC" stroke-width="2"/>
+<text x="360" y="149" font-size="15" fill="#4A5361" text-anchor="middle">モデルに紐づく？</text>
+<path d="M360 176 V196 M200 196 H520" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M200 196 V244" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M194 236 l6 8 l6 -8" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M520 196 V244" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M514 236 l6 8 l6 -8" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="212" y="226" font-size="13" fill="#7A828E">紐づく</text>
+<text x="532" y="226" font-size="13" fill="#7A828E">紐づかない</text>
+<rect x="60" y="252" width="280" height="72" rx="10" fill="#E8F4ED" stroke="#9DCBB0" stroke-width="2"/>
+<text x="200" y="281" font-size="15" font-weight="600" fill="#4A5361" text-anchor="middle">Policy</text>
+<text x="200" y="306" font-size="13" fill="#7A828E" text-anchor="middle">UserPolicy, CoursePolicy...</text>
+<rect x="380" y="252" width="280" height="72" rx="10" fill="#E8F4ED" stroke="#9DCBB0" stroke-width="2"/>
+<text x="520" y="281" font-size="15" font-weight="600" fill="#4A5361" text-anchor="middle">Gate</text>
+<text x="520" y="306" font-size="13" fill="#7A828E" text-anchor="middle">manage-courses, create-course...</text>
+</svg>

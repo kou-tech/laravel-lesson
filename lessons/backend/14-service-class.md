@@ -77,14 +77,7 @@ class CourseController extends Controller
 
 ### 責務の分離
 
-```mermaid
-graph TD
-    A["Controller<br/>HTTPリクエストの受付<br/>バリデーション（FormRequest経由）<br/>レスポンスの返却"]
-    B["Service<br/>ビジネスロジック<br/>複数モデルの調整"]
-    C["Model<br/>データアクセス<br/>リレーション"]
-
-    A --> B --> C
-```
+![Controller・Service・Model の役割](./images/14-service-class-roles.svg)
 
 ### `__invoke` による単一責任の設計
 
@@ -355,29 +348,7 @@ class CourseHasAttendancesException extends BusinessException
 
 ### 例外の階層構造
 
-```mermaid
-classDiagram
-    Exception <|-- BusinessException
-    BusinessException <|-- DuplicateCourseTitleException
-    BusinessException <|-- CourseLimitExceededException
-    BusinessException <|-- CourseHasAttendancesException
-
-    class BusinessException {
-        <<abstract>>
-        #int statusCode
-        +render() JsonResponse
-        +getErrorCode() string*
-    }
-    class DuplicateCourseTitleException {
-        +getErrorCode() string
-    }
-    class CourseLimitExceededException {
-        +getErrorCode() string
-    }
-    class CourseHasAttendancesException {
-        +getErrorCode() string
-    }
-```
+![BusinessException を継承する例外クラス](./images/14-service-class-exceptions.svg)
 
 `BusinessException` を継承することで、全てのビジネス例外が統一されたJSON形式でレスポンスを返します。
 
@@ -478,17 +449,7 @@ class CourseController extends Controller
 
 ### Before / After の比較
 
-```mermaid
-graph LR
-    subgraph Before
-        A[CourseController] -->|"store() 60行<br/>バリデーション<br/>重複チェック<br/>制限チェック<br/>作成<br/>通知<br/>ログ"| B[(DB)]
-    end
-
-    subgraph After
-        C[CourseController] -->|"store() 5行"| D[CreateCourse]
-        D -->|"__invoke()"| E[(DB)]
-    end
-```
+![Before と After のコントローラー](./images/14-service-class-before-after.svg)
 
 
 ## Step 4 受講登録をサービスに切り出す
@@ -730,14 +691,7 @@ class Course extends Model
 
 サービスクラスにするかモデルに書くかの判断基準は以下の通りです。
 
-```mermaid
-flowchart TD
-    A{複数のモデルや<br/>外部サービスに<br/>またがる処理?}
-    A -->|Yes| B[サービスクラス]
-    A -->|No| C{そのモデル自身の<br/>データだけで<br/>完結する?}
-    C -->|Yes| D[モデルのメソッド]
-    C -->|No| B
-```
+![サービスクラスにするかモデルに書くかの判断](./images/14-service-class-decision.svg)
 
 `AttendCourse` は、講座の定員を確かめ、受講者の重複を確かめ、受講を作るという、複数のモデルにまたがる処理なのでサービスにしました。その中で使う `hasCapacity()` は講座自身のデータだけで決まるので、モデルに置いたままにしています。
 

@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="424" viewBox="0 0 720 424" font-family="Hiragino Sans, 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', 'Yu Gothic', Meiryo, sans-serif">
+<rect x="0.5" y="0.5" width="719" height="423" rx="16" fill="#FBFBFC" stroke="#E6E8EB"/>
+<path d="M52 32 H220 V140 H52 A12 12 0 0 1 40 128 V44 A12 12 0 0 1 52 32 Z" fill="#E9F0F9"/>
+<rect x="40" y="32" width="640" height="108" rx="12" fill="none" stroke="#9DB8DC" stroke-width="2"/>
+<text x="64" y="91.5" font-size="15" font-weight="600" fill="#4A5361">Controller</text>
+<text x="248" y="65" font-size="15" fill="#4A5361">HTTPリクエストの受付</text>
+<text x="248" y="91" font-size="15" fill="#4A5361">バリデーション（FormRequest経由）</text>
+<text x="248" y="117" font-size="15" fill="#4A5361">レスポンスの返却</text>
+<path d="M130.0 150 V174 M124 166 L130 174 L136 166" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M52 184 H220 V266 H52 A12 12 0 0 1 40 254 V196 A12 12 0 0 1 52 184 Z" fill="#E8F4ED"/>
+<rect x="40" y="184" width="640" height="82" rx="12" fill="none" stroke="#9DCBB0" stroke-width="2"/>
+<text x="64" y="230.5" font-size="15" font-weight="600" fill="#4A5361">Service</text>
+<text x="248" y="217" font-size="15" fill="#4A5361">ビジネスロジック</text>
+<text x="248" y="243" font-size="15" fill="#4A5361">複数モデルの調整</text>
+<path d="M130.0 276 V300 M124 292 L130 300 L136 292" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M52 310 H220 V392 H52 A12 12 0 0 1 40 380 V322 A12 12 0 0 1 52 310 Z" fill="#F0F1F3"/>
+<rect x="40" y="310" width="640" height="82" rx="12" fill="none" stroke="#C9CDD3" stroke-width="2"/>
+<text x="64" y="356.5" font-size="15" font-weight="600" fill="#4A5361">Model</text>
+<text x="248" y="343" font-size="15" fill="#4A5361">データアクセス</text>
+<text x="248" y="369" font-size="15" fill="#4A5361">リレーション</text>
+</svg>

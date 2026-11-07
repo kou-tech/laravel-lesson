@@ -195,32 +195,7 @@ public function complexOperation()
 
 2人のユーザーが同時に残り1席の講座に申し込む場合を考えます。
 
-```
-ユーザーA: 残席確認 → 1席 → 登録実行
-ユーザーB: 残席確認 → 1席 → 登録実行
-→ 2人とも登録できてしまう（定員オーバー）
-```
-
-シーケンス図で見ると、問題がより明確になります。
-
-```mermaid
-sequenceDiagram
-    participant A as ユーザーA
-    participant B as ユーザーB
-    participant DB as データベース
-
-    Note over DB: 残席: 1
-
-    A->>DB: SELECT（残席確認）
-    DB-->>A: 残席 = 1
-    B->>DB: SELECT（残席確認）
-    DB-->>B: 残席 = 1
-
-    A->>DB: INSERT（受講登録）
-    Note over DB: 残席: 0
-    B->>DB: INSERT（受講登録）
-    Note over DB: 残席: -1 ← 定員オーバー！
-```
+![ユーザーAとユーザーBが同時に残席を確認して定員を超える流れ](./images/15-transaction-race.svg)
 
 AとBがほぼ同時に残席を確認し、どちらも「1席ある」と判断して登録を実行してしまいます。
 
@@ -274,28 +249,7 @@ public function attend(User $user, int $courseId)
 
 `lockForUpdate()` を使うことで、同時リクエストは以下のように直列化されます。
 
-```mermaid
-sequenceDiagram
-    participant A as ユーザーA
-    participant B as ユーザーB
-    participant DB as データベース
-
-    Note over DB: 残席: 1
-
-    A->>DB: SELECT ... FOR UPDATE（ロック取得）
-    DB-->>A: 残席 = 1（ロック保持中）
-
-    B->>DB: SELECT ... FOR UPDATE（ロック取得を試みる）
-    Note over B: ロック待ち...
-
-    A->>DB: INSERT（受講登録）
-    A->>DB: COMMIT
-    Note over DB: 残席: 0
-
-    DB-->>B: 残席 = 0（ロック取得、最新データを読み取り）
-    B->>B: 定員オーバー → 例外スロー
-    B->>DB: ROLLBACK
-```
+![lockForUpdate でユーザーBがロック待ちになる流れ](./images/15-transaction-lock.svg)
 
 ユーザーBはユーザーAのコミット後にロックを取得するため、最新の残席数（0）を読み取り、正しく登録を拒否できます。
 
@@ -334,11 +288,7 @@ sequenceDiagram
 
 2つのトランザクションが互いにロックを待ち合う状態です。
 
-```
-トランザクションA: users をロック → courses のロックを待つ
-トランザクションB: courses をロック → users のロックを待つ
-→ 永久に待ち続ける（デッドロック）
-```
+![トランザクションAとBが互いのロックを待つデッドロック](./images/15-transaction-deadlock.svg)
 
 ### 対策1 ロック順序を統一
 
@@ -370,11 +320,7 @@ DB::transaction(function () use ($user, $course) {
 
 Lesson 14 で作った `AttendCourse` は、定員を確かめてから受講を作ります。Step 3 で見た競合は、このコードでもそのまま起きます。
 
-```
-ユーザーA: hasCapacity() → 残り1席 → Attendance::create()
-ユーザーB: hasCapacity() → 残り1席 → Attendance::create()
-→ 定員1の講座に2人が登録される
-```
+![hasCapacity() の確認のあとに2人とも登録される流れ](./images/15-transaction-attend-race.svg)
 
 同じ受講者が2回申し込んだ場合は、Lesson 10 で付けた複合ユニーク制約が止めてくれます。しかし、別々の受講者が同時に申し込んで定員を超える場合は、今のコードでは止められません。Step 3 と同じように、講座の行にロックを取ってから定員を確かめる形に書き換えます。
 
@@ -430,7 +376,7 @@ class AttendCourse
 
 ポイントは以下の通りです。
 
-講座は、トランザクションの中で `Course::lockForUpdate()->findOrFail($course->id)` を使って取り直します。引数で受け取った `$course` は、ルートモデルバインディングがロックを取る前に読み込んだものです。同じ講座に申し込むリクエストは、どれもこの行のロックを取ろうとするので、Step 3 のシーケンス図のように1つずつ順番に処理されます。
+講座は、トランザクションの中で `Course::lockForUpdate()->findOrFail($course->id)` を使って取り直します。引数で受け取った `$course` は、ルートモデルバインディングがロックを取る前に読み込んだものです。同じ講座に申し込むリクエストは、どれもこの行のロックを取ろうとするので、Step 3 の図のように1つずつ順番に処理されます。
 
 定員のチェックには、取り直した `$lockedCourse` を渡します。受け取った `$course` の件数は使いません。Lesson 16 では、講座一覧を速くするために `withCount` で数えた件数（`attendances_count`）を `hasCapacity()` が使うように改善します。ロックを取る前に数えた件数が `$course` に残っていると、それを使って判定してしまい、ロックを取った意味がなくなります。ロックを取ってから読み直した講座には、この件数が入っていないので、`hasCapacity()` はその場で数え直します。
 

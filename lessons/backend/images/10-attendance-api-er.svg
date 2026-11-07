@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="136" viewBox="0 0 720 136" font-family="Hiragino Sans, 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', 'Yu Gothic', Meiryo, sans-serif">
+<rect x="0.5" y="0.5" width="719" height="135" rx="16" fill="#FBFBFC" stroke="#E6E8EB"/>
+<rect x="48" y="40" width="140" height="56" rx="10" fill="#FFFFFF" stroke="#9DB8DC" stroke-width="2"/>
+<text x="118.0" y="73" font-size="15" fill="#4A5361" text-anchor="middle">User</text>
+<rect x="290" y="40" width="140" height="56" rx="10" fill="#E9F0F9" stroke="#9DB8DC" stroke-width="2"/>
+<text x="360.0" y="73" font-size="15" fill="#4A5361" text-anchor="middle">Attendance</text>
+<rect x="532" y="40" width="140" height="56" rx="10" fill="#FFFFFF" stroke="#9DB8DC" stroke-width="2"/>
+<text x="602.0" y="73" font-size="15" fill="#4A5361" text-anchor="middle">Course</text>
+<path d="M188 68.0 H290" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="239.0" y="58.0" font-size="13" fill="#7A828E" text-anchor="middle">受講する</text>
+<text x="196" y="88.0" font-size="13" fill="#7A828E">1</text>
+<text x="282" y="88.0" font-size="13" fill="#7A828E" text-anchor="end">多</text>
+<path d="M430 68.0 H532" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="481.0" y="58.0" font-size="13" fill="#7A828E" text-anchor="middle">受講される</text>
+<text x="438" y="88.0" font-size="13" fill="#7A828E">多</text>
+<text x="524" y="88.0" font-size="13" fill="#7A828E" text-anchor="end">1</text>
+</svg>

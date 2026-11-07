@@ -16,11 +16,7 @@
 
 受講（Attendance）は、ユーザーと講座の多対多の関係を表します。1人のユーザーは複数の講座を受講でき、1つの講座には複数の受講者がいます。
 
-```mermaid
-erDiagram
-    User ||--o{ Attendance : "受講する"
-    Course ||--o{ Attendance : "受講される"
-```
+![User・Attendance・Course の関係](./images/10-attendance-api-er.svg)
 
 Step 1〜3 で attendances テーブル、Attendance モデル、courses テーブルの `starts_at` カラムを用意し、Step 4〜6 で Policy と受講登録APIを作って動きを確かめます。
 

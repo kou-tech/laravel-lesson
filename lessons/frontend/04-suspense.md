@@ -14,18 +14,7 @@ Suspense（サスペンス） は、「何かを待っている間、代わり�
 
 動画サイトで動画を再生しようとしたとき、こんな画面を見たことがありませんか？
 
-```mermaid
-sequenceDiagram
-    participant User as ユーザー
-    participant App as アプリ
-    participant Server as サーバー
-
-    User->>App: 動画を見たい
-    App->>Server: 動画データください
-    Note over App: 読み込み中...<br/>くるくる表示
-    Server-->>App: はい、動画データ
-    App-->>User: 動画を再生！
-```
+![動画を読み込む間の流れ](./images/04-suspense-loading-flow.svg)
 
 この「くるくる表示」が Suspense の役割です。
 
@@ -82,17 +71,7 @@ Suspense は「このコンポーネントがデータを待っていたら、�
 
 ### 図で理解する Suspense
 
-```mermaid
-graph TD
-    subgraph "Suspenseの仕組み"
-        S[Suspense]
-        F[fallback<br/>読み込み中...]
-        C[子コンポーネント<br/>UserProfile]
-    end
-
-    S --> |データ待ち中| F
-    S --> |データ準備完了| C
-```
+![Suspense が fallback と子コンポーネントを切り替える仕組み](./images/04-suspense-mechanism.svg)
 
 ## Suspenseの基本的な使い方
 
@@ -178,22 +157,7 @@ function App() {
 }
 ```
 
-```mermaid
-graph TD
-    S1[Suspense: ページ全体]
-    S2[Suspense: メイン部分]
-    S3[Suspense: コメント]
-
-    S1 --> Header
-    S1 --> S2
-    S2 --> MainContent
-    S2 --> S3
-    S3 --> Comments
-
-    style S1 fill:#e3f2fd
-    style S2 fill:#bbdefb
-    style S3 fill:#90caf9
-```
+![入れ子にした Suspense](./images/04-suspense-nested.svg)
 
 外側から順番にフォールバックが表示され、準備ができた部分から実際のコンテンツに切り替わります。
 
@@ -203,19 +167,7 @@ graph TD
 
 「読み込み中はこれを表示する」と宣言するだけで済みます。
 
-```mermaid
-graph LR
-    subgraph "従来（命令的）"
-        A[isLoadingを管理]
-        B[if文で分岐]
-        C[表示を切り替え]
-        A --> B --> C
-    end
-
-    subgraph "Suspense（宣言的）"
-        D[fallbackを指定するだけ]
-    end
-```
+![命令的な書き方と宣言的な書き方の比較](./images/04-suspense-declarative.svg)
 
 > 宣言的（Declarative）：
 > 「こうあってほしい」という結果を書くスタイルです。「どうやって実現するか」は書かなくてよく、コードが読みやすくなります。
@@ -254,16 +206,7 @@ Error Boundary（エラーバウンダリ） は、「エラーが発生した�
 
 JavaScriptでエラーが発生すると、通常は画面全体が真っ白になってしまいます。
 
-```mermaid
-graph LR
-    subgraph "Error Boundaryなし"
-        E1[エラー発生] --> W[画面が真っ白]
-    end
-
-    subgraph "Error Boundaryあり"
-        E2[エラー発生] --> F[エラー画面を表示<br/>他の部分は動く]
-    end
-```
+![Error Boundary のありとなしの比較](./images/04-suspense-error-boundary.svg)
 
 Error Boundary を使うと、エラーが発生した部分だけを差し替え、他の部分は正常に動作させられます。
 
@@ -326,21 +269,7 @@ function App() {
 }
 ```
 
-```mermaid
-graph TB
-    subgraph "アプリ全体"
-        Header[ヘッダー]
-        subgraph EB[Error Boundary]
-            Main[メインコンテンツ]
-            Error[エラー発生!]
-        end
-        Footer[フッター]
-    end
-
-    Error -.-> |影響範囲| EB
-    Header --> |正常| OK1[動作中]
-    Footer --> |正常| OK2[動作中]
-```
+![Error Boundary で囲んだ部分だけがエラーの影響を受ける](./images/04-suspense-error-scope.svg)
 
 ### リセット時に処理を実行する
 

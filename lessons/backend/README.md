@@ -98,64 +98,7 @@ vendor/bin/pint --dirty
 
 ## カリキュラム全体マップ
 
-```mermaid
-graph TD
-    subgraph Part1["Part 1: 基礎編"]
-        L1[L1 API基礎] --> L2[L2 デバッグ]
-        L2 --> L3[L3 API設計]
-        L3 --> L4[L4 User API]
-        L4 --> L5[L5 バリデーション]
-        L5 --> L6[L6 認証]
-        L6 --> L7[L7 認可]
-        L7 --> L8[L8 コレクション]
-        L8 --> L9[L9 Course API]
-        L9 --> B1[ボス戦1]
-    end
-
-    subgraph Part2["Part 2: 実務の中核"]
-        L10[L10 受講登録API] --> L11[L11 安全なモデル]
-        L11 --> L12[L12 自動テスト]
-        L12 --> L13[L13 良いコード]
-        L13 --> L14[L14 サービスクラス]
-        L14 --> L15[L15 トランザクション]
-        L15 --> B2[ボス戦2]
-    end
-
-    subgraph Part3["Part 3: 仕上げ"]
-        L16[L16 N+1問題] --> L17[L17 メール/ジョブ]
-        L17 --> L18[L18 TDD]
-        L18 --> B3[ボス戦3]
-    end
-
-    subgraph Advanced["発展"]
-        A1[A1 DB設計の原則]
-        A2[A2 サービスコンテナとDI]
-    end
-
-    Part1 --> Part2
-    Part2 --> Part3
-    L10 -.-> A1
-    L14 -.-> A2
-```
-
-## 旧版の番号から移ってきた人へ
-
-2026年11月にレッスンの順番を見直しました。旧版の番号で途中まで進めていた人は、次の対応表で新しい番号を確かめてください。Lesson 0〜9 は変わっていません。
-
-| 旧版 | 新しい番号 |
-|---|---|
-| Lesson 10 良いコードを書く | Lesson 13 |
-| Lesson 11 データベース設計の基礎 | 前半の原則は発展 A1、後半の受講登録APIは Lesson 10 |
-| Lesson 12 N+1問題を解決する | Lesson 16 |
-| Lesson 13 安全なモデルの記述 | Lesson 11 |
-| Lesson 14 トランザクション処理 | Lesson 15 |
-| Lesson 15 サービスコンテナとDI | 発展 A2 |
-| Lesson 16 サービスクラスの設計 | Lesson 14 |
-| Lesson 17 自動テストの書き方 | Lesson 12 |
-| Lesson 18 メールとジョブ機能 | Lesson 17 |
-| Lesson 19 TDDで機能を追加する | Lesson 18 |
-
-順番が変わったので、旧版の Lesson 14 まで終えた人は、新しい Lesson 12（自動テスト）と Lesson 14（サービスクラス）をまだ終えていないことになります。新しい番号で、終えていないレッスンを順に進めてください。
+![カリキュラム全体マップ](./images/curriculum-map.svg)
 
 ## レッスン中に参照する資料
 

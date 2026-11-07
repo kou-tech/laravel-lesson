@@ -48,23 +48,7 @@ FortifyはフロントエンドのUIを提供しません。UIは別途実装す
 
 ### ログインの流れ
 
-```mermaid
-sequenceDiagram
-    participant User as ユーザー
-    participant Frontend as フロントエンド
-    participant Fortify as Fortify
-    participant DB as データベース
-
-    User->>Frontend: email, password を入力
-    Frontend->>Fortify: POST /login
-    Fortify->>DB: ユーザー検索・パスワード照合
-    alt 認証成功
-        DB-->>Fortify: ユーザー情報
-        Fortify-->>Frontend: セッション発行・リダイレクト
-    else 認証失敗
-        Fortify-->>Frontend: エラーメッセージ
-    end
-```
+![ログインの流れ](./images/06-authentication-login-flow.svg)
 
 
 ## Step 2 authミドルウェアを理解する
@@ -73,9 +57,7 @@ sequenceDiagram
 
 ミドルウェアは、リクエストがコントローラーに到達する前に実行される処理です。
 
-```
-リクエスト → [ミドルウェア] → コントローラー → レスポンス
-```
+![リクエストがミドルウェアを通ってコントローラーに届く流れ](./images/06-authentication-middleware.svg)
 
 ### authミドルウェア
 

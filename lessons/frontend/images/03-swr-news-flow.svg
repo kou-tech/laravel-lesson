@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="538" viewBox="0 0 960 538" font-family="Hiragino Sans, 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', 'Yu Gothic', Meiryo, sans-serif">
+<rect x="0.5" y="0.5" width="959" height="537" rx="16" fill="#FBFBFC" stroke="#E6E8EB"/>
+<rect x="60.0" y="28" width="150" height="36" rx="18" fill="#F0F1F3"/>
+<text x="135.0" y="51.5" font-size="15" font-weight="600" fill="#4A5361" text-anchor="middle">ユーザー</text>
+<line x1="135" y1="72" x2="135" y2="510" stroke="#E1E4E8" stroke-width="2" stroke-linecap="round"/>
+<rect x="290.0" y="28" width="150" height="36" rx="18" fill="#F0F1F3"/>
+<text x="365.0" y="51.5" font-size="15" font-weight="600" fill="#4A5361" text-anchor="middle">アプリ</text>
+<line x1="365" y1="72" x2="365" y2="510" stroke="#E1E4E8" stroke-width="2" stroke-linecap="round"/>
+<rect x="520.0" y="28" width="150" height="36" rx="18" fill="#F0F1F3"/>
+<text x="595.0" y="51.5" font-size="15" font-weight="600" fill="#4A5361" text-anchor="middle">キャッシュ</text>
+<line x1="595" y1="72" x2="595" y2="510" stroke="#E1E4E8" stroke-width="2" stroke-linecap="round"/>
+<rect x="750.0" y="28" width="150" height="36" rx="18" fill="#F0F1F3"/>
+<text x="825.0" y="51.5" font-size="15" font-weight="600" fill="#4A5361" text-anchor="middle">サーバー</text>
+<line x1="825" y1="72" x2="825" y2="510" stroke="#E1E4E8" stroke-width="2" stroke-linecap="round"/>
+<path d="M139 112 H360" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round"/>
+<path d="M352 106 l8 6 l-8 6" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="250.0" y="101" font-size="15" fill="#4A5361" text-anchor="middle" stroke="#FBFBFC" stroke-width="8" stroke-linejoin="round" paint-order="stroke">ニュースを見たい</text>
+<path d="M369 162 H590" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round"/>
+<path d="M582 156 l8 6 l-8 6" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="480.0" y="151" font-size="15" fill="#4A5361" text-anchor="middle" stroke="#FBFBFC" stroke-width="8" stroke-linejoin="round" paint-order="stroke">保存済みデータある？</text>
+<path d="M591 212 H370" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-dasharray="6 6"/>
+<path d="M378 206 l-8 6 l8 6" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="480.0" y="201" font-size="15" fill="#4A5361" text-anchor="middle" stroke="#FBFBFC" stroke-width="8" stroke-linejoin="round" paint-order="stroke">5分前のデータ</text>
+<path d="M361 262 H140" fill="none" stroke="#9DB8DC" stroke-width="2" stroke-linecap="round" stroke-dasharray="6 6"/>
+<path d="M148 256 l-8 6 l8 6" fill="none" stroke="#9DB8DC" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="250.0" y="251" font-size="15" font-weight="600" fill="#4A5361" text-anchor="middle" stroke="#FBFBFC" stroke-width="8" stroke-linejoin="round" paint-order="stroke">とりあえず表示</text>
+<path d="M369 336 H820" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round"/>
+<path d="M812 330 l8 6 l-8 6" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="595.0" y="325" font-size="15" fill="#4A5361" text-anchor="middle" stroke="#FBFBFC" stroke-width="8" stroke-linejoin="round" paint-order="stroke">最新データを要求</text>
+<path d="M821 386 H370" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-dasharray="6 6"/>
+<path d="M378 380 l-8 6 l8 6" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="595.0" y="375" font-size="15" fill="#4A5361" text-anchor="middle" stroke="#FBFBFC" stroke-width="8" stroke-linejoin="round" paint-order="stroke">最新データ</text>
+<path d="M369 436 H590" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round"/>
+<path d="M582 430 l8 6 l-8 6" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="480.0" y="425" font-size="15" fill="#4A5361" text-anchor="middle" stroke="#FBFBFC" stroke-width="8" stroke-linejoin="round" paint-order="stroke">保存しておく</text>
+<path d="M361 486 H140" fill="none" stroke="#9DB8DC" stroke-width="2" stroke-linecap="round" stroke-dasharray="6 6"/>
+<path d="M148 480 l-8 6 l8 6" fill="none" stroke="#9DB8DC" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="250.0" y="475" font-size="15" font-weight="600" fill="#4A5361" text-anchor="middle" stroke="#FBFBFC" stroke-width="8" stroke-linejoin="round" paint-order="stroke">新しい記事に更新</text>
+</svg>
