@@ -93,3 +93,21 @@ code .
 | `make lint` | ESLint |
 | `make format` | Pint + Prettier |
 | `make help` | コマンド一覧 |
+
+## 教材が更新されたとき
+
+レッスンの本文や判定用のファイルは `main` ブランチで更新されます。自分の作業ブランチに取り込むには、作業中の変更をコミットしてから、次を実行してください。
+
+```bash
+git fetch origin
+git merge origin/main
+```
+
+Docker の設定（`docker/app/Dockerfile`）が変わったときは、取り込んだあとにイメージを作り直します。
+
+```bash
+make build
+make restart
+```
+
+テストの実行で「No code coverage driver is available.」と表示される場合は、イメージが古いままです。上の手順で作り直してください。

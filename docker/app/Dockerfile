@@ -6,6 +6,9 @@ RUN apt-get update && apt-get install -y \
     && docker-php-ext-install mbstring zip pcntl pdo_sqlite \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
+# テストのカバレッジとミューテーションテスト（pest --coverage / --mutate）に使う
+RUN pecl install pcov && docker-php-ext-enable pcov
+
 RUN curl -fsSL https://deb.nodesource.com/setup_26.x | bash - \
     && apt-get install -y nodejs \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
