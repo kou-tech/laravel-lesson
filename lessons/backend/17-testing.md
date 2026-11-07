@@ -336,18 +336,23 @@ $this->assertSoftDeleted('courses', [
 
 ### サービスをモック
 
+Lesson 16 で作った `CreateCourse` を、偽物（モック）に差し替えてテストします。`CourseController` はコンストラクタで `CreateCourse` を受け取っているので、サービスコンテナにモックを登録しておくと、コントローラーにはモックが渡されます。
+
 ```php
-use App\Services\NotificationService;
-use Mockery;
+use App\Models\Course;
+use App\Models\User;
+use App\Services\Course\CreateCourse;
+use Mockery\MockInterface;
 
-test('講座作成時に通知が送信される', function () {
-    $mockNotification = Mockery::mock(NotificationService::class);
-    $mockNotification->shouldReceive('notifyAdminsOfNewCourse')
-        ->once();
-
-    $this->app->instance(NotificationService::class, $mockNotification);
-
+test('講座作成APIは CreateCourse に処理を任せる', function () {
     $instructor = User::factory()->instructor()->create();
+    $course = Course::factory()->for($instructor, 'instructor')->create();
+
+    $this->mock(CreateCourse::class, function (MockInterface $mock) use ($course) {
+        $mock->shouldReceive('__invoke')
+            ->once()
+            ->andReturn($course);
+    });
 
     $this->actingAs($instructor)
         ->postJson('/api/courses', [
@@ -356,9 +361,12 @@ test('講座作成時に通知が送信される', function () {
             'status' => 'draft',
             'starts_at' => now()->addWeek()->toDateTimeString(),
         ])
-        ->assertCreated();
+        ->assertCreated()
+        ->assertJsonPath('data.id', $course->id);
 });
 ```
+
+`$this->mock()` は、Mockery でモックを作ってサービスコンテナに登録するところまでをまとめて行うメソッドです。`CreateCourse` は `__invoke` で呼び出すクラスなので、`shouldReceive('__invoke')` で呼ばれ方を指定します。このテストで確かめているのは、コントローラーが `CreateCourse` を1回だけ呼び、その戻り値をレスポンスに使っていることです。重複チェックなど `CreateCourse` 自身の中身は、別のテストで確かめます。
 
 ### Mail のフェイク
 

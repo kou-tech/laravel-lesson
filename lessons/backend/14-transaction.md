@@ -349,37 +349,17 @@ DB::transaction(function () {
 
 ### 対策2 リトライ処理
 
-```php
-use Illuminate\Database\DeadlockException;
-
-$maxAttempts = 3;
-$attempt = 0;
-
-while ($attempt < $maxAttempts) {
-    try {
-        return DB::transaction(function () use ($user, $course) {
-            // 処理
-        });
-    } catch (DeadlockException $e) {
-        $attempt++;
-        if ($attempt >= $maxAttempts) {
-            throw $e;
-        }
-        // 少し待ってからリトライ
-        usleep(100000);  // 100ms
-    }
-}
-```
-
-### DB::transaction() のリトライ機能
-
-`DB::transaction()` は第2引数でリトライ回数を指定できます。
+デッドロックが起きたら、トランザクションを最初からやり直します。Laravel では `DB::transaction()` の第2引数に試行回数を渡すだけで、このやり直しをしてくれます。
 
 ```php
-DB::transaction(function () {
+DB::transaction(function () use ($user, $course) {
     // 処理
-}, 5);  // デッドロック時に最大5回リトライ
+}, 5);  // 合計5回まで試す（やり直しは最大4回）
 ```
+
+第2引数は「リトライの回数」ではなく「合計の試行回数」です。`5` なら1回目に失敗しても、あと4回やり直します。やり直すのは、デッドロックやロック待ちのタイムアウトのような競合のエラーが起きたときだけです。バリデーションの例外など、ほかの例外はロールバックしたうえでそのまま投げ直されます。
+
+> 注意: `try` / `catch` でやり直しを自前で書く場合、`Illuminate\Database\DeadlockException` を `catch` しても、一番外側のトランザクションで起きたデッドロックは捕まえられません。Laravel が `DeadlockException` を投げるのは、トランザクションを入れ子にしたときの内側だけです。外側では、元の `Illuminate\Database\QueryException` がそのまま投げられます。自前で書くより、第2引数を使ってください。
 
 
 ## Step 5 サービスクラスへの切り出し（先取り）
@@ -430,7 +410,7 @@ class AttendanceService
             ]);
 
             return $attendance;
-        }, 3);  // デッドロック時に3回リトライ
+        }, 3);  // デッドロックなどの競合が起きたら、合計3回まで試す
     }
 
     private function validateAttendance(User $user, Course $course): void
