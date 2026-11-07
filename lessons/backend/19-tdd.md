@@ -679,3 +679,7 @@ public function store(Request $request, Course $course): JsonResponse
 
 - [Laravel 公式ドキュメント - Testing](https://laravel.com/docs/testing)
 - [Test-Driven Development by Example（Kent Beck）](https://www.amazon.co.jp/dp/4274217884)
+
+## 次に読むもの
+
+バックエンドのレッスンはこれで終わりです。続けて [フロントエンド資料](../frontend/README.md) を読むと、作ってきたAPIを画面から呼ぶときの設計とデータ取得の考え方を押さえられます。

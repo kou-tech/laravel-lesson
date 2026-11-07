@@ -10,8 +10,8 @@
 - Route Model Bindingを活用できる
 
 > このLessonから受講管理システムの実装に入ります。全体像は以下を参照してください。
-> - [API仕様一覧](./api-spec.md) — 本コースで実装する全エンドポイントと認証/認可要件
-> - [ER図](./er.md) — テーブル構造とリレーション
+> - [API仕様一覧](../reference/api-spec.md) — 本コースで実装する全エンドポイントと認証/認可要件
+> - [ER図](../reference/er.md) — テーブル構造とリレーション
 
 
 ## Step 1 Controllerの作成

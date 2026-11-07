@@ -776,7 +776,7 @@ class AttendanceController extends Controller
 ```
 
 ポイント
-- 講師が自分の講座に受講登録することは想定していないため、`isStudent()` で弾いて 403 を返す（[API仕様一覧](./api-spec.md) の「生徒のみ」に対応）
+- 講師が自分の講座に受講登録することは想定していないため、`isStudent()` で弾いて 403 を返す（[API仕様一覧](../reference/api-spec.md) の「生徒のみ」に対応）
 - `hasCapacity()` で定員チェック（Step 7 で定義したメソッド）
 - 複合ユニーク制約違反は `UniqueConstraintViolationException` をキャッチして 409 Conflict を返す（DBドライバ非依存）
 - アプリ側チェックだけでなく、DB制約が最後の砦として機能する
