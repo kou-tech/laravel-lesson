@@ -426,15 +426,21 @@ if (app()->environment('local')) {
 
 ブラウザで `/mail-preview/attendance` にアクセスするとメールをプレビューできます。
 
-### Mailpit / Mailtrap の利用
+### 送ったメールを確認する
 
-`.env` に以下のように設定します。
+このプロジェクトの `.env` は `MAIL_MAILER=log` になっているため、送ったメールは実際には届かず、本文がログに書き出されます。`make logs` を実行するか、`storage/logs/laravel.log` を開くと確認できます。
+
+受信箱のような画面で見たい場合は、Mailpit を使います。Mailpit は、送られてきたメールを受け取って画面に表示するだけの開発用のメールサーバーで、`make up` でアプリと一緒に起動しています。`.env` を以下のように変えてください。
 
 ```env
 MAIL_MAILER=smtp
-MAIL_HOST=localhost
+MAIL_HOST=mailpit
 MAIL_PORT=1025
 ```
+
+コンテナを起動し直す必要はありません。`php artisan serve` は `.env` の変更を検知して自動で再起動し、コンテナのワーカー（`queue:listen`）はジョブを1件処理するたびに設定を読み込み直すためです。`.env` を保存したら受講登録をしてみてください。http://localhost:8025 の画面にメールが届きます。
+
+> 補足: `MAIL_HOST` は `localhost` ではなく `mailpit` にします。Laravel は Docker コンテナの中で動いているので、`localhost` はアプリのコンテナ自身を指し、Mailpit には届きません。`mailpit` は compose.yml に書いたサービス名で、コンテナ同士はこの名前で通信できます。
 
 
 ## Step 8 テスト

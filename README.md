@@ -75,6 +75,7 @@ code .
 
 - アプリ: http://localhost:8000
 - Vite (HMR): http://localhost:5173
+- Mailpit（開発用のメール確認画面）: http://localhost:8025
 
 ## よく使うコマンド
 
