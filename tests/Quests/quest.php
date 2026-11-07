@@ -70,6 +70,7 @@ function showMap(array $stages): void
             continue;
         }
 
+        // 判定テストだけのステージはその場で走らせ、時間のかかるステージ（ミューテーション、型の検査など）は前回の結果を出す
         $missions = $stage['kind'] === 'pest' ? runPestStage($stage) : readCachedMissions($stage);
 
         if ($missions === null) {
@@ -95,7 +96,11 @@ function showStage(array $stage): void
         return;
     }
 
-    $missions = $stage['kind'] === 'pest' ? runPestStage($stage) : runMutationStage($stage);
+    $missions = match ($stage['kind']) {
+        'pest' => runPestStage($stage),
+        'mutate' => runMutationStage($stage),
+        'checks' => runChecksStage($stage),
+    };
 
     printf("%s  %s\n", stageLabel($stage), summarize($missions));
 
@@ -120,7 +125,7 @@ function showStage(array $stage): void
  */
 function stageLabel(array $stage): string
 {
-    $id = str_starts_with($stage['id'], 'boss-') ? 'Boss '.mb_substr($stage['id'], 5) : 'Stage '.$stage['id'];
+    $id = str_starts_with($stage['id'], 'boss-') ? 'Boss '.mb_strtoupper(mb_substr($stage['id'], 5)) : 'Stage '.mb_strtoupper($stage['id']);
 
     $title = $stage['title'];
     $padding = max(0, 44 - mb_strwidth($title));
@@ -133,10 +138,14 @@ function stageLabel(array $stage): string
  */
 function summarize(array $missions): string
 {
-    $counted = array_values(array_filter($missions, fn (array $mission): bool => ! str_starts_with($mission['name'], '[前提]')));
+    $counted = array_values(array_filter($missions, fn (array $mission): bool => ! str_starts_with($mission['name'], '[前提]') && ! str_starts_with($mission['name'], '[セルフ]')));
     $passed = count(array_filter($counted, fn (array $mission): bool => $mission['result'] === 'passed'));
     $bar = str_repeat('■', $passed).str_repeat('□', count($counted) - $passed);
     $progress = sprintf('%s %d/%d', $bar, $passed, count($counted));
+
+    if ($counted === []) {
+        return 'セルフチェックで確かめるステージです';
+    }
 
     if ($passed === 0) {
         return $progress.'  未着手';
@@ -196,7 +205,9 @@ function readJunit(string $path): array
         $failure = $testcase->failure ?? $testcase->error;
 
         if ($failure !== null && $failure->count() > 0) {
-            $missions[] = ['name' => $name, 'result' => 'failed', 'message' => extractHint((string) $failure, $name)];
+            // node の JUnit は message 属性にきれいな文を入れるので、そちらを先に見る
+            $text = (string) ($failure['message'] ?? '')."\n".(string) $failure;
+            $missions[] = ['name' => $name, 'result' => 'failed', 'message' => extractHint($text, $name)];
         } elseif (isset($testcase->skipped)) {
             $missions[] = ['name' => $name, 'result' => 'skipped', 'message' => ''];
         } else {
@@ -221,6 +232,97 @@ function extractHint(string $failure, string $name): string
     }
 
     return 'エラー: '.mb_trim($firstLine);
+}
+
+/**
+ * 複数の種類の判定を組み合わせたステージ（フロントエンド編）を判定します。
+ * 型の検査などに時間がかかるので、結果を保存し、make map ではその結果を表示します。
+ *
+ * check の type の意味
+ * - pest:    tests/Quests の Pest の判定テスト（file）
+ * - node:    node --test で走らせる判定テスト（file）
+ * - command: コマンド（argv）の終了コードが 0 ならクリア。requires のファイルがなければ未着手
+ * - self:    画面で確かめるセルフチェックの項目（自動では判定しない）
+ *
+ * @param array<string, mixed> $stage
+ * @return list<array{name: string, result: string, message: string}>
+ */
+function runChecksStage(array $stage): array
+{
+    foreach ($stage['prepare'] ?? [] as $argv) {
+        runCommand($argv);
+    }
+
+    $missions = [];
+
+    foreach ($stage['checks'] as $check) {
+        $missions = [...$missions, ...match ($check['type']) {
+            'pest' => runPestStage($check),
+            'node' => runNodeCheck($check),
+            'command' => [runCommandCheck($check)],
+            'self' => [['name' => $check['name'], 'result' => 'skipped', 'message' => $check['hint'] ?? '']],
+        }];
+    }
+
+    cacheMissions($stage, $missions);
+
+    return $missions;
+}
+
+/**
+ * @param array<string, mixed> $check
+ * @return list<array{name: string, result: string, message: string}>
+ */
+function runNodeCheck(array $check): array
+{
+    $junit = tempnam(sys_get_temp_dir(), 'quest');
+    [, $output] = runCommand(['node', '--test', '--test-reporter=junit', '--test-reporter-destination='.$junit, $check['file']]);
+    $missions = readJunit($junit);
+    @unlink($junit);
+
+    // 練習問題のファイルを読み込めないと、テスト名がファイルのパスになり原因が分からないので、エラーの文を添える
+    if (preg_match('/(ERR_MODULE_NOT_FOUND|SyntaxError)[^\n]*/u', $output, $matches) === 1) {
+        foreach ($missions as $index => $mission) {
+            if ($mission['result'] === 'failed' && ! str_starts_with($mission['message'], 'ヒント:')) {
+                $missions[$index]['message'] = 'ヒント: ファイルを読み込めませんでした（'.$matches[0].'）。ファイルの場所と書き間違いを確かめましょう';
+            }
+        }
+    }
+
+    return $missions;
+}
+
+/**
+ * @param array<string, mixed> $check
+ * @return array{name: string, result: string, message: string}
+ */
+function runCommandCheck(array $check): array
+{
+    foreach ($check['requires'] ?? [] as $path) {
+        if (! file_exists(QUEST_ROOT.'/'.$path)) {
+            return ['name' => $check['name'], 'result' => 'skipped', 'message' => ''];
+        }
+    }
+
+    [$exit, $output] = runCommand($check['argv']);
+
+    if ($exit === 0) {
+        return ['name' => $check['name'], 'result' => 'passed', 'message' => ''];
+    }
+
+    $output = (string) preg_replace('/\e\[[0-9;]*m/', '', $output);
+    $detail = '';
+
+    // tsc と eslint の出力から、最初のエラーの行だけを取り出して添える
+    foreach (explode("\n", $output) as $line) {
+        if (preg_match('/error TS\d+|\s(error|warning)\s/u', $line) === 1) {
+            $detail = '（'.mb_trim($line).'）';
+
+            break;
+        }
+    }
+
+    return ['name' => $check['name'], 'result' => 'failed', 'message' => 'ヒント: '.$check['hint'].$detail];
 }
 
 /**
