@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="400" viewBox="0 0 720 400" font-family="Hiragino Sans, 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', 'Yu Gothic', Meiryo, sans-serif">
+<rect x="0.5" y="0.5" width="719" height="399" rx="16" fill="#FBFBFC" stroke="#E6E8EB"/>
+<rect x="80" y="28" width="240" height="36" rx="18" fill="#E9F0F9"/>
+<text x="200" y="51.5" font-size="15" font-weight="600" fill="#4A5361" text-anchor="middle">ユーザーA</text>
+<rect x="400" y="28" width="240" height="36" rx="18" fill="#E8F4ED"/>
+<text x="520" y="51.5" font-size="15" font-weight="600" fill="#4A5361" text-anchor="middle">ユーザーB</text>
+<rect x="90" y="92" width="220" height="68" rx="12" fill="#FFFFFF" stroke="#9DB8DC" stroke-width="2"/>
+<text x="200" y="122" font-size="15" fill="#4A5361" text-anchor="middle">hasCapacity()</text>
+<text x="200" y="145" font-size="14" fill="#7A828E" text-anchor="middle">残り1席</text>
+<path d="M200 168 L200 200 M206 192 L200 200 L194 192" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="90" y="208" width="220" height="48" rx="12" fill="#FFFFFF" stroke="#9DB8DC" stroke-width="2"/>
+<text x="200" y="237.5" font-size="15" fill="#4A5361" text-anchor="middle">Attendance::create()</text>
+<rect x="410" y="92" width="220" height="68" rx="12" fill="#FFFFFF" stroke="#9DCBB0" stroke-width="2"/>
+<text x="520" y="122" font-size="15" fill="#4A5361" text-anchor="middle">hasCapacity()</text>
+<text x="520" y="145" font-size="14" fill="#7A828E" text-anchor="middle">残り1席</text>
+<path d="M520 168 L520 200 M526 192 L520 200 L514 192" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="410" y="208" width="220" height="48" rx="12" fill="#FFFFFF" stroke="#9DCBB0" stroke-width="2"/>
+<text x="520" y="237.5" font-size="15" fill="#4A5361" text-anchor="middle">Attendance::create()</text>
+<path d="M200 264 L200 308 M206 300 L200 308 L194 300" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M520 264 L520 308 M526 300 L520 308 L514 300" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="90" y="316" width="540" height="48" rx="12" fill="#F8EEE4" stroke="#E3BC94" stroke-width="2"/>
+<text x="360" y="345.5" font-size="15" font-weight="600" fill="#4A5361" text-anchor="middle">定員1の講座に2人が登録される</text>
+</svg>

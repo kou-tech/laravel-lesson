@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="244" viewBox="0 0 960 244" font-family="Hiragino Sans, 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', 'Yu Gothic', Meiryo, sans-serif">
+<rect x="0.5" y="0.5" width="959" height="243" rx="16" fill="#FBFBFC" stroke="#E6E8EB"/>
+<rect x="40" y="28" width="410" height="36" rx="18" fill="#F8EEE4"/>
+<text x="60" y="51.5" font-size="15" font-weight="600" fill="#4A5361">認証のみ</text>
+<rect x="40" y="88" width="180" height="120" rx="10" fill="#FFFFFF" stroke="#C9CDD3" stroke-width="2"/>
+<text x="130" y="153" font-size="15" fill="#4A5361" text-anchor="middle">ログイン中のユーザー</text>
+<rect x="330" y="88" width="120" height="44" rx="10" fill="#FFFFFF" stroke="#C9CDD3" stroke-width="2"/>
+<text x="390" y="115" font-size="15" fill="#4A5361" text-anchor="middle">自分の情報</text>
+<path d="M228 110 H322" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M314 104 l8 6 l-8 6" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="275" y="100" font-size="13" fill="#7A828E" text-anchor="middle">編集できる</text>
+<rect x="330" y="164" width="120" height="44" rx="10" fill="#F8EEE4" stroke="#E3BC94" stroke-width="2"/>
+<text x="390" y="191" font-size="15" fill="#4A5361" text-anchor="middle">他人の情報</text>
+<path d="M228 186 H322" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M314 180 l8 6 l-8 6" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="275" y="176" font-size="13" fill="#7A828E" text-anchor="middle">編集できる</text>
+<rect x="510" y="28" width="410" height="36" rx="18" fill="#E8F4ED"/>
+<text x="530" y="51.5" font-size="15" font-weight="600" fill="#4A5361">認証 + 認可</text>
+<rect x="510" y="88" width="180" height="120" rx="10" fill="#FFFFFF" stroke="#C9CDD3" stroke-width="2"/>
+<text x="600" y="153" font-size="15" fill="#4A5361" text-anchor="middle">ログイン中のユーザー</text>
+<rect x="800" y="88" width="120" height="44" rx="10" fill="#FFFFFF" stroke="#C9CDD3" stroke-width="2"/>
+<text x="860" y="115" font-size="15" fill="#4A5361" text-anchor="middle">自分の情報</text>
+<path d="M698 110 H792" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M784 104 l8 6 l-8 6" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="745" y="100" font-size="13" fill="#7A828E" text-anchor="middle">編集できる</text>
+<rect x="800" y="164" width="120" height="44" rx="10" fill="#FFFFFF" stroke="#C9CDD3" stroke-width="2" stroke-dasharray="5 4"/>
+<text x="860" y="191" font-size="15" fill="#7A828E" text-anchor="middle">他人の情報</text>
+<path d="M698 186 H792" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="2 6"/>
+<text x="745" y="176" font-size="13" fill="#7A828E" text-anchor="middle">編集できない</text>
+</svg>

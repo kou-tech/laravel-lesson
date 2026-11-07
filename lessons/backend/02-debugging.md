@@ -1,0 +1,277 @@
+# Lesson 2 デバッグ手法を身につける
+
+## 学習目標
+
+このレッスンでは、Laravelでのデバッグ手法を習得し、問題解決能力を高めます。
+手順に沿って実装し、完了したコードと練習問題の回答を含めたプルリクエストを作成しましょう。
+
+### 到達目標
+- `Log` ファサードを使ってログを出力できる
+- ログレベルを使い分けられる
+- ログを確認して問題の原因を特定できる
+
+
+## なぜデバッグスキルが重要か？
+
+開発中に「なぜ動かないのか分からない」という状況は頻繁に発生します。
+効率的なデバッグスキルを身につけて、対応できるようにしましょう。
+
+- 問題の原因を素早く特定できる
+- 変数の中身を確認して期待通りの値か検証できる
+- 処理の流れを追跡してどこで問題が起きているか把握できる
+
+
+## デバッグツールの使い分け
+
+Laravelには複数のデバッグ手法があります。状況に応じて使い分けましょう。
+
+
+## Step 1 準備 - DebugControllerを作成する
+
+このレッスンでは、デバッグ手法を試すための「使い捨てコントローラー」として `DebugController` を用意します。
+
+まず、テストデータが入っていない場合は `make fresh` を実行して、データベースの初期化とテストデータの投入を行ってください。
+
+> Controllerの詳しい説明は [Lesson 4](./04-user-api.md) で学びます。`DebugController` はLesson 2専用の練習用コントローラーなので、Lesson 2 完了後はそのまま残しておいても、削除しても構いません。
+
+### 1. Controllerを生成する
+
+`make app` でコンテナに入ってから、以下のコマンドを実行します。
+
+```bash
+php artisan make:controller Api/DebugController
+```
+
+### 2. DebugControllerを編集する
+
+`app/Http/Controllers/Api/DebugController.php` を以下の内容に書き換えます。
+
+```php
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Models\User;
+
+class DebugController extends Controller
+{
+    public function index()
+    {
+        return User::all();
+    }
+
+    public function show(User $user)
+    {
+        return $user;
+    }
+}
+```
+
+### 3. ルートを追加する
+
+`routes/api.php` に以下を追加します。
+
+```php
+Route::get('/debug/users', [\App\Http\Controllers\Api\DebugController::class, 'index']);
+Route::get('/debug/users/{user}', [\App\Http\Controllers\Api\DebugController::class, 'show']);
+```
+
+### 4. Postmanで動作確認
+
+Postmanのコレクション内の以下のリクエストで確認します。
+
+- `api > debug > ユーザー一覧（デバッグ用）`（GET）— `/api/debug/users`
+- `api > debug > ユーザー詳細（デバッグ用）`（GET）— `/api/debug/users/:userId`（`Path Variables` の `userId` に初期値 `1` が設定済み）
+
+ユーザーデータが返ってくれば準備完了です。
+
+
+## Step 2 Log ファサードを使う
+
+### なぜログを使うのか？
+
+`dd()` や `dump()` は便利ですが、以下の問題があります。
+
+- 処理が止まる/遅くなる
+- APIのレスポンスが壊れる
+
+`Log` ファサードを使えば、ログファイルに出力するため、これらの問題を回避できます。
+
+### 基本的な使い方
+
+`DebugController` にログ出力を追加してみましょう。
+
+```php
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Models\User;
+use Illuminate\Support\Facades\Log;
+
+class DebugController extends Controller
+{
+    public function index()
+    {
+        return User::all();
+    }
+
+    public function show(User $user)
+    {
+        Log::info('DebugController@show が呼ばれました', [
+            'user_id' => $user->id,
+            'user_name' => $user->name,
+        ]);
+
+        return $user;
+    }
+}
+```
+
+> `index()` は Step 1 で作ったものをそのまま残しています（練習問題1で使います）。変更点は `use Illuminate\Support\Facades\Log;` の追加と、`show()` 内のログ出力の2箇所だけです。
+
+### ログの確認
+
+ログは `storage/logs/laravel.log` に出力されます。コンテナ内（`make app`）で確認しましょう。
+
+```bash
+tail -f storage/logs/laravel.log
+```
+
+APIを呼び出すと、以下のようなログが出力されます。
+
+```
+[2025-01-01 12:00:00] local.INFO: DebugController@show が呼ばれました {"user_id":1,"user_name":"テストユーザー"}
+```
+
+### ログレベル
+
+Logファサードには複数のログレベルがあります。
+
+#### 使い分けの目安
+
+| レベル | 用途例 |
+|--------|--------|
+| `error` | 例外が発生した、処理が失敗した |
+| `warning` | 想定外の値だが処理は継続できる |
+| `info` | 処理の開始/終了、重要な操作のログ |
+| `debug` | 開発時のデバッグ情報（本番では出力しない） |
+
+#### .env でログレベルを制御
+
+`.env` ファイルで `LOG_LEVEL` を設定すると、そのレベル以上のログのみが出力されます。
+
+```env
+# 開発環境
+LOG_LEVEL=debug
+
+# 本番環境（debugは出力しない）
+LOG_LEVEL=info
+```
+
+## Step 3 実践 - デバッグしてみよう
+
+### 課題: 意図的にエラーを起こしてデバッグする
+
+以下のようなバグを仕込んだコードを作成してみましょう。
+
+```php
+public function show(User $user)
+{
+    // 意図的なバグ: 存在しないプロパティにアクセス
+    $fullName = $user->full_name;
+
+    Log::debug('取得したフルネーム', ['full_name' => $fullName]);
+
+    return $user;
+}
+```
+
+### デバッグの手順
+
+1. APIを呼び出す
+2. ログを確認する
+   ```bash
+   tail -f storage/logs/laravel.log
+   ```
+3. ログの内容から問題を特定する
+   - `full_name` の値が `null` になっていないか確認する
+   - User モデルに `full_name` プロパティが存在するか確認する
+
+4. 問題を特定して修正する
+   - `full_name` は User モデルに存在しない
+   - `name` プロパティを使うか、アクセサを追加する
+
+
+## 練習問題
+
+### 問題1
+`DebugController@index`（`/api/debug/users`）に、取得したユーザー数をログ出力する処理を追加してください。
+
+<details>
+<summary>解答例</summary>
+
+```php
+public function index()
+{
+    $users = User::all();
+
+    Log::info('ユーザー一覧を取得しました', [
+        'count' => $users->count(),
+    ]);
+
+    return $users;
+}
+```
+</details>
+
+### 問題2
+`DebugController@show`（`/api/debug/users/{user}`）で、存在しないユーザーIDが指定された場合に `warning` レベルのログを出力する処理を追加してください。ログには指定されたIDを含めてください。
+
+> ヒント: Route Model Bindingを使っている場合、存在しないIDでは自動的に404が返ります。`User::find()` を使う方法に変えると、自分でハンドリングできます。
+
+<details>
+<summary>解答例</summary>
+
+```php
+public function show(int $id)
+{
+    $user = User::find($id);
+
+    if ($user === null) {
+        Log::warning('存在しないユーザーIDが指定されました', [
+            'user_id' => $id,
+        ]);
+
+        return response()->json(['message' => 'ユーザーが見つかりません'], 404);
+    }
+
+    return $user;
+}
+```
+
+ルートの `{user}` と引数名の `$id` は名前が違いますが、ルートの値は前から順に引数へ渡されるので、このままでも動きます。名前をそろえたい場合は、`routes/api.php` のルートを `/debug/users/{id}` に書き換えてください。
+</details>
+
+
+## 応用 Laravel Telescope
+
+> このセクションは応用です。スキップしても以降のレッスンに影響はありません。
+
+Laravel Telescope は、Laravelアプリケーションのデバッグ用ダッシュボードです。
+リクエスト/レスポンス、実行されたクエリ、例外、ログなどをブラウザ上で確認できます。
+
+`http://localhost:8000/telescope` にアクセスするとダッシュボードが開きます。
+
+詳しくは [Laravel 公式ドキュメント - Telescope](https://laravel.com/docs/telescope) を参照してください。
+
+
+## 参考資料
+
+- [Laravel 公式ドキュメント - Logging](https://laravel.com/docs/logging)
+
+## 次のレッスン
+
+[Lesson 3 API設計の基本](./03-api-design.md) では、RESTful APIの設計原則について学びます。

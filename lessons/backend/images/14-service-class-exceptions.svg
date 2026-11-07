@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="452" viewBox="0 0 960 452" font-family="Hiragino Sans, 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', 'Yu Gothic', Meiryo, sans-serif">
+<rect x="0.5" y="0.5" width="959" height="451" rx="16" fill="#FBFBFC" stroke="#E6E8EB"/>
+<rect x="400" y="32" width="160" height="48" rx="12" fill="#FFFFFF" stroke="#C9CDD3" stroke-width="2"/>
+<text x="480" y="61.5" font-size="15" fill="#4A5361" text-anchor="middle">Exception</text>
+<rect x="300" y="124" width="360" height="160" rx="12" fill="#FFFFFF" stroke="#9DB8DC" stroke-width="2"/>
+<path d="M312 124 H648 A12 12 0 0 1 660 136 V188 H300 V136 A12 12 0 0 1 312 124 Z" fill="#E9F0F9"/>
+<rect x="300" y="124" width="360" height="160" rx="12" fill="none" stroke="#9DB8DC" stroke-width="2"/>
+<text x="480" y="150" font-size="13" fill="#7A828E" text-anchor="middle">abstract</text>
+<text x="480" y="172" font-size="15" font-weight="600" fill="#4A5361" text-anchor="middle">BusinessException</text>
+<text x="328" y="218" font-size="15" fill="#4A5361">protected int $statusCode</text>
+<text x="328" y="244" font-size="15" fill="#4A5361">render(): JsonResponse</text>
+<text x="328" y="270" font-size="15" fill="#4A5361">abstract getErrorCode(): string</text>
+<path d="M480 120 L480 84 M474 92 L480 84 L486 92" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="36" y="340" width="276" height="80" rx="12" fill="#FFFFFF" stroke="#9DCBB0" stroke-width="2"/>
+<text x="174" y="372" font-size="15" font-weight="600" fill="#4A5361" text-anchor="middle">DuplicateCourseTitleException</text>
+<text x="174" y="400" font-size="15" fill="#7A828E" text-anchor="middle">getErrorCode(): string</text>
+<line x1="174" y1="336" x2="174" y2="312" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round"/>
+<rect x="342" y="340" width="276" height="80" rx="12" fill="#FFFFFF" stroke="#9DCBB0" stroke-width="2"/>
+<text x="480" y="372" font-size="15" font-weight="600" fill="#4A5361" text-anchor="middle">CourseLimitExceededException</text>
+<text x="480" y="400" font-size="15" fill="#7A828E" text-anchor="middle">getErrorCode(): string</text>
+<line x1="480" y1="336" x2="480" y2="312" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round"/>
+<rect x="648" y="340" width="276" height="80" rx="12" fill="#FFFFFF" stroke="#9DCBB0" stroke-width="2"/>
+<text x="786" y="372" font-size="15" font-weight="600" fill="#4A5361" text-anchor="middle">CourseHasAttendancesException</text>
+<text x="786" y="400" font-size="15" fill="#7A828E" text-anchor="middle">getErrorCode(): string</text>
+<line x1="786" y1="336" x2="786" y2="312" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round"/>
+<line x1="174" y1="312" x2="786" y2="312" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round"/>
+<path d="M480 312 L480 288 M474 296 L480 288 L486 296" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

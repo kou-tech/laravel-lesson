@@ -26,33 +26,7 @@
 - コンポーネントも、小さな部品を組み合わせて画面を作ります
 - 一度作ったパーツは、別の場所でも再利用できます
 
-```mermaid
-graph TB
-    subgraph "Webページ全体"
-        Header[ヘッダー]
-        Main[メインコンテンツ]
-        Footer[フッター]
-    end
-
-    subgraph "ヘッダーの中身"
-        Logo[ロゴ]
-        Nav[ナビゲーション]
-        Button1[ログインボタン]
-    end
-
-    subgraph "メインコンテンツの中身"
-        Card1[商品カード1]
-        Card2[商品カード2]
-        Card3[商品カード3]
-    end
-
-    Header --> Logo
-    Header --> Nav
-    Header --> Button1
-    Main --> Card1
-    Main --> Card2
-    Main --> Card3
-```
+![Webページ全体をヘッダー・メインコンテンツ・フッターに分け、さらに中の部品に分けた図](./images/01-component-page-parts.svg)
 
 ## なぜコンポーネント設計が大切なのか
 
@@ -132,19 +106,7 @@ Atomic Design（アトミックデザイン） は、コンポーネントを5�
 
 ### 5つの段階
 
-```mermaid
-graph LR
-    A[Atoms<br/>原子] --> M[Molecules<br/>分子]
-    M --> O[Organisms<br/>有機体]
-    O --> T[Templates<br/>テンプレート]
-    T --> P[Pages<br/>ページ]
-
-    style A fill:#e1f5fe
-    style M fill:#b3e5fc
-    style O fill:#81d4fa
-    style T fill:#4fc3f7
-    style P fill:#29b6f6
-```
+![Atoms から Pages までの5つの段階](./images/01-component-atomic-stages.svg)
 
 | 段階 | 英語名 | 説明 | 例 |
 |------|--------|------|-----|
@@ -156,22 +118,7 @@ graph LR
 
 ### 具体例：検索フォームの分解
 
-```mermaid
-graph TB
-    subgraph "Molecule（分子）: 検索フォーム"
-        SF[SearchForm]
-    end
-
-    subgraph "Atoms（原子）"
-        Input[TextInput<br/>入力欄]
-        Button[Button<br/>検索ボタン]
-        Icon[SearchIcon<br/>虫眼鏡アイコン]
-    end
-
-    SF --> Input
-    SF --> Button
-    SF --> Icon
-```
+![検索フォーム（分子）が入力欄・検索ボタン・虫眼鏡アイコン（原子）でできている図](./images/01-component-search-form.svg)
 
 ### Atomic Design の注意点
 
@@ -224,16 +171,7 @@ src/
 
 ### コロケーションの図解
 
-```mermaid
-graph TB
-    subgraph "コロケーション"
-        direction TB
-        BF[Button/]
-        BF --> BJ[Button.jsx]
-        BF --> BC[Button.css]
-        BF --> BT[Button.test.js]
-    end
-```
+![Button フォルダに Button.jsx・Button.css・Button.test.js をまとめた図](./images/01-component-colocation.svg)
 
 ## よくある設計のヒント
 
@@ -241,23 +179,7 @@ graph TB
 
 複雑な画面を作るときは、まず小さな部品に分けて考えましょう。
 
-```mermaid
-graph TD
-    A[複雑な画面] --> B[ヘッダー]
-    A --> C[サイドバー]
-    A --> D[メインコンテンツ]
-    A --> E[フッター]
-
-    D --> D1[検索フォーム]
-    D --> D2[フィルター]
-    D --> D3[商品一覧]
-
-    D3 --> D3a[商品カード]
-    D3a --> D3a1[商品画像]
-    D3a --> D3a2[商品名]
-    D3a --> D3a3[価格]
-    D3a --> D3a4[購入ボタン]
-```
+![複雑な画面を部品に分けていき、商品カードの中身まで分割した図](./images/01-component-split-screen.svg)
 
 ### 2. ひとつのコンポーネントには「ひとつの役割」
 
@@ -268,12 +190,7 @@ graph TD
 
 Reactでは、データは基本的に「親コンポーネント → 子コンポーネント」へ流れます。
 
-```mermaid
-graph TD
-    P[親: App] -->|title, description| C1[子: Card]
-    P -->|title, description| C2[子: Card]
-    P -->|title, description| C3[子: Card]
-```
+![親の App から子の Card へ title と description を渡す図](./images/01-component-props-flow.svg)
 
 ### 4. 共通で使うものは汎用的に作る
 

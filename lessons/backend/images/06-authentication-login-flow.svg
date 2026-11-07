@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="492" viewBox="0 0 960 492" font-family="Hiragino Sans, 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', 'Yu Gothic', Meiryo, sans-serif">
+<rect x="0.5" y="0.5" width="959" height="491" rx="16" fill="#FBFBFC" stroke="#E6E8EB"/>
+<rect x="40" y="244" width="880" height="108" rx="12" fill="#E8F4ED"/>
+<text x="58" y="268" font-size="13" font-weight="600" fill="#4A5361">認証成功</text>
+<rect x="40" y="368" width="880" height="76" rx="12" fill="#F8EEE4"/>
+<text x="58" y="392" font-size="13" font-weight="600" fill="#4A5361">認証失敗</text>
+<line x1="150" y1="72" x2="150" y2="460" stroke="#C9CDD3" stroke-width="2" stroke-dasharray="2 6" stroke-linecap="round"/>
+<line x1="383" y1="72" x2="383" y2="460" stroke="#C9CDD3" stroke-width="2" stroke-dasharray="2 6" stroke-linecap="round"/>
+<line x1="617" y1="72" x2="617" y2="460" stroke="#C9CDD3" stroke-width="2" stroke-dasharray="2 6" stroke-linecap="round"/>
+<line x1="850" y1="72" x2="850" y2="460" stroke="#C9CDD3" stroke-width="2" stroke-dasharray="2 6" stroke-linecap="round"/>
+<rect x="70" y="28" width="160" height="44" rx="10" fill="#FFFFFF" stroke="#9DB8DC" stroke-width="2"/>
+<text x="150" y="55" font-size="15" fill="#4A5361" text-anchor="middle">ユーザー</text>
+<rect x="303" y="28" width="160" height="44" rx="10" fill="#FFFFFF" stroke="#9DB8DC" stroke-width="2"/>
+<text x="383" y="55" font-size="15" fill="#4A5361" text-anchor="middle">フロントエンド</text>
+<rect x="537" y="28" width="160" height="44" rx="10" fill="#FFFFFF" stroke="#9DB8DC" stroke-width="2"/>
+<text x="617" y="55" font-size="15" fill="#4A5361" text-anchor="middle">Fortify</text>
+<rect x="770" y="28" width="160" height="44" rx="10" fill="#FFFFFF" stroke="#9DB8DC" stroke-width="2"/>
+<text x="850" y="55" font-size="15" fill="#4A5361" text-anchor="middle">データベース</text>
+<path d="M156 124 H377" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M369 118 l8 6 l-8 6" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="266.5" y="113" font-size="15" fill="#4A5361" text-anchor="middle">email, password を入力</text>
+<path d="M389 176 H611" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M603 170 l8 6 l-8 6" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="500.0" y="165" font-size="15" fill="#4A5361" text-anchor="middle">POST /login</text>
+<path d="M623 228 H844" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M836 222 l8 6 l-8 6" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="733.5" y="217" font-size="15" fill="#4A5361" text-anchor="middle">ユーザー検索・パスワード照合</text>
+<path d="M844 296 H623" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M631 290 l-8 6 l8 6" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="733.5" y="285" font-size="15" fill="#4A5361" text-anchor="middle">ユーザー情報</text>
+<path d="M611 336 H389" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M397 330 l-8 6 l8 6" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="500.0" y="325" font-size="15" fill="#4A5361" text-anchor="middle">セッション発行・リダイレクト</text>
+<path d="M611 428 H389" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M397 422 l-8 6 l8 6" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="500.0" y="417" font-size="15" fill="#4A5361" text-anchor="middle">エラーメッセージ</text>
+</svg>

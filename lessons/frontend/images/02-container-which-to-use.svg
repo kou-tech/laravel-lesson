@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="292" viewBox="0 0 960 292" font-family="Hiragino Sans, 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', 'Yu Gothic', Meiryo, sans-serif">
+<rect x="0.5" y="0.5" width="959" height="291" rx="16" fill="#FBFBFC" stroke="#E6E8EB"/>
+<rect x="380" y="28" width="200" height="48" rx="10" fill="#FFFFFF" stroke="#C9CDD3" stroke-width="2"/>
+<text x="480" y="57.4" font-size="15" font-weight="600" fill="#4A5361" text-anchor="middle">どちらを使う？</text>
+<path d="M480 76 L480 100" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M180 100 L780 100" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M180 100 L180 114" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="180" y="140" font-size="15" fill="#4A5361" text-anchor="middle">データ取得ロジックを</text>
+<text x="180" y="162" font-size="15" fill="#4A5361" text-anchor="middle">複数箇所で使い回したい</text>
+<path d="M180 178 L180 206 M174 198 L180 206 L186 198" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="50" y="212" width="260" height="52" rx="10" fill="#F0F1F3" stroke="#C9CDD3" stroke-width="2"/>
+<text x="180" y="243.4" font-size="15" font-weight="600" fill="#4A5361" text-anchor="middle">Custom Hooks</text>
+<path d="M480 100 L480 114" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="480" y="140" font-size="15" fill="#4A5361" text-anchor="middle">見た目を様々な</text>
+<text x="480" y="162" font-size="15" fill="#4A5361" text-anchor="middle">データソースで使い回したい</text>
+<path d="M480 178 L480 206 M474 198 L480 206 L486 198" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="350" y="212" width="260" height="52" rx="10" fill="#F0F1F3" stroke="#C9CDD3" stroke-width="2"/>
+<text x="480" y="243.4" font-size="15" font-weight="600" fill="#4A5361" text-anchor="middle">Container/Presentational</text>
+<path d="M780 100 L780 114" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="780" y="151" font-size="15" fill="#4A5361" text-anchor="middle">シンプルな機能</text>
+<path d="M780 178 L780 206 M774 198 L780 206 L786 198" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="650" y="212" width="260" height="52" rx="10" fill="#F0F1F3" stroke="#C9CDD3" stroke-width="2"/>
+<text x="780" y="243.4" font-size="15" font-weight="600" fill="#4A5361" text-anchor="middle">分けなくてもOK</text>
+</svg>

@@ -75,6 +75,7 @@ code .
 
 - アプリ: http://localhost:8000
 - Vite (HMR): http://localhost:5173
+- Mailpit（開発用のメール確認画面）: http://localhost:8025
 
 ## よく使うコマンド
 
@@ -91,4 +92,23 @@ code .
 | `make test` | テスト実行 |
 | `make lint` | ESLint |
 | `make format` | Pint + Prettier |
+| `make boss-2` | ボス戦2の題材のコードを用意する |
 | `make help` | コマンド一覧 |
+
+## 教材が更新されたとき
+
+レッスンの本文や判定用のファイルは `main` ブランチで更新されます。自分の作業ブランチに取り込むには、作業中の変更をコミットしてから、次を実行してください。
+
+```bash
+git fetch origin
+git merge origin/main
+```
+
+Docker の設定（`docker/app/Dockerfile`）が変わったときは、取り込んだあとにイメージを作り直します。
+
+```bash
+make build
+make restart
+```
+
+テストの実行で「No code coverage driver is available.」と表示される場合は、イメージが古いままです。上の手順で作り直してください。

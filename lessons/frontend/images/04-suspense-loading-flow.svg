@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="368" viewBox="0 0 720 368" font-family="Hiragino Sans, 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', 'Yu Gothic', Meiryo, sans-serif">
+<rect x="0.5" y="0.5" width="719" height="367" rx="16" fill="#FBFBFC" stroke="#E6E8EB"/>
+<rect x="60.0" y="28" width="140" height="36" rx="18" fill="#F0F1F3"/>
+<text x="130.0" y="51.5" font-size="15" font-weight="600" fill="#4A5361" text-anchor="middle">ユーザー</text>
+<line x1="130" y1="72" x2="130" y2="340" stroke="#E1E4E8" stroke-width="2" stroke-linecap="round"/>
+<rect x="290.0" y="28" width="140" height="36" rx="18" fill="#F0F1F3"/>
+<text x="360.0" y="51.5" font-size="15" font-weight="600" fill="#4A5361" text-anchor="middle">アプリ</text>
+<line x1="360" y1="72" x2="360" y2="340" stroke="#E1E4E8" stroke-width="2" stroke-linecap="round"/>
+<rect x="520.0" y="28" width="140" height="36" rx="18" fill="#F0F1F3"/>
+<text x="590.0" y="51.5" font-size="15" font-weight="600" fill="#4A5361" text-anchor="middle">サーバー</text>
+<line x1="590" y1="72" x2="590" y2="340" stroke="#E1E4E8" stroke-width="2" stroke-linecap="round"/>
+<path d="M134 112 H355" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round"/>
+<path d="M347 106 l8 6 l-8 6" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="245.0" y="101" font-size="15" fill="#4A5361" text-anchor="middle" stroke="#FBFBFC" stroke-width="8" stroke-linejoin="round" paint-order="stroke">動画を見たい</text>
+<path d="M364 162 H585" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round"/>
+<path d="M577 156 l8 6 l-8 6" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="475.0" y="151" font-size="15" fill="#4A5361" text-anchor="middle" stroke="#FBFBFC" stroke-width="8" stroke-linejoin="round" paint-order="stroke">動画データを要求</text>
+<rect x="245.0" y="184" width="230" height="44" rx="10" fill="#E9F0F9" stroke="#9DB8DC" stroke-width="2"/>
+<text x="360.0" y="210.95" font-size="15" fill="#4A5361" text-anchor="middle">読み込み中（くるくる表示）</text>
+<path d="M586 266 H365" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-dasharray="6 6"/>
+<path d="M373 260 l-8 6 l8 6" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="475.0" y="255" font-size="15" fill="#4A5361" text-anchor="middle" stroke="#FBFBFC" stroke-width="8" stroke-linejoin="round" paint-order="stroke">動画データ</text>
+<path d="M356 316 H135" fill="none" stroke="#9DB8DC" stroke-width="2" stroke-linecap="round" stroke-dasharray="6 6"/>
+<path d="M143 310 l-8 6 l8 6" fill="none" stroke="#9DB8DC" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="245.0" y="305" font-size="15" font-weight="600" fill="#4A5361" text-anchor="middle" stroke="#FBFBFC" stroke-width="8" stroke-linejoin="round" paint-order="stroke">動画を再生</text>
+</svg>

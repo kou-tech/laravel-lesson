@@ -1,0 +1,277 @@
+# Lesson 6 認証の仕組みを理解する
+
+## 学習目標
+
+このレッスンでは、Fortifyの仕組みを理解し、認証フローを把握します。
+
+### 到達目標
+- Laravel Fortifyの役割を理解する
+- 認証の流れ（ログイン/ログアウト）を把握する
+- ミドルウェア（`auth`）の動作を理解する
+- 認証済みユーザーのみアクセス可能なAPIを作成できる
+
+
+## 認証とは
+
+認証（Authentication）とは、「このユーザーは本当に本人か？」を確認するプロセスです。
+
+- ログイン時にメールアドレスとパスワードを入力
+- システムがパスワードを照合
+- 正しければ「認証済み」としてセッションを発行
+
+次のレッスンで学ぶ認可（Authorization）とは異なります。
+
+| 概念 | 質問 | 例 |
+|------|------|-----|
+| 認証 | この人は誰？ | ログイン処理 |
+| 認可 | この人は何ができる？ | 管理者のみアクセス可能 |
+
+
+## Laravel Fortifyとは
+
+### Fortifyの役割
+
+Laravel Fortify は、認証機能のバックエンド実装を提供するパッケージです。
+
+提供する機能
+- ログイン / ログアウト
+- ユーザー登録
+- パスワードリセット
+- メール確認
+- 2要素認証
+- パスキー（このプロジェクトの `config/fortify.php` では有効にしていません）
+
+FortifyはフロントエンドのUIを提供しません。UIは別途実装する必要があります（このプロジェクトではInertia + Reactで実装済み）。
+
+
+## Step 1 認証の流れを理解する
+
+### ログインの流れ
+
+![ログインの流れ](./images/06-authentication-login-flow.svg)
+
+
+## Step 2 authミドルウェアを理解する
+
+### ミドルウェアとは
+
+ミドルウェアは、リクエストがコントローラーに到達する前に実行される処理です。
+
+![リクエストがミドルウェアを通ってコントローラーに届く流れ](./images/06-authentication-middleware.svg)
+
+### authミドルウェア
+
+`auth` ミドルウェアは、認証済みのユーザーのみアクセスを許可します。
+
+未認証の場合
+- Webリクエスト → ログイン画面にリダイレクト
+- APIリクエスト → 401 Unauthorized エラー
+
+### ルートへの適用
+
+```php
+// routes/web.php
+Route::get('/dashboard', function () {
+    return Inertia::render('dashboard');
+})->middleware(['auth', 'verified']);
+```
+
+- `auth`: 認証済みユーザーのみ
+- `verified`: メール確認済みユーザーのみ
+
+
+## Step 3 認証が必要なAPIを作成する
+
+### 認証済みユーザーの情報を返すAPI
+
+`routes/api.php` に以下を追加します。
+
+> ここで出てくる `auth:sanctum` は「Sanctum の仕組みで認証済みかをチェックするミドルウェア」です。いまは「APIで認証を required にするときの決まり文句」と捉えて構いません。Sanctum が何をしているかは Step 4 で説明します。
+
+```php
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\UserController;
+
+// 認証不要（公開API）の GET /users/{user} は Lesson 4 で追加済みなので、ここには書かない
+
+// 認証必要（要ログイン）
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/me', [\App\Http\Controllers\Api\UserController::class, 'me']);
+});
+```
+
+### Controllerにメソッドを追加
+
+`app/Http/Controllers/Api/UserController.php` に `me()` を追記します。Lesson 4・5 で作った `index()` / `show()` / `update()` はそのまま残してください。
+
+```php
+    /**
+     * 認証済みユーザー自身の情報を返す
+     */
+    public function me(Request $request): UserResource
+    {
+        // $request->user() で認証済みユーザーを取得
+        return new UserResource($request->user());
+    }
+```
+
+`me()` で使う `Illuminate\Http\Request` の `use` は、ファイルの先頭に追加してください。Lesson 5 で `update()` の引数を `UpdateRequest` に変えたあと Pint を実行すると、使われなくなった `use Illuminate\Http\Request;` は消えています。まだ残っている場合は、二重に書かないでください。
+
+### 動作確認
+
+未認証でアクセスした場合
+
+Postmanのコレクション内の `api > me > 認証済みユーザー取得` を送信してください。
+
+```json
+{
+    "message": "Unauthenticated."
+}
+```
+
+401エラーが返ります。
+
+`Accept: application/json` ヘッダーがないと、ログイン画面へリダイレクトされるため注意してください。コレクションには設定済みです。
+
+### ログイン/ログアウトを試す
+
+Postmanのコレクション内の以下のリクエストを順番に実行してください。
+
+1. `login > ログイン` — セッションが発行される
+2. `api > me > 認証済みユーザー取得` — ユーザー情報が返る
+3. `logout > ログアウト` — セッションが破棄される
+
+> 補足
+> - `login > ログイン` の Body には `{"email": "test@example.com", "password": "password"}` が事前設定されています。別のアカウントで試す場合は `Body > raw (JSON)` を書き換えてください。
+> - `logout > ログアウト` は Body 不要です。
+
+
+## Step 4 Sanctumについて
+
+### Sanctumとは
+
+Laravel Sanctumは、API認証のためのパッケージです。
+
+2つの認証方式を提供します。
+1. SPAセッション認証: 同一ドメインのSPAからのリクエストを処理
+2. APIトークン認証: モバイルアプリや外部サービスからのリクエストを処理
+
+このプロジェクトでは、InertiaがSPAとして動作するため、主にセッション認証を使います。
+
+### auth:sanctum ミドルウェア
+
+```php
+Route::middleware('auth:sanctum')->group(function () {
+    // このグループ内はSanctumで認証
+});
+```
+
+このミドルウェアはセッション認証（SPA用）とトークン認証（API用）の両方に対応しています。
+
+
+## Guard と Provider
+
+### 概念の理解
+
+Laravelの認証システムは、Guard と Provider で構成されています。
+
+```
+Guard: 認証状態の管理方法を決める
+  - session: セッションで認証状態を保持
+  - token: トークンで認証
+
+Provider: ユーザー情報の取得方法を決める
+  - database: DBから直接取得
+  - eloquent: Eloquentモデル経由で取得
+```
+
+### 設定ファイル
+
+`config/auth.php` で設定されています。
+
+```php
+'guards' => [
+    'web' => [
+        'driver' => 'session',
+        'provider' => 'users',
+    ],
+],
+
+'providers' => [
+    'users' => [
+        'driver' => 'eloquent',
+        'model' => env('AUTH_MODEL', App\Models\User::class),
+    ],
+],
+```
+
+`model` は `.env` の `AUTH_MODEL` で差し替えられ、未設定なら `App\Models\User` が使われます。通常、この設定を変更する必要はありません。
+
+
+## 練習問題
+
+> 動作確認用に Postman コレクションへ以下のリクエストを用意しています。
+> - 問題1: `api > me > 認証済みユーザー更新`（PATCH、Body に `{"name":"更新後の名前"}` 事前設定）
+> - 問題2: 既存の `api > me > 認証済みユーザー取得`（GET）でログ出力を確認
+
+### 問題1
+認証済みユーザーの `name` を更新する `PATCH /api/me` エンドポイントを作成してください。
+
+<details>
+<summary>解答例</summary>
+
+ルート定義（`routes/api.php`）
+
+```php
+Route::middleware('auth:sanctum')->group(function () {
+    Route::patch('/me', [UserController::class, 'updateMe']);
+});
+```
+
+コントローラー
+
+```php
+public function updateMe(Request $request): UserResource
+{
+    $validated = $request->validate([
+        'name' => ['required', 'string', 'max:255'],
+    ]);
+
+    $request->user()->update($validated);
+
+    return new UserResource($request->user());
+}
+```
+</details>
+
+### 問題2
+`me` メソッドにログ出力を追加し、認証済みユーザーが自身の情報を取得したことを記録してください。
+
+<details>
+<summary>解答例</summary>
+
+```php
+use Illuminate\Support\Facades\Log;
+
+public function me(Request $request): UserResource
+{
+    Log::info('認証済みユーザーが自身の情報を取得しました', [
+        'user_id' => $request->user()->id,
+    ]);
+
+    return new UserResource($request->user());
+}
+```
+</details>
+
+
+## 参考資料
+
+- [Laravel 公式ドキュメント - Authentication](https://laravel.com/docs/authentication)
+- [Laravel 公式ドキュメント - Fortify](https://laravel.com/docs/fortify)
+- [Laravel 公式ドキュメント - Sanctum](https://laravel.com/docs/sanctum)
+
+
+## 次のレッスン
+
+[Lesson 7 認可（Gate/Policy）を実装する](./07-authorization.md) では、「誰が何をできるか」を制御する認可機能を学びます。

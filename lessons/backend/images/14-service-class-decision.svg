@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="404" viewBox="0 0 720 404" font-family="Hiragino Sans, 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', 'Yu Gothic', Meiryo, sans-serif">
+<rect x="0.5" y="0.5" width="719" height="403" rx="16" fill="#FBFBFC" stroke="#E6E8EB"/>
+<rect x="40" y="32" width="300" height="76" rx="12" fill="#FFFFFF" stroke="#9DB8DC" stroke-width="2"/>
+<text x="190" y="64" font-size="15" fill="#4A5361" text-anchor="middle">複数のモデルや外部サービスに</text>
+<text x="190" y="88" font-size="15" fill="#4A5361" text-anchor="middle">またがる処理？</text>
+<rect x="40" y="172" width="300" height="76" rx="12" fill="#FFFFFF" stroke="#9DB8DC" stroke-width="2"/>
+<text x="190" y="204" font-size="15" fill="#4A5361" text-anchor="middle">そのモデル自身のデータだけで</text>
+<text x="190" y="228" font-size="15" fill="#4A5361" text-anchor="middle">完結する？</text>
+<rect x="460" y="182" width="220" height="56" rx="12" fill="#E8F4ED" stroke="#9DCBB0" stroke-width="2"/>
+<text x="570" y="215.5" font-size="15" font-weight="600" fill="#4A5361" text-anchor="middle">サービスクラス</text>
+<rect x="80" y="312" width="220" height="56" rx="12" fill="#E8F4ED" stroke="#9DCBB0" stroke-width="2"/>
+<text x="190" y="345.5" font-size="15" font-weight="600" fill="#4A5361" text-anchor="middle">モデルのメソッド</text>
+<path d="M190 118 L190 162 M196 154 L190 162 L184 154" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="204" y="145" font-size="13" fill="#7A828E">No</text>
+<path d="M190 258 L190 302 M196 294 L190 302 L184 294" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="204" y="285" font-size="13" fill="#7A828E">Yes</text>
+<path d="M350 70.0 H558.0 A12 12 0 0 1 570.0 82.0 V172.0 M564 164 L570 172 L576 164" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="455" y="60" font-size="13" fill="#7A828E" text-anchor="middle">Yes</text>
+<path d="M350 210 L450 210 M442 204 L450 210 L442 216" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="400" y="200" font-size="13" fill="#7A828E" text-anchor="middle">No</text>
+</svg>

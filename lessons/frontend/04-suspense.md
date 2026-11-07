@@ -14,18 +14,7 @@ Suspense（サスペンス） は、「何かを待っている間、代わり�
 
 動画サイトで動画を再生しようとしたとき、こんな画面を見たことがありませんか？
 
-```mermaid
-sequenceDiagram
-    participant User as ユーザー
-    participant App as アプリ
-    participant Server as サーバー
-
-    User->>App: 動画を見たい
-    App->>Server: 動画データください
-    Note over App: 読み込み中...<br/>くるくる表示
-    Server-->>App: はい、動画データ
-    App-->>User: 動画を再生！
-```
+![動画を読み込む間の流れ](./images/04-suspense-loading-flow.svg)
 
 この「くるくる表示」が Suspense の役割です。
 
@@ -82,17 +71,7 @@ Suspense は「このコンポーネントがデータを待っていたら、�
 
 ### 図で理解する Suspense
 
-```mermaid
-graph TD
-    subgraph "Suspenseの仕組み"
-        S[Suspense]
-        F[fallback<br/>読み込み中...]
-        C[子コンポーネント<br/>UserProfile]
-    end
-
-    S --> |データ待ち中| F
-    S --> |データ準備完了| C
-```
+![Suspense が fallback と子コンポーネントを切り替える仕組み](./images/04-suspense-mechanism.svg)
 
 ## Suspenseの基本的な使い方
 
@@ -129,17 +108,17 @@ function App() {
 }
 ```
 
-### 2. データ取得との組み合わせ（React 18以降）
+### 2. データ取得との組み合わせ
 
-React 18からは、データ取得ライブラリと組み合わせて使えます。
+React 18からは、Suspenseに対応したデータ取得ライブラリ（SWR、TanStack Query、Relayなど）と組み合わせて使えるようになりました。React 19では、Promiseの結果を読み取る `use` が加わり、ライブラリの機能を使わずにデータを待つ処理も書けます。
 
 ```jsx
-import { Suspense } from 'react';
+import { Suspense, use } from 'react';
 import { fetchUserData } from './api';
 
 // データ取得を「サスペンド」できるコンポーネント
 function UserProfile({ userId }) {
-  // SWR、React Query、Relayなどが対応
+  // fetchUserData は、同じ userId なら同じ Promise を返すようにキャッシュしておく
   const user = use(fetchUserData(userId));
   return <div>{user.name}</div>;
 }
@@ -152,6 +131,9 @@ function App() {
   );
 }
 ```
+
+> 注意
+> `use` に渡す Promise は、レンダーのたびに作り直さないようにします。`use(fetch('/api/user'))` のようにコンポーネントの中で毎回 Promise を作ると、再レンダーのたびに fallback が表示されてしまいます。Promise はキャッシュから取り出すか、データ取得ライブラリやフレームワークの仕組みに任せましょう。また、Promise が失敗したときのエラー表示は、このあと学ぶ Error Boundary で行います。
 
 ### 3. ネスト（入れ子）にする
 
@@ -175,22 +157,7 @@ function App() {
 }
 ```
 
-```mermaid
-graph TD
-    S1[Suspense: ページ全体]
-    S2[Suspense: メイン部分]
-    S3[Suspense: コメント]
-
-    S1 --> Header
-    S1 --> S2
-    S2 --> MainContent
-    S2 --> S3
-    S3 --> Comments
-
-    style S1 fill:#e3f2fd
-    style S2 fill:#bbdefb
-    style S3 fill:#90caf9
-```
+![入れ子にした Suspense](./images/04-suspense-nested.svg)
 
 外側から順番にフォールバックが表示され、準備ができた部分から実際のコンテンツに切り替わります。
 
@@ -200,19 +167,7 @@ graph TD
 
 「読み込み中はこれを表示する」と宣言するだけで済みます。
 
-```mermaid
-graph LR
-    subgraph "従来（命令的）"
-        A[isLoadingを管理]
-        B[if文で分岐]
-        C[表示を切り替え]
-        A --> B --> C
-    end
-
-    subgraph "Suspense（宣言的）"
-        D[fallbackを指定するだけ]
-    end
-```
+![命令的な書き方と宣言的な書き方の比較](./images/04-suspense-declarative.svg)
 
 > 宣言的（Declarative）：
 > 「こうあってほしい」という結果を書くスタイルです。「どうやって実現するか」は書かなくてよく、コードが読みやすくなります。
@@ -251,16 +206,7 @@ Error Boundary（エラーバウンダリ） は、「エラーが発生した�
 
 JavaScriptでエラーが発生すると、通常は画面全体が真っ白になってしまいます。
 
-```mermaid
-graph LR
-    subgraph "Error Boundaryなし"
-        E1[エラー発生] --> W[画面が真っ白]
-    end
-
-    subgraph "Error Boundaryあり"
-        E2[エラー発生] --> F[エラー画面を表示<br/>他の部分は動く]
-    end
-```
+![Error Boundary のありとなしの比較](./images/04-suspense-error-boundary.svg)
 
 Error Boundary を使うと、エラーが発生した部分だけを差し替え、他の部分は正常に動作させられます。
 
@@ -323,21 +269,7 @@ function App() {
 }
 ```
 
-```mermaid
-graph TB
-    subgraph "アプリ全体"
-        Header[ヘッダー]
-        subgraph EB[Error Boundary]
-            Main[メインコンテンツ]
-            Error[エラー発生!]
-        end
-        Footer[フッター]
-    end
-
-    Error -.-> |影響範囲| EB
-    Header --> |正常| OK1[動作中]
-    Footer --> |正常| OK2[動作中]
-```
+![Error Boundary で囲んだ部分だけがエラーの影響を受ける](./images/04-suspense-error-scope.svg)
 
 ### リセット時に処理を実行する
 
@@ -404,6 +336,7 @@ function App() {
 
 ```jsx
 import { Suspense } from 'react';
+import { ErrorBoundary } from 'react-error-boundary';
 import useSWR from 'swr';
 
 const fetcher = (url) => fetch(url).then((res) => res.json());
@@ -451,7 +384,7 @@ function App() {
 ### 組み合わせのパターン
 
 ```jsx
-<ErrorBoundary fallback={<ErrorFallback />}>
+<ErrorBoundary FallbackComponent={ErrorFallback}>
   <Suspense fallback={<Loading />}>
     <MyComponent />
   </Suspense>
@@ -468,6 +401,7 @@ function App() {
 
 - [React 公式ドキュメント - Suspense](https://ja.react.dev/reference/react/Suspense)
 - [React 公式ドキュメント - lazy](https://ja.react.dev/reference/react/lazy)
+- [React 公式ドキュメント - use](https://ja.react.dev/reference/react/use)
 - [React 公式ドキュメント - Error Boundary](https://ja.react.dev/reference/react/Component#catching-rendering-errors-with-an-error-boundary)
 
 ### ライブラリ
@@ -478,3 +412,4 @@ function App() {
 ### 関連記事
 
 - [React 18 の新機能](https://ja.react.dev/blog/2022/03/29/react-v18)
+- [React 19 の新機能](https://ja.react.dev/blog/2024/12/05/react-19)

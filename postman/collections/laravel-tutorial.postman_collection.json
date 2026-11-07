@@ -573,6 +573,36 @@
                                 }
                             },
                             "response": []
+                        },
+                        {
+                            "name": "自分の受講一覧",
+                            "id": "6cd45ea7-130d-41e2-8ce6-92cb4d3ae44d",
+                            "protocolProfileBehavior": {
+                                "disableBodyPruning": true
+                            },
+                            "request": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Referer",
+                                        "value": "{{Referer}}"
+                                    },
+                                    {
+                                        "key": "Origin",
+                                        "value": "{{Origin}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{BASE_URL}}/api/me/attendances",
+                                    "host": ["{{BASE_URL}}"],
+                                    "path": ["api", "me", "attendances"]
+                                }
+                            },
+                            "response": []
                         }
                     ],
                     "id": "0ce04526-390d-46df-89c0-2f5d6fe73f24"
@@ -594,6 +624,51 @@
                                             },
                                             "request": {
                                                 "method": "POST",
+                                                "header": [
+                                                    {
+                                                        "key": "Accept",
+                                                        "value": "application/json"
+                                                    },
+                                                    {
+                                                        "key": "X-XSRF-TOKEN",
+                                                        "value": "{{XSRF-TOKEN}}"
+                                                    },
+                                                    {
+                                                        "key": "Referer",
+                                                        "value": "{{Referer}}"
+                                                    },
+                                                    {
+                                                        "key": "Origin",
+                                                        "value": "{{Origin}}"
+                                                    }
+                                                ],
+                                                "url": {
+                                                    "raw": "{{BASE_URL}}/api/courses/:courseId/attendances",
+                                                    "host": ["{{BASE_URL}}"],
+                                                    "path": [
+                                                        "api",
+                                                        "courses",
+                                                        ":courseId",
+                                                        "attendances"
+                                                    ],
+                                                    "variable": [
+                                                        {
+                                                            "key": "courseId",
+                                                            "value": "27"
+                                                        }
+                                                    ]
+                                                }
+                                            },
+                                            "response": []
+                                        },
+                                        {
+                                            "name": "受講キャンセル",
+                                            "id": "53f6054f-7f09-4dad-a7a8-ce8eb1870107",
+                                            "protocolProfileBehavior": {
+                                                "disableBodyPruning": true
+                                            },
+                                            "request": {
+                                                "method": "DELETE",
                                                 "header": [
                                                     {
                                                         "key": "Accept",
@@ -863,7 +938,7 @@
                                 ],
                                 "body": {
                                     "mode": "raw",
-                                    "raw": "{\n  \"title\": \"講座名テスト\",\n  \"description\": \"説明説明\",\n  \"capacity\": 1,\n  \"status\": \"draft\"\n}",
+                                    "raw": "{\n  \"title\": \"講座名テスト\",\n  \"description\": \"説明説明\",\n  \"capacity\": 1,\n  \"status\": \"draft\",\n  \"starts_at\": \"2027-04-01 10:00:00\"\n}",
                                     "options": {
                                         "raw": {
                                             "headerFamily": "json",

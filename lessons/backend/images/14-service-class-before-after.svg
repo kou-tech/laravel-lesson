@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="432" viewBox="0 0 960 432" font-family="Hiragino Sans, 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', 'Yu Gothic', Meiryo, sans-serif">
+<rect x="0.5" y="0.5" width="959" height="431" rx="16" fill="#FBFBFC" stroke="#E6E8EB"/>
+<rect x="40" y="28" width="160" height="36" rx="18" fill="#F0F1F3"/>
+<text x="60" y="51.5" font-size="15" font-weight="600" fill="#4A5361">Before</text>
+<rect x="40" y="84" width="452" height="162" rx="12" fill="#FFFFFF" stroke="#C9CDD3" stroke-width="2"/>
+<text x="64" y="118" font-size="15" font-weight="600" fill="#4A5361">CourseController</text>
+<text x="64" y="144" font-size="15" fill="#7A828E">store()  60行</text>
+<rect x="64" y="164" width="128" height="30" rx="8" fill="#F0F1F3"/>
+<text x="128" y="184" font-size="14" fill="#4A5361" text-anchor="middle">バリデーション</text>
+<rect x="204" y="164" width="128" height="30" rx="8" fill="#F0F1F3"/>
+<text x="268" y="184" font-size="14" fill="#4A5361" text-anchor="middle">重複チェック</text>
+<rect x="344" y="164" width="128" height="30" rx="8" fill="#F0F1F3"/>
+<text x="408" y="184" font-size="14" fill="#4A5361" text-anchor="middle">制限チェック</text>
+<rect x="64" y="204" width="128" height="30" rx="8" fill="#F0F1F3"/>
+<text x="128" y="224" font-size="14" fill="#4A5361" text-anchor="middle">作成</text>
+<rect x="204" y="204" width="128" height="30" rx="8" fill="#F0F1F3"/>
+<text x="268" y="224" font-size="14" fill="#4A5361" text-anchor="middle">通知</text>
+<rect x="344" y="204" width="128" height="30" rx="8" fill="#F0F1F3"/>
+<text x="408" y="224" font-size="14" fill="#4A5361" text-anchor="middle">ログ</text>
+<rect x="760" y="137" width="160" height="56" rx="12" fill="#F0F1F3" stroke="#C9CDD3" stroke-width="2"/>
+<text x="840" y="170.5" font-size="15" font-weight="600" fill="#4A5361" text-anchor="middle">DB</text>
+<path d="M504 165 L748 165 M740 159 L748 165 L740 171" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="40" y="282" width="160" height="36" rx="18" fill="#E8F4ED"/>
+<text x="60" y="305.5" font-size="15" font-weight="600" fill="#4A5361">After</text>
+<rect x="40" y="338" width="240" height="72" rx="12" fill="#FFFFFF" stroke="#C9CDD3" stroke-width="2"/>
+<text x="64" y="369" font-size="15" font-weight="600" fill="#4A5361">CourseController</text>
+<text x="64" y="393" font-size="15" fill="#7A828E">store()  5行</text>
+<rect x="400" y="338" width="240" height="72" rx="12" fill="#E8F4ED" stroke="#9DCBB0" stroke-width="2"/>
+<text x="424" y="369" font-size="15" font-weight="600" fill="#4A5361">CreateCourse</text>
+<text x="424" y="393" font-size="15" fill="#7A828E">__invoke()</text>
+<rect x="760" y="346" width="160" height="56" rx="12" fill="#F0F1F3" stroke="#C9CDD3" stroke-width="2"/>
+<text x="840" y="379.5" font-size="15" font-weight="600" fill="#4A5361" text-anchor="middle">DB</text>
+<path d="M292 374 L388 374 M380 368 L388 374 L380 380" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M652 374 L748 374 M740 368 L748 374 L740 380" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="132" viewBox="0 0 960 132" font-family="Hiragino Sans, 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', 'Yu Gothic', Meiryo, sans-serif">
+<rect x="0.5" y="0.5" width="959" height="131" rx="16" fill="#FBFBFC" stroke="#E6E8EB"/>
+<rect x="40" y="28" width="132" height="76" rx="10" fill="#FFFFFF" stroke="#9DB8DC" stroke-width="2"/>
+<text x="106" y="61.9" font-size="15" font-weight="600" fill="#4A5361" text-anchor="middle">Atoms</text>
+<text x="106" y="81.2" font-size="13" fill="#7A828E" text-anchor="middle">原子</text>
+<path d="M184 66 L215 66 M207 72 L215 66 L207 60" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="227" y="28" width="132" height="76" rx="10" fill="#FFFFFF" stroke="#9DB8DC" stroke-width="2"/>
+<text x="293" y="61.9" font-size="15" font-weight="600" fill="#4A5361" text-anchor="middle">Molecules</text>
+<text x="293" y="81.2" font-size="13" fill="#7A828E" text-anchor="middle">分子</text>
+<path d="M371 66 L402 66 M394 72 L402 66 L394 60" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="414" y="28" width="132" height="76" rx="10" fill="#FFFFFF" stroke="#9DB8DC" stroke-width="2"/>
+<text x="480" y="61.9" font-size="15" font-weight="600" fill="#4A5361" text-anchor="middle">Organisms</text>
+<text x="480" y="81.2" font-size="13" fill="#7A828E" text-anchor="middle">有機体</text>
+<path d="M558 66 L589 66 M581 72 L589 66 L581 60" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="601" y="28" width="132" height="76" rx="10" fill="#FFFFFF" stroke="#9DB8DC" stroke-width="2"/>
+<text x="667" y="61.9" font-size="15" font-weight="600" fill="#4A5361" text-anchor="middle">Templates</text>
+<text x="667" y="81.2" font-size="13" fill="#7A828E" text-anchor="middle">テンプレート</text>
+<path d="M745 66 L776 66 M768 72 L776 66 L768 60" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="788" y="28" width="132" height="76" rx="10" fill="#FFFFFF" stroke="#9DB8DC" stroke-width="2"/>
+<text x="854" y="61.9" font-size="15" font-weight="600" fill="#4A5361" text-anchor="middle">Pages</text>
+<text x="854" y="81.2" font-size="13" fill="#7A828E" text-anchor="middle">ページ</text>
+</svg>

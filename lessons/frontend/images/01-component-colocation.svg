@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="184" viewBox="0 0 720 184" font-family="Hiragino Sans, 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', 'Yu Gothic', Meiryo, sans-serif">
+<rect x="0.5" y="0.5" width="719" height="183" rx="16" fill="#FBFBFC" stroke="#E6E8EB"/>
+<rect x="40" y="28" width="640" height="128" rx="14" fill="#E9F0F9"/>
+<text x="64" y="60" font-size="15" font-weight="600" fill="#4A5361">Button/</text>
+<rect x="64" y="80" width="186.7" height="52" rx="10" fill="#FFFFFF" stroke="#9DB8DC" stroke-width="2"/>
+<text x="157.3" y="111.4" font-size="15" fill="#4A5361" text-anchor="middle">Button.jsx</text>
+<rect x="266.7" y="80" width="186.7" height="52" rx="10" fill="#FFFFFF" stroke="#9DB8DC" stroke-width="2"/>
+<text x="360" y="111.4" font-size="15" fill="#4A5361" text-anchor="middle">Button.css</text>
+<rect x="469.3" y="80" width="186.7" height="52" rx="10" fill="#FFFFFF" stroke="#9DB8DC" stroke-width="2"/>
+<text x="562.7" y="111.4" font-size="15" fill="#4A5361" text-anchor="middle">Button.test.js</text>
+</svg>

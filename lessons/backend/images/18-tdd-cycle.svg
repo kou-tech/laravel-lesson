@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="212" viewBox="0 0 960 212" font-family="Hiragino Sans, 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', 'Yu Gothic', Meiryo, sans-serif">
+<rect x="0.5" y="0.5" width="959" height="211" rx="16" fill="#FBFBFC" stroke="#E6E8EB"/>
+<rect x="40" y="32" width="264" height="88" rx="12" fill="#F8EEE4" stroke="#E3BC94" stroke-width="2"/>
+<text x="172" y="68" font-size="15" font-weight="600" fill="#4A5361" text-anchor="middle">1. Red（赤）</text>
+<text x="172" y="96" font-size="15" fill="#4A5361" text-anchor="middle">失敗するテストを書く</text>
+<rect x="348" y="32" width="264" height="88" rx="12" fill="#E8F4ED" stroke="#9DCBB0" stroke-width="2"/>
+<text x="480" y="68" font-size="15" font-weight="600" fill="#4A5361" text-anchor="middle">2. Green（緑）</text>
+<text x="480" y="96" font-size="15" fill="#4A5361" text-anchor="middle">テストを通す最小限のコードを書く</text>
+<rect x="656" y="32" width="264" height="88" rx="12" fill="#E9F0F9" stroke="#9DB8DC" stroke-width="2"/>
+<text x="788" y="68" font-size="15" font-weight="600" fill="#4A5361" text-anchor="middle">3. Refactor（リファクタリング）</text>
+<text x="788" y="96" font-size="15" fill="#4A5361" text-anchor="middle">コードを整理する</text>
+<path d="M312 76 L340 76 M332 70 L340 76 L332 82" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M620 76 L648 76 M640 70 L648 76 L640 82" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M788.0 128 V162 A14 14 0 0 1 774.0 176 H186.0 A14 14 0 0 1 172.0 162 V128 M166 136 L172 128 L178 136" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
