@@ -1,0 +1,58 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Boss;
+
+use App\Enums\AttendanceStatus;
+use App\Exceptions\AlreadyAttendingException;
+use App\Exceptions\CapacityExceededException;
+use App\Models\Attendance;
+use App\Models\Course;
+use App\Models\User;
+use Illuminate\Support\Facades\DB;
+use InvalidArgumentException;
+
+/**
+ * ボス戦2: 受講登録（不具合入り）
+ *
+ * このクラスには不具合が3つあります。テストを書いて見つけ、直してください。
+ */
+class BuggyAttendCourse
+{
+    public function __invoke(User $user, Course $course): Attendance
+    {
+        $attendance = DB::transaction(function () use ($user, $course) {
+            $lockedCourse = Course::lockForUpdate()->findOrFail($course->id);
+
+            $this->validate($user, $lockedCourse);
+
+            try {
+                return Attendance::create([
+                    'user_id' => $user->id,
+                    'course_id' => $lockedCourse->id,
+                    'status' => AttendanceStatus::Attending,
+                    'attended_at' => now(),
+                ]);
+            } catch (InvalidArgumentException) {
+                throw new AlreadyAttendingException;
+            }
+        });
+
+        return $attendance->load(['user', 'course.instructor']);
+    }
+
+    /**
+     * 申し込めるかを確かめる
+     */
+    private function validate(User $user, Course $course): void
+    {
+        $attendanceCount = $course->attendances()->count();
+
+        $hasCapacity = $attendanceCount <= $course->capacity;
+
+        if (! $hasCapacity) {
+            throw new CapacityExceededException;
+        }
+    }
+}

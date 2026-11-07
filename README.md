@@ -92,6 +92,7 @@ code .
 | `make test` | テスト実行 |
 | `make lint` | ESLint |
 | `make format` | Pint + Prettier |
+| `make boss-2` | ボス戦2の題材のコードを用意する |
 | `make help` | コマンド一覧 |
 
 ## 教材が更新されたとき
