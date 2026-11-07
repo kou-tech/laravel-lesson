@@ -1,4 +1,4 @@
-.PHONY: setup build init up down restart logs app fresh seed test lint format map quest boss-2 help
+.PHONY: setup build init up down restart logs app fresh seed seed-frontend test lint format map quest boss-2 help
 
 help: ## ヘルプを表示
 	@grep -E '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-12s\033[0m %s\n", $$1, $$2}'
@@ -42,6 +42,9 @@ fresh: ## DB初期化 + シーダー
 
 seed: ## シーダー実行
 	docker compose exec app php artisan db:seed
+
+seed-frontend: ## フロントエンド編の練習用データを入れる
+	docker compose exec app php artisan db:seed --class=FrontendLessonSeeder
 
 test: ## テスト
 	docker compose exec app php artisan test

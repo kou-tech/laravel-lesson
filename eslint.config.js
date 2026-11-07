@@ -30,6 +30,15 @@ export default [
         },
     },
     {
+        // フロントエンド編 F1 の練習問題は node --test で実行するので、node の globals も許可する
+        files: ['resources/js/practice/**/*.js'],
+        languageOptions: {
+            globals: {
+                ...globals.node,
+            },
+        },
+    },
+    {
         ignores: ['vendor', 'node_modules', 'public', 'bootstrap/ssr', 'tailwind.config.js'],
     },
     prettier, // Turn off all rules that might conflict with Prettier
