@@ -564,6 +564,16 @@ $course->save();
 ```
 </details>
 
+## クリア判定
+
+次のコマンドで、Step 7 の Attendance モデルの仕上げができたかを確かめましょう。
+
+```bash
+make quest-11
+```
+
+`status_label` が付くこと、`created_at` と `updated_at` が出ないこと、`active` スコープが受講中だけを返すことがメインのミッションです。練習問題1・2はサイドのミッションです。
+
 ## 参考資料
 
 - [Laravel 公式ドキュメント - Mass Assignment](https://laravel.com/docs/eloquent#mass-assignment)

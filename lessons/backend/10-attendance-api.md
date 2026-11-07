@@ -702,6 +702,16 @@ return [
 > 補足: Lesson 16 で講座一覧の `index` に同じ条件の `withCount` を足すと、一覧でも `attendances_count` が読み込まれるので、追加のクエリなしで一覧にも `remaining_seats` が出るようになります。
 </details>
 
+## クリア判定
+
+ここまでできたら、次のコマンドでクリアしたかを確かめましょう。
+
+```bash
+make quest-10
+```
+
+本文の手順で作った受講登録API（201・403・422・409、キャンセル済みを定員に数えないこと）がメインのミッションです。練習問題1の残席数はサイドのミッションです。
+
 ## 参考資料
 
 - [Laravel 公式ドキュメント - Migrations（Foreign Key Constraints）](https://laravel.com/docs/migrations#foreign-key-constraints)

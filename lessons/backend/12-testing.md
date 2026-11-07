@@ -550,6 +550,7 @@ describe('POST /api/courses/{course}/attendances', function () {
         $response->assertCreated()
             ->assertJsonPath('data.user.id', $student->id)
             ->assertJsonPath('data.course.id', $course->id)
+            ->assertJsonPath('data.course.instructor.id', $course->instructor_id)
             ->assertJsonPath('data.status', 'attending');
 
         $this->assertDatabaseHas('attendances', [
@@ -715,6 +716,30 @@ describe('DELETE /api/courses/{course}', function () {
 `Course::factory()->for($instructor, 'instructor')` は、Step 3 の「講師と一緒に作成」と同じ書き方で、作った講師をその講座の担当講師にします。2つ目のテストでは、担当講師の `$owner` とは別に講師をもう1人作り、その講師で削除を試しています。
 </details>
 
+
+## クリア判定
+
+ここまでのレッスンで使ってきた `make quest-10` などの判定は、実は Pest のテストです。`tests/Quests/Stage10Test.php` を開いてみてください。Lesson 10 の受講登録APIに対して、このレッスンで学んだ `postJson()` やステータスコードの確認を使ったテストが並んでいます。テストは「こう動くはず」という仕様を、実行できる形で書いたものだということが分かると思います。
+
+このレッスンの判定は、少し違う方法で行います。判定テストではなく、あなたが Step 9 で書いた `tests/Feature/Api/AttendanceStoreTest.php` そのものを確かめます。
+
+```bash
+make quest-12
+```
+
+判定は3段階です。テストのファイルがあること、テストがすべて通ること、そしてミューテーションスコアが 80% 以上であることです。
+
+ミューテーションテストは、`AttendanceController` のコードをわざと少しずつ書き換え（たとえば `201` を `200` に、`<` を `<=` に）、そのたびにあなたのテストを走らせる仕組みです。書き換えたコードはミュータントと呼ばれます。ミュータントでもテストが通ってしまったら、テストがその書き換えを見逃したことになります。スコアは、テストで捕まえられたミュータントの割合です。判定では、あなたのテストが実際に通った行だけを書き換えます（`--covered-only`）。このあとのレッスンで `AttendanceController` にメソッドが増えても、受講登録のテストの判定は変わりません。
+
+スコアが足りないときは、生き残ったミュータントを確かめましょう。
+
+```bash
+docker compose exec app vendor/bin/pest tests/Feature/Api/AttendanceStoreTest.php --mutate --class='App\Http\Controllers\Api\AttendanceController' --covered-only
+```
+
+たとえば「`assertStatus(201)` の代わりに `assertSuccessful()` を使っていたので、201 が 200 に変わっても気づけなかった」のように、テストの確かめ方が甘い箇所が分かります。
+
+> 補足: ミューテーションテストには、カバレッジを取るための PCOV が必要です。このプロジェクトの Docker イメージには入っています。「Mutation testing requires code coverage」と表示されたら、イメージが古いままなので、リポジトリの README の手順で作り直してください。
 
 ## 参考資料
 
