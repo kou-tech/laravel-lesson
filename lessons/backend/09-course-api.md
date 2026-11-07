@@ -101,6 +101,19 @@ class Course extends Model
 }
 ```
 
+> 補足: Laravel 13 の公式ドキュメントでは、ローカルスコープを `#[Scope]` 属性で定義する書き方を紹介しています。メソッド名の先頭に `scope` を付ける上の書き方も引き続き使え、呼び出し方（`Course::active()`）はどちらも同じです。本コースは Lesson 13 でも `scope` を付ける書き方を使うため、ここでもそちらに揃えています。
+>
+> ```php
+> use Illuminate\Database\Eloquent\Attributes\Scope;
+> use Illuminate\Database\Eloquent\Builder;
+>
+> #[Scope]
+> protected function active(Builder $query): void
+> {
+>     $query->where('status', CourseStatus::Active);
+> }
+> ```
+
 
 ## Step 2 API Resourceの作成
 

@@ -97,7 +97,7 @@ php artisan test --filter="生徒は自分の受講をキャンセルできる"
 
 ```
 FAILED  Tests\Feature\Api\AttendanceCancelTest > 生徒は自分の受講をキャンセルできる
-404 Not Found
+Expected response status code [200] but received 404.
 ```
 
 ルートが存在しないので404エラー。これがRed状態です。
@@ -189,7 +189,8 @@ php artisan test --filter="講座開始3日前以降はキャンセルできな�
 ```
 
 ```
-FAILED  Expected status code 422 but received 200.
+FAILED  Tests\Feature\Api\AttendanceCancelTest > 講座開始3日前以降はキャンセルできない
+Expected response status code [422] but received 200.
 ```
 
 

@@ -39,6 +39,7 @@ Laravel Fortify は、認証機能のバックエンド実装を提供するパ�
 - パスワードリセット
 - メール確認
 - 2要素認証
+- パスキー（このプロジェクトの `config/fortify.php` では有効にしていません）
 
 FortifyはフロントエンドのUIを提供しません。UIは別途実装する必要があります（このプロジェクトではInertia + Reactで実装済み）。
 
@@ -218,12 +219,12 @@ Provider: ユーザー情報の取得方法を決める
 'providers' => [
     'users' => [
         'driver' => 'eloquent',
-        'model' => App\Models\User::class,
+        'model' => env('AUTH_MODEL', App\Models\User::class),
     ],
 ],
 ```
 
-通常、この設定を変更する必要はありません。
+`model` は `.env` の `AUTH_MODEL` で差し替えられ、未設定なら `App\Models\User` が使われます。通常、この設定を変更する必要はありません。
 
 
 ## 練習問題

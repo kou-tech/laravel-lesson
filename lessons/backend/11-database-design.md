@@ -189,7 +189,7 @@ $table->unique(['user_id', 'course_id']);
 
 ### 例外処理
 
-複合ユニーク制約違反は、Laravel 11 以降で提供される `UniqueConstraintViolationException` でキャッチできます（本プロジェクトは Laravel 13）。DB ドライバ（MySQL / SQLite など）に依存せずに判定できるのが利点です。
+複合ユニーク制約違反は、Laravel 10.x の途中で追加された `UniqueConstraintViolationException` でキャッチできます（本プロジェクトは Laravel 13）。DB ドライバ（MySQL / SQLite など）に依存せずに判定できるのが利点です。
 
 ```php
 use Illuminate\Database\UniqueConstraintViolationException;

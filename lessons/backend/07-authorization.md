@@ -232,11 +232,11 @@ class UserPolicy
 
 ### Policyの登録
 
-Laravel 11以降（本プロジェクトは Laravel 13）では、モデル名と一致するPolicyは自動的に登録されます。
+Laravel は、`app/Policies` に置いた「モデル名 + `Policy`」という名前のクラスを自動的に見つけて紐づけます（Policy の自動検出）。登録用のコードを書く必要はありません。
 
 - `User` モデル → `UserPolicy` が自動的に紐づく
 
-手動で登録する場合は `AppServiceProvider` で設定します。
+命名規則に合わない Policy を使う場合は、`AppServiceProvider` で手動登録します。
 
 ```php
 use App\Models\User;
@@ -246,6 +246,19 @@ use Illuminate\Support\Facades\Gate;
 public function boot(): void
 {
     Gate::policy(User::class, UserPolicy::class);
+}
+```
+
+モデルに `#[UsePolicy]` 属性を付けて、対応する Policy を指定する方法もあります。
+
+```php
+use App\Policies\UserPolicy;
+use Illuminate\Database\Eloquent\Attributes\UsePolicy;
+
+#[UsePolicy(UserPolicy::class)]
+class User extends Authenticatable
+{
+    // ...
 }
 ```
 
@@ -271,6 +284,8 @@ public function update(Request $request, User $user)
     return new UserResource($user);
 }
 ```
+
+> 補足: `$this->authorize()` が使えるのは、このプロジェクトの基底クラス `App\Http\Controllers\Controller` に `AuthorizesRequests` トレイトを追加してあるためです。Laravel 11 以降で新しく作ったプロジェクトの基底 Controller にはこのトレイトがなく、公式ドキュメントでは `Gate::authorize('update', $user);` と書く方法で説明しています。どちらも認可に失敗すると 403 を返します。
 
 ### 認可失敗時のレスポンス
 

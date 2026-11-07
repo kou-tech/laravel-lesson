@@ -340,6 +340,7 @@ public function index()
         "current_page": 1,
         "from": 1,
         "last_page": 5,
+        "path": "http://localhost:8000/api/users",
         "per_page": 15,
         "to": 15,
         "total": 75

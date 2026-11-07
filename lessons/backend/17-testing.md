@@ -394,14 +394,14 @@ test('受講時にメールが送信される', function () {
 
 ```php
 use Illuminate\Support\Facades\Queue;
-use App\Jobs\SendAttendanceNotification;
+use App\Jobs\SendAttendanceConfirmation;
 
 test('受講時にジョブがキューに追加される', function () {
     Queue::fake();
 
     // ... テスト処理 ...
 
-    Queue::assertPushed(SendAttendanceNotification::class);
+    Queue::assertPushed(SendAttendanceConfirmation::class);
 });
 ```
 
@@ -514,6 +514,8 @@ php artisan test --filter="講師は講座を作成できる"
 ```bash
 php artisan test --coverage
 ```
+
+> カバレッジの計測には、PHP の拡張機能 Xdebug か PCOV が必要です。どちらも入っていない環境では「No code coverage driver is available.」と表示されて計測できません。
 
 ## 練習問題
 

@@ -55,13 +55,15 @@ public function store(Request $request)
 
 ```json
 {
-    "message": "The given data was invalid.",
+    "message": "The name field is required. (and 1 more error)",
     "errors": {
-        "name": ["名前は必須です。"],
-        "email": ["このメールアドレスは既に使用されています。"]
+        "name": ["The name field is required."],
+        "email": ["The email has already been taken."]
     }
 }
 ```
+
+`message` には最初のエラーメッセージが入り、ほかにもエラーがあるときは `(and 1 more error)` のように残りの件数が付きます。
 
 
 ## Step 2 FormRequestを使う理由

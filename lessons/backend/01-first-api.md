@@ -133,7 +133,7 @@ APIでは、HTTPメソッドで操作の種類を表現します。
 
 PUTとPATCHはどちらも更新に使いますが、PUTはリソース全体を送信して置き換える操作、PATCHは変更したい部分だけを送信する操作です。実務ではPATCHを使うことが多いですが、プロジェクトの方針によって異なります。
 
-詳しくは [MDN - HTTPリクエストメソッド](https://developer.mozilla.org/ja/docs/Web/HTTP/Methods) を参照してください。
+詳しくは [MDN - HTTPリクエストメソッド](https://developer.mozilla.org/ja/docs/Web/HTTP/Reference/Methods) を参照してください。
 
 ### POSTの例
 
@@ -203,7 +203,7 @@ Postmanのコレクション内の `api > fruits > fruits`（POST）で確認
 | 422 | Unprocessable Entity | バリデーションエラー |
 | 500 | Internal Server Error | サーバーエラー |
 
-詳しくは [MDN - HTTPレスポンスステータスコード](https://developer.mozilla.org/ja/docs/Web/HTTP/Status) を参照してください。
+詳しくは [MDN - HTTPレスポンスステータスコード](https://developer.mozilla.org/ja/docs/Web/HTTP/Reference/Status) を参照してください。
 
 ### ステータスコードを指定する
 
@@ -224,15 +224,18 @@ return $data;
 定義したルートを確認するコマンドがあります。`make app` でコンテナに入ってから実行してください。
 
 ```bash
-php artisan route:list --path=api
+php artisan route:list --path=api --except-vendor
 ```
 
 ```
 GET|HEAD   api/fruits ........
-GET|HEAD   api/fruits/{id} ...
 POST       api/fruits ........
+GET|HEAD   api/fruits/{id} ...
 GET|HEAD   api/hello .........
+GET|HEAD   api/user ..........
 ```
+
+> `--except-vendor` は、パッケージが登録したルートを一覧から除くオプションです。付けないと、URLに `api` を含むTelescopeのルート（`telescope/telescope-api/...`）も大量に表示されます。`api/user` は、最初から `routes/api.php` に入っているルートです。
 
 ## 練習問題
 

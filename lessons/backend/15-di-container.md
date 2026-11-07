@@ -279,6 +279,23 @@ public function register(): void
 }
 ```
 
+> 補足: Laravel 13 では、サービスプロバイダーに書く代わりに、インターフェースに `#[Bind]` 属性を付けてバインドすることもできます。`environments` を指定すれば、上の環境ごとの切り替えも属性だけで書けます。
+>
+> ```php
+> use App\Services\FakeMailer;
+> use App\Services\SmtpMailer;
+> use Illuminate\Container\Attributes\Bind;
+>
+> #[Bind(SmtpMailer::class)]
+> #[Bind(FakeMailer::class, environments: ['testing'])]
+> interface MailerInterface
+> {
+>     public function send(string $to, string $subject, string $body): void;
+> }
+> ```
+>
+> 同じように、クラスに `#[Singleton]` 属性を付けると `singleton()` で登録したのと同じ扱いになります。どちらも結果はサービスプロバイダーに書いた場合と同じです。このレッスンでは、バインドの仕組みが見えやすいサービスプロバイダーの書き方で進めます。
+
 
 ## Step 5 実践 - AttendanceService のリファクタリング
 

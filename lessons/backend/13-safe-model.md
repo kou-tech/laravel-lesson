@@ -7,7 +7,7 @@
 ### 到達目標
 - Mass Assignment脆弱性を理解する
 - `$fillable` / `$guarded` を適切に設定できる
-- `$casts` でデータ型を変換できる
+- `casts()` メソッドでデータ型を変換できる
 - アクセサ/ミューテタを活用できる
 
 
@@ -84,6 +84,18 @@ class User extends Authenticatable
 >
 > なお、シーダーとFactoryは `Model::unguarded()` の中で実行されるため、この制限を受けません。テストデータで自由に `role` を指定できるのはそのためです。
 
+> 補足: Laravel 13 からは、`$fillable` プロパティの代わりにクラスへ `#[Fillable]` 属性を付けても同じ設定ができます。公式ドキュメントの例も属性の書き方に変わりました。`$guarded` / `$hidden` / `$visible` / `$appends` にも、それぞれ `#[Guarded]` / `#[Hidden]` / `#[Visible]` / `#[Appends]` 属性があります。プロパティの書き方も引き続き使えます。本プロジェクトのモデルはプロパティで書いているため、このコースはプロパティの書き方で進めます。
+>
+> ```php
+> use Illuminate\Database\Eloquent\Attributes\Fillable;
+>
+> #[Fillable(['name', 'email', 'password'])]
+> class User extends Authenticatable
+> {
+>     // ...
+> }
+> ```
+
 ### 安全なコントローラー
 
 ```php
@@ -141,25 +153,29 @@ protected $guarded = [];
 テストやシーダーで使うことはありますが、本番コードでは避けてください。
 
 
-## Step 3 $casts でデータ型を変換
+## Step 3 casts() でデータ型を変換
 
 ### なぜキャストが必要？
 
-データベースからの取得値は基本的に文字列です。
+データベースから取り出した値は、PHP で扱いたい型と一致するとは限りません。整数のカラムは `int` で返りますが、真偽値は `0` / `1` の整数、日時は文字列のまま返ってきます。
 
 ```php
 $course = Course::find(1);
 
 // キャストなし
-var_dump($course->capacity);  // string(2) "20"
-var_dump($course->is_active); // string(1) "1"
+var_dump($course->capacity);   // int(20)
+var_dump($course->is_active);  // int(1)
+var_dump($course->starts_at);  // string(19) "2026-04-01 10:00:00"
 
 // キャストあり
-var_dump($course->capacity);  // int(20)
-var_dump($course->is_active); // bool(true)
+var_dump($course->capacity);   // int(20)
+var_dump($course->is_active);  // bool(true)
+var_dump($course->starts_at);  // object(Illuminate\Support\Carbon)
 ```
 
-### $casts の設定
+> 補足: PHP 8.0 までは、SQLite から取り出した値は整数でも文字列（`"20"`）で返っていました（MySQL も接続の設定によっては同じでした）。PHP 8.1 で PDO の挙動が変わり、整数と浮動小数点数は PHP の `int` / `float` で返るようになっています。古い記事で「DB の値は全部文字列」と説明されているのはこのためです。真偽値・日時・JSON・Enum は今でもキャストしないと期待した型になりません。
+
+### casts() の設定
 
 ```php
 class Course extends Model
@@ -178,18 +194,21 @@ class Course extends Model
 }
 ```
 
+> 補足: Laravel 10 までは `protected $casts = [...];` というプロパティで書くのが標準でした。Laravel 11 から `casts()` メソッドで書く形が標準になり、本プロジェクトのモデルもこの形です。古い記事で `$casts` プロパティを見かけても、同じ設定だと読み替えてください。プロパティの書き方も引き続き動きます。
+
 ### 主要なキャスト型
 
 | 型 | 説明 | 例 |
 |---|------|-----|
 | `integer` | 整数に変換 | `"20"` → `20` |
-| `boolean` | 真偽値に変換 | `"1"` → `true` |
+| `boolean` | 真偽値に変換 | `1` → `true` |
 | `array` | JSON を配列に | `'{"a":1}'` → `['a' => 1]` |
 | `object` | JSON をオブジェクトに | `'{"a":1}'` → `stdClass` |
 | `datetime` | Carbon インスタンスに | `"2025-01-01"` → `Carbon` |
 | `date` | 日付のみの Carbon | 時刻を切り捨て |
 | `decimal:N` | 小数点N桁の文字列 | `1000` → `"1000.00"` |
 | `encrypted` | 暗号化して保存 | 自動で暗号化/復号 |
+| `hashed` | 保存時にハッシュ化 | パスワードに使う |
 
 ### Enumキャスト
 
@@ -288,6 +307,8 @@ class User extends Authenticatable
 $user->password = 'plain_password';  // 自動でハッシュ化
 $user->phone = '090-1234-5678';      // "09012345678" で保存
 ```
+
+> 補足: パスワードをミューテタで `bcrypt()` する書き方は、Laravel 10 で `hashed` キャストが入る前によく使われていた方法です。本プロジェクトの User モデルは `casts()` に `'password' => 'hashed'` を持っていて、代入した平文は保存時に自動でハッシュ化されます。上の `password()` ミューテタは仕組みの説明用なので、User モデルには追加しないでください。ミューテタを定義すると `hashed` キャストは使われなくなり、ハッシュ済みの値までもう一度ハッシュ化されます。`UserFactory` はハッシュ済みのパスワードを渡しているため、Factory で作ったユーザーが `password` でログインできなくなります。
 
 ### アクセサ + ミューテタ
 

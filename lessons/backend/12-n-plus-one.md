@@ -176,6 +176,8 @@ Model::handleLazyLoadingViolationUsing(function ($model, $relation) {
 });
 ```
 
+> 補足: Laravel 12.8 から、アクセスしたリレーションをまとめて読み込む `Model::automaticallyEagerLoadRelationships()` が使えるようになりました。コレクションの1件目でリレーションにアクセスした時点で、残りの全件分も1回のクエリで読み込みます。公式ドキュメントにも載っている方法ですが、どのクエリがいつ飛ぶかがコードから読み取りにくくなります。このコースでは、`with()` で読み込むリレーションを明示し、`preventLazyLoading()` で書き忘れに気付く方法で進めます。
+
 ## Step 4 カウントの最適化
 
 ### 問題（受講者数を取得）

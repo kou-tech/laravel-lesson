@@ -211,7 +211,7 @@ HTTPメソッドが操作を表すため、URLには名詞（リソース名）�
 ## 参考資料
 
 - [REST API Tutorial](https://restfulapi.net/)
-- [HTTP Status Codes](https://developer.mozilla.org/ja/docs/Web/HTTP/Status)
+- [HTTP Status Codes](https://developer.mozilla.org/ja/docs/Web/HTTP/Reference/Status)
 
 
 ## 次のレッスン

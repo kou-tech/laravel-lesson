@@ -200,28 +200,19 @@ namespace App\Jobs;
 
 use App\Mail\AttendanceConfirmation;
 use App\Models\Attendance;
-use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
+use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\Attributes\Timeout;
+use Illuminate\Queue\Attributes\Tries;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Throwable;
 
+#[Tries(3)]     // 最大試行回数
+#[Timeout(60)]  // タイムアウト（秒）
 class SendAttendanceConfirmation implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
-
-    /**
-     * 最大試行回数
-     */
-    public int $tries = 3;
-
-    /**
-     * タイムアウト（秒）
-     */
-    public int $timeout = 60;
+    use Queueable;
 
     public function __construct(
         public Attendance $attendance
@@ -250,6 +241,10 @@ class SendAttendanceConfirmation implements ShouldQueue
 }
 ```
 
+> 補足: `make:job` が生成するクラスは `Illuminate\Foundation\Queue\Queueable` トレイトを1つだけ use します。このトレイトが `Dispatchable`・`InteractsWithQueue`・`Queueable`・`SerializesModels` の4つをまとめて読み込むので、自分で並べる必要はありません。古い記事や、以前のバージョンで作られたプロジェクトでは、4つを個別に use する書き方もよく見かけます。
+>
+> 試行回数やタイムアウトは、Laravel 13 の公式ドキュメントでは `#[Tries(3)]` のようなクラスの属性で指定しています。以前からある `public int $tries = 3;` / `public int $timeout = 60;` というプロパティの書き方も引き続き使えます。
+
 ### Job のディスパッチ
 
 ```php
@@ -275,28 +270,35 @@ SendAttendanceConfirmation::dispatchSync($attendance);
 
 ### .env の設定
 
+キューの接続先は `.env` の `QUEUE_CONNECTION` で決まります。
+
 ```env
-# 開発環境（同期実行）
+# その場で同期実行する（キューを使わない）
 QUEUE_CONNECTION=sync
 
-# 本番環境（データベースキュー）
+# データベースのテーブルにジョブを積む
 QUEUE_CONNECTION=database
 ```
 
+このプロジェクトの `.env` は、Laravel 11 以降の初期設定どおり `QUEUE_CONNECTION=database` になっています。テスト実行時だけは `phpunit.xml` で `sync` に切り替えています（Step 8 で使います）。
+
 ### データベースキューの準備
 
-`make app` でコンテナに入ってから実行します。
+`database` ドライバーが使う `jobs` テーブルは、Laravel 11 以降は最初から入っているマイグレーション `database/migrations/0001_01_01_000002_create_jobs_table.php` で作られます。このプロジェクトでは `make setup` の時点で作成済みなので、追加の作業はいりません。
 
-```bash
-php artisan queue:table
-php artisan migrate
-```
-
-> DB初期化とシーダー実行を一括で行いたい場合は `make fresh` が使えます。
+> 補足: 古い記事では `php artisan queue:table` でマイグレーションを作る手順が紹介されています。現在のコマンド名は `php artisan make:queue-table` で、上のマイグレーションがないプロジェクトでだけ使います。このプロジェクトで実行すると「Migration already exists.」と表示されて何も作られません。
 
 ### キューワーカーの起動
 
-コンテナ内（`make app`）でキューワーカーを起動します。
+キューに積んだジョブは、ワーカーと呼ばれる常駐プロセスが取り出して実行します。このプロジェクトの Docker コンテナは、起動時に次のワーカーを立ち上げています（`docker/app/Dockerfile` の `CMD`）。
+
+```bash
+php artisan queue:listen --tries=1
+```
+
+そのため、自分でワーカーを起動しなくてもジョブは処理されます。処理の様子は `make logs` の `queue` の行で確認できます。`queue:listen` はジョブを1件処理するたびにアプリケーションを読み込み直すので、コードを書き換えたあとにワーカーを再起動する必要もありません。
+
+本番環境では、読み込み直しをしない分だけ速い `queue:work` を使うのが一般的です。参考までに主なオプションを載せておきます。
 
 ```bash
 # 基本的な起動
@@ -308,19 +310,20 @@ php artisan queue:work --queue=emails,default
 # メモリ制限とタイムアウト設定
 php artisan queue:work --memory=128 --timeout=60
 
-# 1ジョブ処理後に終了（デプロイ時に便利）
+# 1ジョブ処理したら終了する
 php artisan queue:work --once
 ```
+
+> `queue:work` は起動時に読み込んだコードを使い続けます。デプロイでコードを更新したら `php artisan queue:restart` でワーカーを再起動してください。
 
 
 ## Step 5 失敗したジョブの管理
 
 ### 失敗ジョブテーブル
 
-```bash
-php artisan queue:failed-table
-php artisan migrate
-```
+最大試行回数を超えて失敗したジョブは `failed_jobs` テーブルに記録されます。このテーブルも `jobs` テーブルと同じマイグレーション（`0001_01_01_000002_create_jobs_table.php`）で作成済みです。
+
+> 補足: マイグレーションがないプロジェクトでは `php artisan make:queue-failed-table` で作ります。古い記事にある `php artisan queue:failed-table` は旧名です。このプロジェクトで実行しても、`queue:table` と同じく「Migration already exists.」と表示されて何も作られません。
 
 ### 失敗ジョブの確認
 
@@ -344,18 +347,20 @@ php artisan queue:flush
 ### リトライ設定
 
 ```php
+use Illuminate\Queue\Attributes\Backoff;
+use Illuminate\Queue\Attributes\Tries;
+
+#[Tries(3)]                  // 最大3回試行
+#[Backoff([10, 60, 300])]    // 試行間の待機時間（秒）。10秒、1分、5分
 class SendAttendanceConfirmation implements ShouldQueue
 {
-    // 最大3回試行
-    public int $tries = 3;
-
-    // 試行間の待機時間（秒）
-    public array $backoff = [10, 60, 300];  // 10秒、1分、5分
-
-    // または一定間隔
-    public int $backoff = 60;  // 60秒間隔
+    // ...
 }
 ```
+
+待機時間を一定間隔にしたい場合は `#[Backoff(60)]` のように1つの値を渡します。
+
+> 補足: コンテナのワーカーは `--tries=1` で起動していますが、ジョブクラスに `#[Tries(3)]` を書くとジョブ側の指定が優先されます。プロパティで書く場合は `public int $tries = 3;` と `public array $backoff = [10, 60, 300];` のようにします。
 
 
 ## Step 6 実践 - 受講時のメール送信
@@ -558,18 +563,15 @@ namespace App\Jobs;
 use App\Enums\AttendanceStatus;
 use App\Mail\CourseReminder;
 use App\Models\Course;
-use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
+use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\Attributes\Tries;
 use Illuminate\Support\Facades\Mail;
 
+#[Tries(3)]
 class SendCourseReminder implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
-
-    public int $tries = 3;
+    use Queueable;
 
     public function __construct(
         public Course $course
