@@ -105,9 +105,10 @@ function showStage(array $stage): void
     printf("%s  %s\n", stageLabel($stage), summarize($missions));
 
     foreach ($missions as $mission) {
-        $mark = match ($mission['result']) {
-            'passed' => '✅',
-            'failed' => '❌',
+        $mark = match (true) {
+            str_starts_with($mission['name'], '[セルフ]') => '・',
+            $mission['result'] === 'passed' => '✅',
+            $mission['result'] === 'failed' => '❌',
             default => '⬜',
         };
         printf("  %s %s\n", $mark, $mission['name']);
@@ -257,7 +258,7 @@ function runChecksStage(array $stage): array
 
     foreach ($stage['checks'] as $check) {
         $missions = [...$missions, ...match ($check['type']) {
-            'pest' => runPestStage($check),
+            'pest' => relabel(runPestStage($check), $check['as'] ?? null),
             'node' => runNodeCheck($check),
             'command' => [runCommandCheck($check)],
             'self' => [['name' => $check['name'], 'result' => 'skipped', 'message' => $check['hint'] ?? '']],
@@ -267,6 +268,24 @@ function runChecksStage(array $stage): array
     cacheMissions($stage, $missions);
 
     return $missions;
+}
+
+/**
+ * 前のステージの判定を流用するときに、[メイン]・[サイド] を [前提] のような別の区分に付け替えます。
+ *
+ * @param list<array{name: string, result: string, message: string}> $missions
+ * @return list<array{name: string, result: string, message: string}>
+ */
+function relabel(array $missions, ?string $label): array
+{
+    if ($label === null) {
+        return $missions;
+    }
+
+    return array_map(
+        fn (array $mission): array => ['name' => (string) preg_replace('/^\[(メイン|サイド)\]/u', "[{$label}]", $mission['name'])] + $mission,
+        $missions,
+    );
 }
 
 /**
@@ -304,7 +323,10 @@ function runCommandCheck(array $check): array
         }
     }
 
-    [$exit, $output] = runCommand($check['argv']);
+    // 受講者によって作るかどうかが変わるファイル・ディレクトリは、あるときだけ対象に入れる
+    $optional = array_values(array_filter($check['optional'] ?? [], fn (string $path): bool => file_exists(QUEST_ROOT.'/'.$path)));
+
+    [$exit, $output] = runCommand([...$check['argv'], ...$optional]);
 
     if ($exit === 0) {
         return ['name' => $check['name'], 'result' => 'passed', 'message' => ''];

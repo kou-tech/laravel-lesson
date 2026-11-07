@@ -621,13 +621,13 @@ const isAdmin = auth.user.role === 'admin';
 make quest-f5
 ```
 
-メインのミッションは、型が API の形と合っていることです。判定では、判定専用の tsconfig を使い、CourseResource・AttendanceResource からその場で作った JSON を `satisfies Course`・`satisfies Attendance` で型検査します。そのため、キーの名前だけでなく、null になるか（`string | null`）、キーごと省略されることがあるか（`?`）まで、Step 2・3 で見た JSON と合っている必要があります。JSON にあるキーを型に書き忘れても、JSON にないキーを必須にしても落ちます。講師と受講者数を読み込んだ講座、読み込んでいない講座、description が null の講座の3通りを確かめます。
+メインのミッションは、型が API の形と合っていることです。判定では、判定専用の tsconfig を使い、CourseResource・AttendanceResource が返す JSON の形を写したデータ（判定のファイル `tests/Quests/frontend/types/f5.types.ts` に書いてあります）を `satisfies Course`・`satisfies Attendance` で型検査します。そのため、キーの名前だけでなく、null になるか（`string | null`）、キーごと省略されることがあるか（`?`）まで、Step 2・3 で見た JSON と合っている必要があります。JSON にあるキーを型に書き忘れても、JSON にないキーを必須にしても落ちます。講師と受講者数を読み込んだ講座、読み込んでいない講座、description が null の講座の3通りを確かめます。
 
 あわせて、ありえない値が型エラーになることも確かめます。status に `'published'` を入れた Course、closed のキーがない CourseStats、`'pending'` の AttendanceStatus、role が `'admin'` の User、`{ kind: 'full', remaining: 3 }` の SeatAvailability です。CourseStatus を `string` にしてしまうと、ここで落ちます。
 
 lib/course-seats.ts は node --test で、`seatAvailability()` が remaining_seats のないときに unknown、0 のときに full、それ以外で available と残席の数を返すこと、`seatLabel()` が「残り 3 席」「満席」のような文を返すことを確かめます。最後に、`npx tsc --noEmit` がプロジェクト全体で通ること、このレッスンで作った・直したファイルが eslint（`--no-inline-config --max-warnings 0`）を通ることを確かめます。
 
-練習問題1の `Paginated<T>` はサイドのミッションです。講座一覧 API の JSON が `satisfies Paginated<Course>` で通るかを確かめます。練習問題2はセルフチェックです。
+練習問題1の `Paginated<T>` はサイドのミッションです。講座一覧 API の JSON の形を写したデータが `satisfies Paginated<Course>` で通るかを確かめます。練習問題2はセルフチェックです。
 
 ## 参考資料
 

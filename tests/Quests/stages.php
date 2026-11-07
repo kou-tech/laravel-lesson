@@ -47,12 +47,11 @@ return [
         'id' => 'f0',
         'title' => '準備',
         'kind' => 'checks',
-        'prepare' => [['php', 'artisan', 'wayfinder:generate', '--with-form']],
         'checks' => [
             ['type' => 'pest', 'file' => 'tests/Quests/frontend/F0Test.php'],
             [
                 'type' => 'command',
-                'name' => '[メイン] 型の検査が通る（npm run types）',
+                'name' => '[前提] Wayfinder の生成物があり、型の検査が通る（npm run types）',
                 'argv' => ['npx', 'tsc', '--noEmit'],
                 'requires' => ['resources/js/routes/index.ts'],
                 'hint' => 'Step 5。php artisan wayfinder:generate --with-form を実行してから npm run types を試しましょう',
@@ -108,6 +107,7 @@ return [
             ['type' => 'self', 'name' => '[セルフ] key に index を使うと、絞り込んだときに印がずれることを確かめた（Step 6）'],
             ['type' => 'self', 'name' => '[セルフ] StrictMode で、開発中はログが2回出ることを確かめた（Step 8）'],
             ['type' => 'self', 'name' => '[セルフ] F2 と F3 のコードを並べて比べた（Step 9）'],
+            ['type' => 'self', 'name' => '[セルフ] 練習問題2。「気になるだけ表示」のチェックボックスで絞り込める'],
         ],
     ],
     [
@@ -135,6 +135,7 @@ return [
             ['type' => 'self', 'name' => '[セルフ] preserveState を外すと、絞り込んだときに印が消えることを確かめた（Step 3）'],
             ['type' => 'self', 'name' => '[セルフ] 講師にだけ「講座を作る」のリンクが出る（Step 4）'],
             ['type' => 'self', 'name' => '[セルフ] 業務例外を catch しないと、エラーのモーダルが出ることを確かめた（Step 5）'],
+            ['type' => 'self', 'name' => '[セルフ] 練習問題2。絞り込みのボタンを <Link> で書き直せた'],
         ],
     ],
     [
@@ -155,7 +156,7 @@ return [
                 'type' => 'command',
                 'name' => '[メイン] 型の検査が通る（npm run types）',
                 'argv' => ['npx', 'tsc', '--noEmit'],
-                'requires' => ['resources/js/types/course.ts'],
+                'requires' => ['resources/js/types/attendance.ts', 'resources/js/lib/course-seats.ts'],
                 'hint' => 'npm run types のエラーを読んで直しましょう',
             ],
             [
@@ -181,6 +182,7 @@ return [
         'kind' => 'checks',
         'prepare' => [['php', 'artisan', 'wayfinder:generate', '--with-form']],
         'checks' => [
+            ['type' => 'pest', 'file' => 'tests/Quests/frontend/F4Test.php', 'as' => '前提'],
             [
                 'type' => 'command',
                 'name' => '[メイン] 部品とフックの props・戻り値が設計どおり',
@@ -232,7 +234,7 @@ return [
             [
                 'type' => 'command',
                 'name' => '[メイン] eslint のエラーがない',
-                'argv' => ['npx', 'eslint', '--no-inline-config', '--max-warnings', '0', 'resources/js/components/courses/attend-button.tsx', 'resources/js/components/courses/course-stats-summary.tsx', 'resources/js/pages/courses/index.tsx'],
+                'argv' => ['npx', 'eslint', '--no-inline-config', '--max-warnings', '0', 'resources/js/components/courses/attend-button.tsx', 'resources/js/components/courses/course-list.tsx', 'resources/js/components/courses/course-stats-summary.tsx', 'resources/js/pages/courses/index.tsx'],
                 'requires' => ['resources/js/components/courses/attend-button.tsx', 'resources/js/components/courses/course-stats-summary.tsx'],
                 'hint' => 'npx eslint で、表示されたファイルのエラーを直しましょう',
             ],
@@ -265,6 +267,7 @@ return [
                 'name' => '[メイン] eslint のエラーがない',
                 'argv' => ['npx', 'eslint', '--no-inline-config', '--max-warnings', '0', 'resources/js/pages/me/attendances.tsx', 'resources/js/lib/attendance.ts'],
                 'requires' => ['resources/js/pages/me/attendances.tsx', 'resources/js/lib/attendance.ts'],
+                'optional' => ['resources/js/components/attendances'],
                 'hint' => 'npx eslint で、表示されたファイルのエラーを直しましょう',
             ],
             ['type' => 'self', 'name' => '[セルフ] 受講がないとき、案内の文が出る'],

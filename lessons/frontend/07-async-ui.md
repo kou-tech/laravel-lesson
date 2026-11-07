@@ -418,7 +418,7 @@ Inertia の楽観的な更新は、送信中もほかの操作を止めません
 
 ### CourseCard にボタンを置く
 
-F6 で、CourseCard は children を受け取り、カードの下の段（CardFooter）に表示するように作りました。F6 で作った `resources/js/components/courses/course-list.tsx` で CourseCard を使っているところに、AttendButton を children として渡します。
+F6 で、CourseCard は children を受け取り、カードの下の段（CardFooter）に表示するように作りました。F6 で作った `resources/js/components/courses/course-list.tsx` で CourseCard を使っているところに、AttendButton を children として渡します。F6 の「気になる」のボタンは消さずに残し、`<div className="flex gap-2">` で包んで、AttendButton と横に並べます。
 
 ```tsx
 import { AttendButton } from '@/components/courses/attend-button';
@@ -427,7 +427,17 @@ import { AttendButton } from '@/components/courses/attend-button';
 ```tsx
 <li key={course.id}>
     <CourseCard course={course}>
-        <AttendButton course={course} />
+        <div className="flex gap-2">
+            <AttendButton course={course} />
+            <Button
+                type="button"
+                variant={isFavorite ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => handleToggleFavorite(course.id)}
+            >
+                {isFavorite ? '★ 気になる' : '☆ 気になる'}
+            </Button>
+        </div>
     </CourseCard>
 </li>
 ```
@@ -542,35 +552,60 @@ import type { BreadcrumbItem, SharedData } from '@/types';
 import type { Course, CourseStats, CourseStatus } from '@/types/course';
 import { Deferred, Head, Link, usePage } from '@inertiajs/react';
 
+const breadcrumbs: BreadcrumbItem[] = [
+    {
+        title: '講座一覧',
+        href: index().url,
+    },
+];
+
 export type CoursesPageProps = {
     courses: { data: Course[] };
     filters: { status: CourseStatus | null };
     stats?: CourseStats;
 };
 
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: '講座一覧', href: index().url },
-];
-
 export default function CoursesIndex({ courses, stats }: CoursesPageProps) {
     const { auth, errors } = usePage<SharedData>().props;
-    const { status, changeStatus } = useCourseFilter();
+    const { selected, changeStatus } = useCourseFilter();
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="講座一覧" />
             <div className="flex flex-col gap-4 p-4">
-                {auth.user.role === 'instructor' && (
-                    <Button asChild className="self-start">
-                        <Link href={create()}>講座を作成する</Link>
-                    </Button>
-                )}
+                <div className="flex items-center justify-between">
+                    <h1 className="text-xl font-semibold">講座一覧</h1>
+                    {auth.user.role === 'instructor' && (
+                        <Button asChild size="sm">
+                            <Link href={create()}>講座を作る</Link>
+                        </Button>
+                    )}
+                </div>
+
                 <Deferred data="stats" fallback={<CourseStatsSkeleton />}>
                     {stats && <CourseStatsSummary stats={stats} />}
                 </Deferred>
-                <StatusFilter value={status} onChange={changeStatus} />
+
+                <StatusFilter selected={selected} onChange={changeStatus} />
+
                 <InputError message={errors.attendance} />
-                <CourseList courses={courses.data} />
+
+                <CourseList
+                    courses={courses.data}
+                    empty={
+                        selected === 'all' ? undefined : (
+                            <div className="flex items-center gap-2">
+                                <p>この条件の講座はありません。</p>
+                                <Button
+                                    variant="link"
+                                    onClick={() => changeStatus('all')}
+                                >
+                                    すべて表示する
+                                </Button>
+                            </div>
+                        )
+                    }
+                />
             </div>
         </AppLayout>
     );
@@ -581,7 +616,9 @@ F6 の形から変えたのは、次のところです。
 
 - `CoursesPageProps` に `stats?: CourseStats` を足した（`export` は Step 4 で付けたもの）
 - 引数で `stats` も受け取り、`usePage` から `errors` も取り出した
-- 統計を `<Deferred>` で囲んで置き、絞り込みのボタンの下にエラーメッセージを置いた
+- 見出しの下に統計を `<Deferred>` で囲んで置き、絞り込みのボタンの下にエラーメッセージを置いた
+
+見出しと「講座を作る」のリンク、F6 の練習問題1の `empty` は、F6 のまま残しています。F6 の補足で flash のメッセージの表示を残した人は、`const { auth, errors } = usePage<SharedData>().props;` の代わりに `const { props, flash } = usePage<SharedData>();` と `const { auth, errors } = props;` の2行を書き、メッセージの `<p>` も残してください。
 
 `<Deferred>` は、`data` に書いた props が届くまで `fallback` を表示し、届いたら中身に切り替えます。Step 2 の `Suspense` と同じ役目を、Inertia の deferred props に合わせて受け持つ部品です。
 
@@ -699,11 +736,13 @@ F6 の useCourseFilter で `router.get` を呼んでいるところの、オプ�
 `resources/js/hooks/use-course-filter.ts`
 
 ```ts
-router.get(index(), statusQuery(next), {
-    preserveState: true,
-    preserveScroll: true,
-    viewTransition: true,
-});
+function changeStatus(status: StatusOption): void {
+    router.get(index.url(), statusQuery(status), {
+        preserveState: true,
+        preserveScroll: true,
+        viewTransition: true,
+    });
+}
 ```
 
 足すのは `viewTransition: true` の1行だけです。

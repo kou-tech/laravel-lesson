@@ -413,6 +413,8 @@ export default function CoursesIndex({ courses }: CoursesPageProps) {
 
 ページの JSX が、「見出しとリンク、絞り込み、一覧」と画面の並びをそのまま読める形になりました。CoursesPageProps の `filters` はページの中では使っていませんが、コントローラーから届く props の形を表す型なので残しておきます。
 
+> 補足: F4 の練習問題1で flash のメッセージを表示していた人は、上のコードに丸ごと書き換えると、その表示が消えます。残したいときは、`const { auth } = usePage<SharedData>().props;` の行を F4 の解答例と同じ2行（`const { props, flash } = usePage<SharedData>();` と `const { auth } = props;`）にし、見出しの `<div>` の下に、F4 の解答例のメッセージの `<p>`（`typeof flash.message === 'string' && ...`）を足してください。
+
 データは、次の図のように親から子へ props で流れます。StatusFilter で選んだステータスだけが、onChange を通って親に戻ります。
 
 ![CoursesIndex が useCourseFilter から selected と changeStatus を受け取り、StatusFilter に selected と onChange、CourseList に courses を渡し、CourseList が CourseCard に course を渡す](./images/f6-props-flow.svg)
@@ -601,7 +603,7 @@ make quest-f6
 
 lib/course-filter.ts の `statusQuery()` は node --test で、`'all'` なら `{}`、`'active'` なら `{ status: 'active' }` を返すことを確かめます。F3 で作った `filterCourses()`・`countByStatus()` も同じファイルにあるので、`import type` 以外の import を足さないでください。
 
-あわせて、`npx tsc --noEmit` がプロジェクト全体で通ること、このレッスンで作った・直したファイルが eslint（`--no-inline-config --max-warnings 0`。react-hooks のルールも含む）を通ること、F4 の判定（講座一覧のページが courses/index として表示され、props が変わっていないこと）が引き続き通ることを確かめます。
+あわせて、`npx tsc --noEmit` がプロジェクト全体で通ること、このレッスンで作った・直したファイルが eslint（`--no-inline-config --max-warnings 0`。react-hooks のルールも含む）を通ることを確かめます。ページを組み立て直してもサーバーとのやりとりが変わっていないことは、[前提] のミッションとして F4 の判定（講座一覧のページが courses/index として表示され、props が変わっていないことなど）を走らせて確かめます。
 
 練習問題1の `empty` はサイドのミッションです。`<CourseList courses={[]} empty={<span />} />` が型検査を通るかを確かめます。練習問題2と、Step 7 のブラウザでの確認はセルフチェックです。
 
