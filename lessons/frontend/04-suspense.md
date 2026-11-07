@@ -129,17 +129,17 @@ function App() {
 }
 ```
 
-### 2. データ取得との組み合わせ（React 18以降）
+### 2. データ取得との組み合わせ
 
-React 18からは、データ取得ライブラリと組み合わせて使えます。
+React 18からは、Suspenseに対応したデータ取得ライブラリ（SWR、TanStack Query、Relayなど）と組み合わせて使えるようになりました。React 19では、Promiseの結果を読み取る `use` が加わり、ライブラリの機能を使わずにデータを待つ処理も書けます。
 
 ```jsx
-import { Suspense } from 'react';
+import { Suspense, use } from 'react';
 import { fetchUserData } from './api';
 
 // データ取得を「サスペンド」できるコンポーネント
 function UserProfile({ userId }) {
-  // SWR、React Query、Relayなどが対応
+  // fetchUserData は、同じ userId なら同じ Promise を返すようにキャッシュしておく
   const user = use(fetchUserData(userId));
   return <div>{user.name}</div>;
 }
@@ -152,6 +152,9 @@ function App() {
   );
 }
 ```
+
+> 注意
+> `use` に渡す Promise は、レンダーのたびに作り直さないようにします。`use(fetch('/api/user'))` のようにコンポーネントの中で毎回 Promise を作ると、再レンダーのたびに fallback が表示されてしまいます。Promise はキャッシュから取り出すか、データ取得ライブラリやフレームワークの仕組みに任せましょう。また、Promise が失敗したときのエラー表示は、このあと学ぶ Error Boundary で行います。
 
 ### 3. ネスト（入れ子）にする
 
@@ -404,6 +407,7 @@ function App() {
 
 ```jsx
 import { Suspense } from 'react';
+import { ErrorBoundary } from 'react-error-boundary';
 import useSWR from 'swr';
 
 const fetcher = (url) => fetch(url).then((res) => res.json());
@@ -451,7 +455,7 @@ function App() {
 ### 組み合わせのパターン
 
 ```jsx
-<ErrorBoundary fallback={<ErrorFallback />}>
+<ErrorBoundary FallbackComponent={ErrorFallback}>
   <Suspense fallback={<Loading />}>
     <MyComponent />
   </Suspense>
@@ -468,6 +472,7 @@ function App() {
 
 - [React 公式ドキュメント - Suspense](https://ja.react.dev/reference/react/Suspense)
 - [React 公式ドキュメント - lazy](https://ja.react.dev/reference/react/lazy)
+- [React 公式ドキュメント - use](https://ja.react.dev/reference/react/use)
 - [React 公式ドキュメント - Error Boundary](https://ja.react.dev/reference/react/Component#catching-rendering-errors-with-an-error-boundary)
 
 ### ライブラリ
@@ -478,3 +483,4 @@ function App() {
 ### 関連記事
 
 - [React 18 の新機能](https://ja.react.dev/blog/2022/03/29/react-v18)
+- [React 19 の新機能](https://ja.react.dev/blog/2024/12/05/react-19)

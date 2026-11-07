@@ -165,28 +165,42 @@ const { data } = useSWR('/api/stock-price', fetcher, {
 > 「たぶん成功するだろう」と楽観的に考えて、サーバーからの応答を待たずに画面を先に更新する手法です。失敗したら元に戻します。
 
 ```jsx
-import useSWR, { mutate } from 'swr';
+import useSWR from 'swr';
+
+// サーバーに送信する関数。失敗したらエラーを投げる
+const postTodo = async (newTodo) => {
+  const response = await fetch('/api/todos', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(newTodo),
+  });
+
+  if (!response.ok) {
+    throw new Error('追加に失敗しました');
+  }
+};
 
 function TodoList() {
-  const { data: todos } = useSWR('/api/todos', fetcher);
+  const { data: todos, mutate } = useSWR('/api/todos', fetcher);
 
   const addTodo = async (newTodo) => {
-    // 1. 画面を先に更新（楽観的更新）
-    mutate('/api/todos', [...todos, newTodo], false);
-
-    // 2. サーバーに送信
-    await fetch('/api/todos', {
-      method: 'POST',
-      body: JSON.stringify(newTodo),
+    await mutate(postTodo(newTodo), {
+      // 1. 送信の完了を待たずに、画面を先に更新（楽観的更新）
+      optimisticData: [...todos, newTodo],
+      // 2. 送信に失敗したら、元のデータに戻す
+      rollbackOnError: true,
+      // postTodo の戻り値はキャッシュに入れない
+      populateCache: false,
+      // 3. 送信後に、サーバーの最新データを取り直す
+      revalidate: true,
     });
-
-    // 3. サーバーの最新データで確認
-    mutate('/api/todos');
   };
 
   return (/* ... */);
 }
 ```
+
+SWR 2系では、`mutate` のオプションに `optimisticData`（先に表示するデータ）と `rollbackOnError`（失敗したら元に戻すかどうか）を渡せます。送信に失敗すると `mutate` はエラーを投げるので、画面にエラーを出したいときは `try...catch` で受け取ります。
 
 ### 5. エラー時の再試行が自動
 
@@ -230,7 +244,7 @@ SWRを追加すると、アプリのファイルサイズが少し増えます�
 Next.jsなどでSSR/SSGと組み合わせる場合、初期データの渡し方に注意が必要です。
 
 ```jsx
-// Next.jsでの例
+// Next.js（Pages Router）での例
 export async function getServerSideProps() {
   const user = await fetchUser();
   return { props: { fallback: { '/api/user': user } } };
@@ -303,5 +317,5 @@ Cache-Control: max-age=60, stale-while-revalidate=300
 
 ### HTTP仕様
 
-- [MDN Web Docs - Cache-Control](https://developer.mozilla.org/ja/docs/Web/HTTP/Headers/Cache-Control)
+- [MDN Web Docs - Cache-Control](https://developer.mozilla.org/ja/docs/Web/HTTP/Reference/Headers/Cache-Control)
 - [RFC 5861 - HTTP Cache-Control Extensions for Stale Content](https://datatracker.ietf.org/doc/html/rfc5861)
