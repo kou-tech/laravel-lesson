@@ -167,6 +167,8 @@ Lesson 5 で決めた命名規則に従い、`Course/` サブディレクトリ�
 php artisan make:request Course/StoreRequest
 ```
 
+Lesson 5 の練習問題1で `Course/StoreRequest` をすでに作った人は、このコマンドが `Request already exists.` で止まります。その場合はコマンドを飛ばし、作ってあるファイルの中身を下のコードに書き換えてください。
+
 ```php
 <?php
 
@@ -383,7 +385,7 @@ class CourseController extends Controller
 ```
 
 > ステータスコードの補足
-> - API Resource をそのまま `return` すると 200 になります。Lesson 1 で学んだ通り、作成成功は 201 Created を返すべきなので、`store` だけは `->response()->setStatusCode(201)` で明示しています。Lesson 17 でこのAPIのテストを書くとき、`assertCreated()`（201期待）が通る前提になります。
+> - API Resource をそのまま `return` すると 200 になります。Lesson 1 で学んだ通り、作成成功は 201 Created を返すべきなので、`store` だけは `->response()->setStatusCode(201)` で明示しています。Lesson 12 の Step 8 でこのAPIのテストを書くとき、`assertCreated()`（201期待）が通る前提になります。
 > - 削除は本文なしの 204 No Content です。`response()->noContent()` が同じ意味のショートカットです。`Response` 型を使うので `use Illuminate\Http\Response;` も追加してください。
 
 
@@ -569,17 +571,27 @@ public function index(Request $request)
 {
     $query = Course::with('instructor');
 
+    // ステータスでフィルタリング
+    if ($request->has('status')) {
+        $query->where('status', $request->input('status'));
+    }
+
+    // 講師名で部分一致検索（追加）
     if ($request->has('instructor')) {
         $query->whereHas('instructor', function ($q) use ($request) {
             $q->where('name', 'like', '%' . $request->input('instructor') . '%');
         });
     }
 
-    $courses = $query->latest()->paginate();
+    // ページネーション
+    $perPage = $request->input('per_page', 15);
+    $courses = $query->latest()->paginate($perPage);
 
     return CourseResource::collection($courses);
 }
 ```
+
+Step 5 で書いた status の絞り込みと `per_page` の指定は残したまま、講師名の `if` ブロックを足しています。
 </details>
 
 ### 問題2

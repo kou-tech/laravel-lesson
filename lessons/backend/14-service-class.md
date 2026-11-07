@@ -268,8 +268,9 @@ class DeleteCourse
 
 ### 基底クラス
 
+`app/Exceptions/BusinessException.php`
+
 ```php
-// app/Exceptions/BusinessException.php
 <?php
 
 namespace App\Exceptions;
@@ -295,8 +296,9 @@ abstract class BusinessException extends Exception
 
 ### 具象クラス
 
+`app/Exceptions/DuplicateCourseTitleException.php`
+
 ```php
-// app/Exceptions/DuplicateCourseTitleException.php
 <?php
 
 namespace App\Exceptions;
@@ -312,8 +314,9 @@ class DuplicateCourseTitleException extends BusinessException
 }
 ```
 
+`app/Exceptions/CourseLimitExceededException.php`
+
 ```php
-// app/Exceptions/CourseLimitExceededException.php
 <?php
 
 namespace App\Exceptions;
@@ -329,8 +332,9 @@ class CourseLimitExceededException extends BusinessException
 }
 ```
 
+`app/Exceptions/CourseHasAttendancesException.php`
+
 ```php
-// app/Exceptions/CourseHasAttendancesException.php
 <?php
 
 namespace App\Exceptions;
@@ -462,8 +466,9 @@ Lesson 10 で作った `AttendanceController::store` には、定員のチェッ
 
 Lesson 10 のコントローラーが返していた 422 と 409 を、Step 2 と同じ形の例外にします。
 
+`app/Exceptions/CapacityExceededException.php`
+
 ```php
-// app/Exceptions/CapacityExceededException.php
 <?php
 
 namespace App\Exceptions;
@@ -479,8 +484,9 @@ class CapacityExceededException extends BusinessException
 }
 ```
 
+`app/Exceptions/AlreadyAttendingException.php`
+
 ```php
-// app/Exceptions/AlreadyAttendingException.php
 <?php
 
 namespace App\Exceptions;
@@ -502,8 +508,9 @@ class AlreadyAttendingException extends BusinessException
 
 ### AttendCourse
 
+`app/Services/Attendance/AttendCourse.php`
+
 ```php
-// app/Services/Attendance/AttendCourse.php
 <?php
 
 namespace App\Services\Attendance;
@@ -831,8 +838,9 @@ php artisan test tests/Feature/Api/CourseControllerTest.php
 <details>
 <summary>解答例</summary>
 
+`app/Services/Course/CopyCourse.php`
+
 ```php
-// app/Services/Course/CopyCourse.php
 <?php
 
 namespace App\Services\Course;
@@ -890,9 +898,11 @@ Route::post('/courses/{course}/copies', [CourseController::class, 'copy']);
 
 `CopyCourse` は `CreateCourse` をコンストラクタで受け取っていますが、コントローラーは `CopyCourse` を受け取るだけで構いません。`CopyCourse` を作るときに、Laravel が `CreateCourse` も作って渡します。
 
-テストの例です。
+テストの例です。`make app` でコンテナに入り、`php artisan make:test Api/CourseCopyTest` でファイルを作ってから、`tests/Feature/Api/CourseCopyTest.php` の中身を下のコードに置き換えます。
 
 ```php
+<?php
+
 use App\Models\Course;
 use App\Models\User;
 

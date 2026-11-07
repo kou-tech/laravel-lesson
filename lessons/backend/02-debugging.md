@@ -251,6 +251,8 @@ public function show(int $id)
     return $user;
 }
 ```
+
+ルートの `{user}` と引数名の `$id` は名前が違いますが、ルートの値は前から順に引数へ渡されるので、このままでも動きます。名前をそろえたい場合は、`routes/api.php` のルートを `/debug/users/{id}` に書き換えてください。
 </details>
 
 

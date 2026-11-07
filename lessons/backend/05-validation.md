@@ -271,7 +271,7 @@ app/Http/Requests/
 ### 3. nullable vs sometimes
 
 ```php
-// nullable: 値がnullでもOK（フィールドは必須）
+// nullable: 値がnullでもOK（requiredと組み合わせなければ、フィールド自体がなくても通る）
 'bio' => ['nullable', 'string'],
 
 // sometimes: フィールド自体がなくてもOK（あればバリデーション）

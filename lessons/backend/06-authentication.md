@@ -92,8 +92,7 @@ Route::get('/dashboard', function () {
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\UserController;
 
-// 認証不要（公開API）
-Route::get('/users/{user}', [\App\Http\Controllers\Api\UserController::class, 'show']);
+// 認証不要（公開API）の GET /users/{user} は Lesson 4 で追加済みなので、ここには書かない
 
 // 認証必要（要ログイン）
 Route::middleware('auth:sanctum')->group(function () {
@@ -116,7 +115,7 @@ Route::middleware('auth:sanctum')->group(function () {
     }
 ```
 
-`Illuminate\Http\Request` は Lesson 4 の時点で既に `use` 済みのはずです。もし外していた場合は追加してください。
+`me()` で使う `Illuminate\Http\Request` の `use` は、ファイルの先頭に追加してください。Lesson 5 で `update()` の引数を `UpdateRequest` に変えたあと Pint を実行すると、使われなくなった `use Illuminate\Http\Request;` は消えています。まだ残っている場合は、二重に書かないでください。
 
 ### 動作確認
 

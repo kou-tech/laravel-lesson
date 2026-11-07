@@ -69,8 +69,11 @@ test('講座一覧を取得できる', function () {
 
 クラスやメソッド単位でテストします。
 
+`tests/Unit/CourseStatusTest.php`
+
 ```php
-// tests/Unit/CourseStatusTest.php
+<?php
+
 use App\Enums\CourseStatus;
 
 test('ステータスに対応する日本語ラベルを返す', function () {
@@ -104,8 +107,10 @@ test('ステータスに対応する日本語ラベルを返す', function () {
 
 このプロジェクトでは Pest を使用しています。
 
+`tests/Feature/CourseTest.php`
+
 ```php
-// tests/Feature/CourseTest.php
+<?php
 
 use App\Models\Course;
 use App\Models\User;
@@ -433,8 +438,10 @@ php artisan test --coverage
 php artisan make:test Api/CourseControllerTest
 ```
 
+`tests/Feature/Api/CourseControllerTest.php`
+
 ```php
-// tests/Feature/Api/CourseControllerTest.php
+<?php
 
 use App\Models\Course;
 use App\Models\User;
@@ -532,8 +539,10 @@ php artisan test tests/Feature/Api/CourseControllerTest.php
 php artisan make:test Api/AttendanceStoreTest
 ```
 
+`tests/Feature/Api/AttendanceStoreTest.php`
+
 ```php
-// tests/Feature/Api/AttendanceStoreTest.php
+<?php
 
 use App\Models\Attendance;
 use App\Models\Course;

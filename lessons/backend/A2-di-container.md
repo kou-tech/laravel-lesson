@@ -336,8 +336,9 @@ class AttendanceController extends Controller
 
 #### インターフェース
 
+`app/Contracts/AttendanceServiceInterface.php`
+
 ```php
-// app/Contracts/AttendanceServiceInterface.php
 <?php
 
 namespace App\Contracts;
@@ -355,8 +356,9 @@ interface AttendanceServiceInterface
 
 #### サービス実装
 
+`app/Services/AttendanceService.php`
+
 ```php
-// app/Services/AttendanceService.php
 <?php
 
 namespace App\Services;
@@ -404,8 +406,9 @@ class AttendanceService implements AttendanceServiceInterface
 
 #### コントローラー
 
+`app/Http/Controllers/Api/AttendanceController.php`
+
 ```php
-// app/Http/Controllers/Api/AttendanceController.php
 <?php
 
 namespace App\Http\Controllers\Api;
@@ -525,8 +528,9 @@ Lesson 14 では `CreateCourse` という具象クラスを `$this->mock()` で�
 <details>
 <summary>解答例</summary>
 
+`app/Contracts/NotificationServiceInterface.php`
+
 ```php
-// app/Contracts/NotificationServiceInterface.php
 <?php
 
 namespace App\Contracts;
@@ -539,8 +543,9 @@ interface NotificationServiceInterface
 }
 ```
 
+`app/Services/EmailNotificationService.php`
+
 ```php
-// app/Services/EmailNotificationService.php
 <?php
 
 namespace App\Services;
@@ -580,8 +585,9 @@ public function register(): void
 <details>
 <summary>解答例</summary>
 
+`app/Services/FakeNotificationService.php`
+
 ```php
-// app/Services/FakeNotificationService.php
 <?php
 
 namespace App\Services;

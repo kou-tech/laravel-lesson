@@ -498,8 +498,10 @@ php artisan make:test Api/AttendanceConfirmationTest
 
 ### メール送信のテスト
 
+`tests/Feature/Api/AttendanceConfirmationTest.php`
+
 ```php
-// tests/Feature/Api/AttendanceConfirmationTest.php
+<?php
 
 use App\Jobs\SendAttendanceConfirmation;
 use App\Mail\AttendanceConfirmation;
@@ -620,7 +622,67 @@ Step 6 のコードなら、どちらのテストもそのまま通ります。`
 <details>
 <summary>解答例</summary>
 
-`CourseReminder` は、Step 1 と同じ手順（`php artisan make:mail CourseReminder`）で作るメールです。ここでは中身を省略します。
+`CourseReminder` は、Step 1 と同じ手順（`php artisan make:mail CourseReminder`）で作るメールです。生成されたクラスのコンストラクタは引数を受け取らないので、ジョブから `new CourseReminder($this->course)` で講座を渡せるように書き換えます。件名とビュー名も自分で決めて書きます。
+
+`app/Mail/CourseReminder.php`
+
+```php
+<?php
+
+namespace App\Mail;
+
+use App\Models\Course;
+use Illuminate\Bus\Queueable;
+use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Content;
+use Illuminate\Mail\Mailables\Envelope;
+use Illuminate\Queue\SerializesModels;
+
+class CourseReminder extends Mailable
+{
+    use Queueable, SerializesModels;
+
+    public function __construct(
+        public Course $course
+    ) {}
+
+    public function envelope(): Envelope
+    {
+        return new Envelope(
+            subject: '【開講前日のお知らせ】' . $this->course->title,
+        );
+    }
+
+    public function content(): Content
+    {
+        return new Content(
+            view: 'emails.course-reminder',
+            with: [
+                'courseName' => $this->course->title,
+                'startsAt' => $this->course->starts_at->format('Y年m月d日 H:i'),
+            ],
+        );
+    }
+}
+```
+
+ビューは `resources/views/emails/course-reminder.blade.php` に置きます。
+
+```blade
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+</head>
+<body>
+    <h1>明日は開講日です</h1>
+
+    <p>受講中の講座「{{ $courseName }}」は、{{ $startsAt }} に始まります。</p>
+</body>
+</html>
+```
+
+ジョブは次のとおりです。
 
 ```php
 <?php

@@ -896,7 +896,7 @@
                                 ],
                                 "body": {
                                     "mode": "raw",
-                                    "raw": "{\n  \"title\": \"講座名テスト\",\n  \"description\": \"説明説明\",\n  \"capacity\": 1,\n  \"status\": \"draft\"\n}",
+                                    "raw": "{\n  \"title\": \"講座名テスト\",\n  \"description\": \"説明説明\",\n  \"capacity\": 1,\n  \"status\": \"draft\",\n  \"starts_at\": \"2027-04-01 10:00:00\"\n}",
                                     "options": {
                                         "raw": {
                                             "headerFamily": "json",

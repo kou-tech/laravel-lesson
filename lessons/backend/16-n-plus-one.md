@@ -383,8 +383,10 @@ Lesson 14 の `AttendCourse` は `load(['user', 'course.instructor'])` で読み
 php artisan make:test Api/MyAttendanceTest
 ```
 
+`tests/Feature/Api/MyAttendanceTest.php`
+
 ```php
-// tests/Feature/Api/MyAttendanceTest.php
+<?php
 
 use App\Models\Attendance;
 use App\Models\User;

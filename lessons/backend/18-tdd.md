@@ -48,9 +48,9 @@ php artisan make:test Api/AttendanceCancelTest
 
 ### 最初のテスト
 
-```php
-// tests/Feature/Api/AttendanceCancelTest.php
+`tests/Feature/Api/AttendanceCancelTest.php`
 
+```php
 <?php
 
 use App\Enums\AttendanceStatus;
@@ -383,8 +383,9 @@ Lesson 14 の練習問題2の最後のケースで確かめたのも、この経
 
 Lesson 14 で決めた「1サービス = 1操作、`__invoke` で呼ぶ」方針に沿って、`App\Services\Attendance\CancelAttendance` に抽出します。Lesson 14 のディレクトリ構成の例で「Lesson 18 で作る」としていたクラスです。
 
+`app/Services/Attendance/CancelAttendance.php`
+
 ```php
-// app/Services/Attendance/CancelAttendance.php
 <?php
 
 namespace App\Services\Attendance;
@@ -429,8 +430,9 @@ class CancelAttendance
 
 `CancellationDeadlineExceededException` は Lesson 14 の `BusinessException` を継承して作ります。これで 422 と、`message`・`error_code` の入ったJSONが返ります。
 
+`app/Exceptions/CancellationDeadlineExceededException.php`
+
 ```php
-// app/Exceptions/CancellationDeadlineExceededException.php
 <?php
 
 namespace App\Exceptions;
@@ -703,8 +705,9 @@ Step 6 では、コントローラーに書いた処理をサービスクラス�
 
 Step 1 テストを書く
 
+`tests/Feature/Api/CourseCapacityUpdateTest.php`
+
 ```php
-// tests/Feature/Api/CourseCapacityUpdateTest.php
 <?php
 
 use App\Models\Attendance;
@@ -794,6 +797,7 @@ public function rules(): array
             },
         ],
         'status' => ['sometimes', Rule::enum(CourseStatus::class)],
+        'starts_at' => ['sometimes', 'date'],
     ];
 }
 ```
@@ -842,8 +846,9 @@ test('キャンセル後に再登録しても、受講の行は増えない', fu
 
 直すのは、受講登録の処理をまとめた `AttendCourse` です。トランザクションの中で、キャンセル済みの受講があれば作り直さずに `attending` へ戻し、なければ今までどおり作ります。
 
+`app/Services/Attendance/AttendCourse.php`
+
 ```php
-// app/Services/Attendance/AttendCourse.php
 <?php
 
 namespace App\Services\Attendance;

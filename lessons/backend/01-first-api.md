@@ -13,13 +13,9 @@
 
 ### api.phpにルートを追加
 
-`routes/api.php` を開き、以下のコードを追加します。
+`routes/api.php` を開き、ファイルの末尾に以下のコードを追加します。最初から書かれている `/user` のルートと `use` の行は、消さずに残してください。
 
 ```php
-<?php
-
-use Illuminate\Support\Facades\Route;
-
 Route::get('/hello', function () {
     return ['message' => 'Hello, World!'];
 });

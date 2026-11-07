@@ -78,9 +78,11 @@ class User extends Authenticatable
 >     "name" => "テスト", "email" => "mass@example.com",
 >     "password" => "password", "role" => "instructor",
 >   ]);
->   echo $u->role->value;   // student （instructor は無視される）
+>   echo $u->fresh()->role->value;   // student （instructor は無視される）
 > '
 > ```
+>
+> `create()` は、DBのカラムの既定値（`role` の `student`）をモデルに読み戻しません。作った直後の `$u->role` は `null` なので、`fresh()` でDBから読み直してから確かめています。
 >
 > なお、シーダーとFactoryは `Model::unguarded()` の中で実行されるため、この制限を受けません。テストデータで自由に `role` を指定できるのはそのためです。
 
