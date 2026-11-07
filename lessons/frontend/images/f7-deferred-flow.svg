@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="430" viewBox="0 0 960 430" font-family="Hiragino Sans, 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', 'Yu Gothic', Meiryo, sans-serif">
+<rect x="0.5" y="0.5" width="959" height="429" rx="16" fill="#FBFBFC" stroke="#E6E8EB"/>
+<rect x="140" y="28" width="180" height="36" rx="18" fill="#F0F1F3"/>
+<text x="230" y="51.5" font-size="15" font-weight="600" fill="#4A5361" text-anchor="middle">ブラウザ</text>
+<line x1="230" y1="72" x2="230" y2="404" stroke="#E1E4E8" stroke-width="2" stroke-linecap="round"/>
+<rect x="640" y="28" width="180" height="36" rx="18" fill="#F0F1F3"/>
+<text x="730" y="51.5" font-size="15" font-weight="600" fill="#4A5361" text-anchor="middle">サーバー</text>
+<line x1="730" y1="72" x2="730" y2="404" stroke="#E1E4E8" stroke-width="2" stroke-linecap="round"/>
+<path d="M234 112 H725" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round"/>
+<path d="M717 106 l8 6 l-8 6" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="480.0" y="101" font-size="15" fill="#4A5361" text-anchor="middle" stroke="#FBFBFC" stroke-width="8" stroke-linejoin="round" paint-order="stroke">講座一覧のページを要求</text>
+<path d="M726 162 H235" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-dasharray="6 6"/>
+<path d="M243 156 l-8 6 l8 6" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="480.0" y="151" font-size="15" fill="#4A5361" text-anchor="middle" stroke="#FBFBFC" stroke-width="8" stroke-linejoin="round" paint-order="stroke">courses（stats は後で）</text>
+<rect x="115.0" y="184" width="230" height="44" rx="10" fill="#FFFFFF" stroke="#C9CDD3" stroke-width="2"/>
+<text x="230" y="211" font-size="15" fill="#4A5361" text-anchor="middle">一覧と fallback を表示</text>
+<path d="M234 282 H725" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round"/>
+<path d="M717 276 l8 6 l-8 6" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="480.0" y="271" font-size="15" fill="#4A5361" text-anchor="middle" stroke="#FBFBFC" stroke-width="8" stroke-linejoin="round" paint-order="stroke">stats だけを要求</text>
+<path d="M726 332 H235" fill="none" stroke="#9DB8DC" stroke-width="2" stroke-linecap="round" stroke-dasharray="6 6"/>
+<path d="M243 326 l-8 6 l8 6" fill="none" stroke="#9DB8DC" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="480.0" y="321" font-size="15" fill="#4A5361" text-anchor="middle" stroke="#FBFBFC" stroke-width="8" stroke-linejoin="round" paint-order="stroke">stats</text>
+<rect x="115.0" y="354" width="230" height="44" rx="10" fill="#E9F0F9" stroke="#9DB8DC" stroke-width="2"/>
+<text x="230" y="381" font-size="15" fill="#4A5361" text-anchor="middle">統計に差し替える</text>
+</svg>

@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="320" viewBox="0 0 960 320" font-family="Hiragino Sans, 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', 'Yu Gothic', Meiryo, sans-serif">
+<rect x="0.5" y="0.5" width="959" height="319" rx="16" fill="#FBFBFC" stroke="#E6E8EB"/>
+<rect x="40" y="28" width="240" height="36" rx="18" fill="#F0F1F3"/>
+<text x="60" y="51.5" font-size="15" font-weight="600" fill="#4A5361">最初のアクセス</text>
+<rect x="60" y="84" width="170" height="56" rx="10" fill="#FFFFFF" stroke="#C9CDD3" stroke-width="2"/>
+<text x="145" y="107" font-size="15" fill="#4A5361" text-anchor="middle">ブラウザ</text>
+<text x="145" y="128" font-size="13" fill="#7A828E" text-anchor="middle">GET /courses</text>
+<path d="M234 112 h48 m-8 -6 l8 6 l-8 6" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="290" y="84" width="170" height="56" rx="10" fill="#FFFFFF" stroke="#C9CDD3" stroke-width="2"/>
+<text x="375" y="117" font-size="15" fill="#4A5361" text-anchor="middle">コントローラー</text>
+<path d="M464 112 h48 m-8 -6 l8 6 l-8 6" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="520" y="84" width="170" height="56" rx="10" fill="#FFFFFF" stroke="#C9CDD3" stroke-width="2"/>
+<text x="605" y="117" font-size="15" fill="#4A5361" text-anchor="middle">HTML と props</text>
+<path d="M694 112 h48 m-8 -6 l8 6 l-8 6" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="750" y="84" width="170" height="56" rx="10" fill="#FFFFFF" stroke="#C9CDD3" stroke-width="2"/>
+<text x="835" y="117" font-size="15" fill="#4A5361" text-anchor="middle">ページを描く</text>
+<rect x="40" y="172" width="240" height="36" rx="18" fill="#E9F0F9"/>
+<text x="60" y="195.5" font-size="15" font-weight="600" fill="#4A5361">Link・router.get</text>
+<rect x="60" y="228" width="170" height="56" rx="10" fill="#FFFFFF" stroke="#9DB8DC" stroke-width="2"/>
+<text x="145" y="251" font-size="15" fill="#4A5361" text-anchor="middle">ブラウザ</text>
+<text x="145" y="272" font-size="13" fill="#7A828E" text-anchor="middle">X-Inertia: true</text>
+<path d="M234 256 h48 m-8 -6 l8 6 l-8 6" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="290" y="228" width="170" height="56" rx="10" fill="#FFFFFF" stroke="#9DB8DC" stroke-width="2"/>
+<text x="375" y="261" font-size="15" fill="#4A5361" text-anchor="middle">コントローラー</text>
+<path d="M464 256 h48 m-8 -6 l8 6 l-8 6" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="520" y="228" width="170" height="56" rx="10" fill="#E9F0F9" stroke="#9DB8DC" stroke-width="2"/>
+<text x="605" y="261" font-size="15" fill="#4A5361" text-anchor="middle">props の JSON</text>
+<path d="M694 256 h48 m-8 -6 l8 6 l-8 6" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="750" y="228" width="170" height="56" rx="10" fill="#FFFFFF" stroke="#9DB8DC" stroke-width="2"/>
+<text x="835" y="261" font-size="15" fill="#4A5361" text-anchor="middle">ページを差し替える</text>
+</svg>

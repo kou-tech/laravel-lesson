@@ -955,4 +955,4 @@ class AttendCourse
 
 次は [ボス戦3 講師向けの受講者一覧APIをTDDで作る](./boss-3-course-attendances.md) です。コードは載っておらず、渡される仕様だけを見て、このレッスンと同じ Red → Green → Refactor の順で `GET /api/courses/{course}/attendances` を作ります。
 
-ボス戦3 まで終えたら、バックエンドのレッスンは終わりです。続けて [フロントエンド資料](../frontend/README.md) を読むと、作ってきたAPIを画面から呼ぶときの設計とデータ取得の考え方を押さえられます。
+ボス戦3 まで終えたら、バックエンドのレッスンは終わりです。続けて [フロントエンド編](../frontend/README.md) に進むと、作ってきた受講管理のAPIを、画面から使えるようにしていきます。

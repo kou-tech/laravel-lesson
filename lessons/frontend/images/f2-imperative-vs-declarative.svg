@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="450" viewBox="0 0 960 450" font-family="Hiragino Sans, 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', 'Yu Gothic', Meiryo, sans-serif">
+<rect x="0.5" y="0.5" width="959" height="449" rx="16" fill="#FBFBFC" stroke="#E6E8EB"/>
+<rect x="40" y="28" width="440" height="36" rx="18" fill="#F0F1F3"/>
+<text x="260.0" y="51.5" font-size="15" font-weight="600" fill="#4A5361" text-anchor="middle">命令的（F2）</text>
+<rect x="520" y="28" width="400" height="36" rx="18" fill="#E9F0F9"/>
+<text x="720.0" y="51.5" font-size="15" font-weight="600" fill="#4A5361" text-anchor="middle">宣言的（F3）</text>
+<rect x="60" y="130" width="150" height="44" rx="10" fill="#FFFFFF" stroke="#C9CDD3" stroke-width="2"/>
+<text x="135.0" y="157.0" font-size="15" fill="#4A5361" text-anchor="middle">読み込みの完了</text>
+<rect x="60" y="210" width="150" height="44" rx="10" fill="#FFFFFF" stroke="#C9CDD3" stroke-width="2"/>
+<text x="135.0" y="237.0" font-size="15" fill="#4A5361" text-anchor="middle">絞り込みのボタン</text>
+<rect x="60" y="290" width="150" height="44" rx="10" fill="#FFFFFF" stroke="#C9CDD3" stroke-width="2"/>
+<text x="135.0" y="317.0" font-size="15" fill="#4A5361" text-anchor="middle">気になるのボタン</text>
+<rect x="320" y="96" width="150" height="38" rx="10" fill="#FFFFFF" stroke="#C9CDD3" stroke-width="2"/>
+<text x="395.0" y="120.0" font-size="15" fill="#4A5361" text-anchor="middle">一覧</text>
+<rect x="320" y="152" width="150" height="38" rx="10" fill="#FFFFFF" stroke="#C9CDD3" stroke-width="2"/>
+<text x="395.0" y="176.0" font-size="15" fill="#4A5361" text-anchor="middle">件数</text>
+<rect x="320" y="208" width="150" height="38" rx="10" fill="#FFFFFF" stroke="#C9CDD3" stroke-width="2"/>
+<text x="395.0" y="232.0" font-size="15" fill="#4A5361" text-anchor="middle">空のメッセージ</text>
+<rect x="320" y="264" width="150" height="38" rx="10" fill="#FFFFFF" stroke="#C9CDD3" stroke-width="2"/>
+<text x="395.0" y="288.0" font-size="15" fill="#4A5361" text-anchor="middle">ボタンの選択状態</text>
+<rect x="320" y="320" width="150" height="38" rx="10" fill="#FFFFFF" stroke="#C9CDD3" stroke-width="2"/>
+<text x="395.0" y="344.0" font-size="15" fill="#4A5361" text-anchor="middle">星の印</text>
+<rect x="320" y="376" width="150" height="38" rx="10" fill="#FFFFFF" stroke="#C9CDD3" stroke-width="2"/>
+<text x="395.0" y="400.0" font-size="15" fill="#4A5361" text-anchor="middle">気になるの件数</text>
+<path d="M212 152 L316 115 M306.4 112.2 L316 115 L310.3 123.2" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M212 152 L316 171 M309.1 163.8 L316 171 L307.0 175.3" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M212 152 L316 227 M312.9 217.5 L316 227 L306.0 227.0" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M212 232 L316 115 M306.2 117.1 L316 115 L315.0 125.0" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M212 232 L316 171 M306.0 170.0 L316 171 L312.0 180.2" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M212 232 L316 227 M307.6 221.5 L316 227 L308.2 233.3" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M212 232 L316 283 M311.3 274.2 L316 283 L306.1 284.7" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M212 232 L316 339 M314.6 329.1 L316 339 L306.1 337.3" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M212 312 L316 339 M309.6 331.3 L316 339 L306.7 342.7" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M212 312 L316 395 M313.3 385.4 L316 395 L306.0 394.5" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="560" y="96" width="150" height="44" rx="10" fill="#FFFFFF" stroke="#9DB8DC" stroke-width="2"/>
+<text x="635.0" y="123.0" font-size="15" fill="#4A5361" text-anchor="middle">絞り込みのボタン</text>
+<rect x="730" y="96" width="150" height="44" rx="10" fill="#FFFFFF" stroke="#9DB8DC" stroke-width="2"/>
+<text x="805.0" y="123.0" font-size="15" fill="#4A5361" text-anchor="middle">気になるのボタン</text>
+<path d="M635 144 V164 H720 V182 m-6 -8 l6 8 l6 -8" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M805 144 V164 H720" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="600" y="186" width="240" height="60" rx="10" fill="#FFFFFF" stroke="#9DB8DC" stroke-width="2"/>
+<text x="720.0" y="213.0" font-size="15" fill="#4A5361" text-anchor="middle">状態</text>
+<text x="720.0" y="232.0" font-size="13" fill="#7A828E" text-anchor="middle">ステータス・気になるの id</text>
+<path d="M720 250 V278 m-6 -8 l6 8 l6 -8" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="600" y="282" width="240" height="44" rx="10" fill="#FFFFFF" stroke="#9DB8DC" stroke-width="2"/>
+<text x="720.0" y="309.0" font-size="15" fill="#4A5361" text-anchor="middle">状態から画面を作る</text>
+<path d="M720 330 V358 m-6 -8 l6 8 l6 -8" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="600" y="362" width="240" height="44" rx="10" fill="#E9F0F9" stroke="#9DB8DC" stroke-width="2"/>
+<text x="720.0" y="389.0" font-size="15" fill="#4A5361" text-anchor="middle">画面</text>
+</svg>

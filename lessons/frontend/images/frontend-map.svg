@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="310" viewBox="0 0 760 310" font-family="Hiragino Sans, 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', 'Yu Gothic', Meiryo, sans-serif">
+<rect x="0.5" y="0.5" width="759" height="309" rx="16" fill="#FBFBFC" stroke="#E6E8EB"/>
+<rect x="40" y="28" width="300" height="36" rx="18" fill="#E9F0F9"/>
+<text x="60" y="51.5" font-size="15" font-weight="600" fill="#4A5361">JavaScript と React</text>
+<line x1="68" y1="96" x2="68" y2="222" stroke="#9DB8DC" stroke-width="5" stroke-linecap="round"/>
+<circle cx="68" cy="96" r="14" fill="#FFFFFF" stroke="#9DB8DC" stroke-width="3"/>
+<text x="68" y="100.5" font-size="12" font-weight="600" fill="#4A5361" text-anchor="middle">F0</text>
+<text x="98" y="101" font-size="15" fill="#4A5361">準備</text>
+<circle cx="68" cy="138" r="14" fill="#FFFFFF" stroke="#9DB8DC" stroke-width="3"/>
+<text x="68" y="142.5" font-size="12" font-weight="600" fill="#4A5361" text-anchor="middle">F1</text>
+<text x="98" y="143" font-size="15" fill="#4A5361">React に必要な JavaScript</text>
+<circle cx="68" cy="180" r="14" fill="#FFFFFF" stroke="#9DB8DC" stroke-width="3"/>
+<text x="68" y="184.5" font-size="12" font-weight="600" fill="#4A5361" text-anchor="middle">F2</text>
+<text x="98" y="185" font-size="15" fill="#4A5361">命令的に画面を作る</text>
+<circle cx="68" cy="222" r="14" fill="#FFFFFF" stroke="#9DB8DC" stroke-width="3"/>
+<text x="68" y="226.5" font-size="12" font-weight="600" fill="#4A5361" text-anchor="middle">F3</text>
+<text x="98" y="227" font-size="15" fill="#4A5361">React で宣言的に書き直す</text>
+<path d="M362 46 h28 m-8 -6 l8 6 l-8 6" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="420" y="28" width="300" height="36" rx="18" fill="#E8F4ED"/>
+<text x="440" y="51.5" font-size="15" font-weight="600" fill="#4A5361">Inertia で画面を作る</text>
+<line x1="448" y1="96" x2="448" y2="264" stroke="#9DCBB0" stroke-width="5" stroke-linecap="round"/>
+<circle cx="448" cy="96" r="14" fill="#FFFFFF" stroke="#9DCBB0" stroke-width="3"/>
+<text x="448" y="100.5" font-size="12" font-weight="600" fill="#4A5361" text-anchor="middle">F4</text>
+<text x="478" y="101" font-size="15" fill="#4A5361">Inertia でページをつなぐ</text>
+<circle cx="448" cy="138" r="14" fill="#FFFFFF" stroke="#9DCBB0" stroke-width="3"/>
+<text x="448" y="142.5" font-size="12" font-weight="600" fill="#4A5361" text-anchor="middle">F5</text>
+<text x="478" y="143" font-size="15" fill="#4A5361">TypeScript で画面を守る</text>
+<circle cx="448" cy="180" r="14" fill="#FFFFFF" stroke="#9DCBB0" stroke-width="3"/>
+<text x="448" y="184.5" font-size="12" font-weight="600" fill="#4A5361" text-anchor="middle">F6</text>
+<text x="478" y="185" font-size="15" fill="#4A5361">コンポーネント設計</text>
+<circle cx="448" cy="222" r="14" fill="#FFFFFF" stroke="#9DCBB0" stroke-width="3"/>
+<text x="448" y="226.5" font-size="12" font-weight="600" fill="#4A5361" text-anchor="middle">F7</text>
+<text x="478" y="227" font-size="15" fill="#4A5361">待ち時間を設計する</text>
+<circle cx="448" cy="264" r="16" fill="#9DCBB0"/>
+<text x="448" y="268.5" font-size="12" font-weight="700" fill="#FFFFFF" text-anchor="middle">B</text>
+<text x="478" y="269" font-size="15" font-weight="600" fill="#4A5361">ボス戦F  自分の受講一覧</text>
+</svg>

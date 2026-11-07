@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="330" viewBox="0 0 720 330" font-family="Hiragino Sans, 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', 'Yu Gothic', Meiryo, sans-serif">
+<rect x="0.5" y="0.5" width="719" height="329" rx="16" fill="#FBFBFC" stroke="#E6E8EB"/>
+<rect x="40" y="28" width="300" height="36" rx="18" fill="#F0F1F3"/>
+<text x="190" y="51.5" font-size="15" font-weight="600" fill="#4A5361" text-anchor="middle">持ち上げる前</text>
+<rect x="380" y="28" width="300" height="36" rx="18" fill="#E9F0F9"/>
+<text x="530" y="51.5" font-size="15" font-weight="600" fill="#4A5361" text-anchor="middle">持ち上げた後</text>
+<rect x="90" y="92" width="200" height="56" rx="10" fill="#FFFFFF" stroke="#C9CDD3" stroke-width="2"/>
+<text x="190" y="125" font-size="15" fill="#4A5361" text-anchor="middle">CoursesIndex</text>
+<path d="M190 148 V204" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round"/>
+<path d="M96 204 H284" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round"/>
+<path d="M96 204 V232 m-6 -8 l6 8 l6 -8" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M190 204 V232 m-6 -8 l6 8 l6 -8" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M284 204 V232 m-6 -8 l6 8 l6 -8" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="52" y="236" width="88" height="56" rx="10" fill="#FFFFFF" stroke="#C9CDD3" stroke-width="2"/>
+<text x="96" y="260" font-size="13" fill="#4A5361" text-anchor="middle">CourseItem</text>
+<text x="96" y="280" font-size="13" fill="#7A828E" text-anchor="middle">気になる</text>
+<rect x="146" y="236" width="88" height="56" rx="10" fill="#FFFFFF" stroke="#C9CDD3" stroke-width="2"/>
+<text x="190" y="260" font-size="13" fill="#4A5361" text-anchor="middle">CourseItem</text>
+<text x="190" y="280" font-size="13" fill="#7A828E" text-anchor="middle">気になる</text>
+<rect x="240" y="236" width="88" height="56" rx="10" fill="#FFFFFF" stroke="#C9CDD3" stroke-width="2"/>
+<text x="284" y="260" font-size="13" fill="#4A5361" text-anchor="middle">CourseItem</text>
+<text x="284" y="280" font-size="13" fill="#7A828E" text-anchor="middle">気になる</text>
+<rect x="430" y="92" width="200" height="56" rx="10" fill="#E9F0F9" stroke="#9DB8DC" stroke-width="2"/>
+<text x="530" y="115" font-size="15" fill="#4A5361" text-anchor="middle">CoursesIndex</text>
+<text x="530" y="136" font-size="13" fill="#7A828E" text-anchor="middle">favoriteIds</text>
+<path d="M500 152 V200 m-6 -8 l6 8 l6 -8" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="490" y="181" font-size="13" fill="#7A828E" text-anchor="end">isFavorite</text>
+<path d="M560 200 V152 m-6 8 l6 -8 l6 8" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="570" y="181" font-size="13" fill="#7A828E">onToggleFavorite</text>
+<path d="M436 204 H624" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round"/>
+<path d="M436 204 V236" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round"/>
+<path d="M530 204 V236" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round"/>
+<path d="M624 204 V236" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round"/>
+<rect x="392" y="236" width="88" height="56" rx="10" fill="#FFFFFF" stroke="#9DB8DC" stroke-width="2"/>
+<text x="436" y="269" font-size="13" fill="#4A5361" text-anchor="middle">CourseItem</text>
+<rect x="486" y="236" width="88" height="56" rx="10" fill="#FFFFFF" stroke="#9DB8DC" stroke-width="2"/>
+<text x="530" y="269" font-size="13" fill="#4A5361" text-anchor="middle">CourseItem</text>
+<rect x="580" y="236" width="88" height="56" rx="10" fill="#FFFFFF" stroke="#9DB8DC" stroke-width="2"/>
+<text x="624" y="269" font-size="13" fill="#4A5361" text-anchor="middle">CourseItem</text>
+</svg>

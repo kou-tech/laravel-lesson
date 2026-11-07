@@ -344,4 +344,4 @@ class CourseAttendanceController extends Controller
 
 ## クリアしたら次へ
 
-バックエンドのレッスンはこれで終わりです。続けて [フロントエンド資料](../frontend/README.md) を読むと、作ってきたAPIを画面から呼ぶときの設計とデータ取得の考え方を押さえられます。発展の [A1 データベース設計の原則](./A1-database-design.md) と [A2 サービスコンテナとDI](./A2-di-container.md) は、まだ読んでいなければここで読んでおくと、これまでのコードの背景が分かります。
+バックエンドのレッスンはこれで終わりです。続けて [フロントエンド編](../frontend/README.md) に進むと、作ってきた受講管理のAPIを、画面から使えるようにしていきます。発展の [A1 データベース設計の原則](./A1-database-design.md) と [A2 サービスコンテナとDI](./A2-di-container.md) は、まだ読んでいなければここで読んでおくと、これまでのコードの背景が分かります。

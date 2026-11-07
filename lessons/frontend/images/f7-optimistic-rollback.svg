@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="334" viewBox="0 0 960 334" font-family="Hiragino Sans, 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', 'Yu Gothic', Meiryo, sans-serif">
+<rect x="0.5" y="0.5" width="959" height="333" rx="16" fill="#FBFBFC" stroke="#E6E8EB"/>
+<rect x="40" y="28" width="180" height="36" rx="18" fill="#E8F4ED"/>
+<text x="60" y="51.5" font-size="15" font-weight="600" fill="#4A5361">成功したとき</text>
+<rect x="40" y="84" width="148" height="52" rx="12" fill="#FFFFFF" stroke="#C9CDD3" stroke-width="2"/>
+<text x="114.0" y="115" font-size="15" fill="#4A5361" text-anchor="middle">ボタンを押す</text>
+<rect x="226" y="84" width="148" height="52" rx="12" fill="#FFFFFF" stroke="#C9CDD3" stroke-width="2"/>
+<text x="300.0" y="115" font-size="15" fill="#4A5361" text-anchor="middle">残席 5 → 4</text>
+<rect x="412" y="84" width="148" height="52" rx="12" fill="#FFFFFF" stroke="#C9CDD3" stroke-width="2"/>
+<text x="486.0" y="115" font-size="15" fill="#4A5361" text-anchor="middle">サーバーで登録</text>
+<rect x="598" y="84" width="148" height="52" rx="12" fill="#E8F4ED" stroke="#9DCBB0" stroke-width="2"/>
+<text x="672.0" y="115" font-size="15" font-weight="600" fill="#4A5361" text-anchor="middle">4 のまま</text>
+<path d="M192 110 H222" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round"/>
+<path d="M214 104 l8 6 l-8 6" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M378 110 H408" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round"/>
+<path d="M400 104 l8 6 l-8 6" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M564 110 H594" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round"/>
+<path d="M586 104 l8 6 l-8 6" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="40" y="186" width="180" height="36" rx="18" fill="#F8EEE4"/>
+<text x="60" y="209.5" font-size="15" font-weight="600" fill="#4A5361">失敗したとき</text>
+<rect x="40" y="242" width="148" height="52" rx="12" fill="#FFFFFF" stroke="#C9CDD3" stroke-width="2"/>
+<text x="114.0" y="273" font-size="15" fill="#4A5361" text-anchor="middle">ボタンを押す</text>
+<rect x="226" y="242" width="148" height="52" rx="12" fill="#FFFFFF" stroke="#C9CDD3" stroke-width="2"/>
+<text x="300.0" y="273" font-size="15" fill="#4A5361" text-anchor="middle">残席 5 → 4</text>
+<rect x="412" y="242" width="148" height="52" rx="12" fill="#FFFFFF" stroke="#E3BC94" stroke-width="2"/>
+<text x="486.0" y="273" font-size="15" fill="#4A5361" text-anchor="middle">満席で失敗</text>
+<rect x="598" y="242" width="148" height="52" rx="12" fill="#F8EEE4" stroke="#E3BC94" stroke-width="2"/>
+<text x="672.0" y="273" font-size="15" font-weight="600" fill="#4A5361" text-anchor="middle">押す前の 5 に戻る</text>
+<rect x="784" y="242" width="148" height="52" rx="12" fill="#F0F1F3" stroke="#C9CDD3" stroke-width="2"/>
+<text x="858.0" y="273" font-size="15" fill="#4A5361" text-anchor="middle">最新の残席に直す</text>
+<path d="M192 268 H222" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round"/>
+<path d="M214 262 l8 6 l-8 6" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M378 268 H408" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round"/>
+<path d="M400 262 l8 6 l-8 6" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M564 268 H594" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round"/>
+<path d="M586 262 l8 6 l-8 6" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M750 268 H780" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round"/>
+<path d="M772 262 l8 6 l-8 6" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

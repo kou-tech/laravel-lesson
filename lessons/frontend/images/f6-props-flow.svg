@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="404" viewBox="0 0 960 404" font-family="Hiragino Sans, 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', 'Yu Gothic', Meiryo, sans-serif">
+<rect x="0.5" y="0.5" width="959" height="403" rx="16" fill="#FBFBFC" stroke="#E6E8EB"/>
+<rect x="300" y="40" width="200" height="52" rx="10" fill="#FFFFFF" stroke="#9DB8DC" stroke-width="2"/>
+<text x="400" y="71.4" font-size="15" font-weight="600" fill="#4A5361" text-anchor="middle">CoursesIndex</text>
+<rect x="700" y="40" width="200" height="52" rx="10" fill="#E8F4ED" stroke="#9DCBB0" stroke-width="2"/>
+<text x="800" y="71.4" font-size="15" font-weight="600" fill="#4A5361" text-anchor="middle">useCourseFilter</text>
+<text x="600" y="56" font-size="13" fill="#7A828E" text-anchor="middle">selected, changeStatus</text>
+<path d="M692 66 L508 66 M516 60 L508 66 L516 72" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M400 92 L400 116" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M220 116 L580 116" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M220 116 L220 130" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="220" y="152" font-size="13" fill="#7A828E" text-anchor="middle">selected, onChange</text>
+<path d="M220 166 L220 194 M214 186 L220 194 L226 186" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="120" y="198" width="200" height="52" rx="10" fill="#FFFFFF" stroke="#9DB8DC" stroke-width="2"/>
+<text x="220" y="229.4" font-size="15" font-weight="600" fill="#4A5361" text-anchor="middle">StatusFilter</text>
+<path d="M580 116 L580 130" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="580" y="152" font-size="13" fill="#7A828E" text-anchor="middle">courses</text>
+<path d="M580 166 L580 194 M574 186 L580 194 L586 186" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="480" y="198" width="200" height="52" rx="10" fill="#FFFFFF" stroke="#9DB8DC" stroke-width="2"/>
+<text x="580" y="229.4" font-size="15" font-weight="600" fill="#4A5361" text-anchor="middle">CourseList</text>
+<path d="M580 250 L580 264" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="580" y="286" font-size="13" fill="#7A828E" text-anchor="middle">course</text>
+<path d="M580 300 L580 328 M574 320 L580 328 L586 320" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="480" y="332" width="200" height="52" rx="10" fill="#FFFFFF" stroke="#9DB8DC" stroke-width="2"/>
+<text x="580" y="363.4" font-size="15" font-weight="600" fill="#4A5361" text-anchor="middle">CourseCard</text>
+<path d="M120 224 L80 224 L80 66 L292 66 M284 60 L292 66 L284 72" fill="none" stroke="#C3C8CF" stroke-width="2" stroke-dasharray="6 6" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="92" y="100" font-size="13" fill="#7A828E">選んだ status</text>
+</svg>
