@@ -220,7 +220,7 @@ return $data;
 定義したルートを確認するコマンドがあります。`make app` でコンテナに入ってから実行してください。
 
 ```bash
-php artisan route:list --path=api --except-vendor
+php artisan route:list --path=api
 ```
 
 ```
@@ -231,7 +231,7 @@ GET|HEAD   api/hello .........
 GET|HEAD   api/user ..........
 ```
 
-> `--except-vendor` は、パッケージが登録したルートを一覧から除くオプションです。付けないと、URLに `api` を含むTelescopeのルート（`telescope/telescope-api/...`）も大量に表示されます。`api/user` は、最初から `routes/api.php` に入っているルートです。
+> `api/user` は、最初から `routes/api.php` に入っているルートです。
 
 ## 練習問題
 
