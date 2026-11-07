@@ -7,7 +7,7 @@
 ### 到達目標
 - N+1問題とは何かを説明できる
 - `with()` を使ってN+1問題を解決できる
-- Telescope/ログでクエリを確認できる
+- 実行されたクエリをログで確認できる
 - `preventLazyLoading()` で Eager Loading の書き忘れを見つけて直せる
 - `withCount()` で関連するレコードの件数をまとめて数えられる
 
@@ -137,11 +137,24 @@ $courses = Course::with(['attendances' => function ($query) {
 
 ## Step 3 N+1問題の検出
 
-### Telescopeで確認
+### ログで確認
 
-1. Telescopeダッシュボードを開く (`/telescope`)
-2. 「Queries」タブを確認
-3. 同じテーブルへの繰り返しクエリを探す
+`app/Providers/AppServiceProvider.php` の `boot()` に以下を追加すると、実行された SQL が1本ずつログに書き出されます。Lesson 2 で学んだ `Log` ファサードを使います。
+
+```php
+use Illuminate\Database\Events\QueryExecuted;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+
+public function boot(): void
+{
+    DB::listen(function (QueryExecuted $query) {
+        Log::debug($query->toRawSql());
+    });
+}
+```
+
+API を呼んでから `make logs` でログを見ます。同じテーブルへの似たクエリ（`WHERE id = 1`、`WHERE id = 2`、…）が何本も並んでいたら、N+1 が起きています。確かめ終わったら、ログが増えすぎないようにこの追加は消してください。
 
 ### preventLazyLoading() で検出
 

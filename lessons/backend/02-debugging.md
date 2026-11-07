@@ -256,18 +256,6 @@ public function show(int $id)
 </details>
 
 
-## 応用 Laravel Telescope
-
-> このセクションは応用です。スキップしても以降のレッスンに影響はありません。
-
-Laravel Telescope は、Laravelアプリケーションのデバッグ用ダッシュボードです。
-リクエスト/レスポンス、実行されたクエリ、例外、ログなどをブラウザ上で確認できます。
-
-`http://localhost:8000/telescope` にアクセスするとダッシュボードが開きます。
-
-詳しくは [Laravel 公式ドキュメント - Telescope](https://laravel.com/docs/telescope) を参照してください。
-
-
 ## 参考資料
 
 - [Laravel 公式ドキュメント - Logging](https://laravel.com/docs/logging)

@@ -70,7 +70,7 @@ vendor/bin/pint --dirty
 | # | タイトル | 学習目標 |
 |---|---------|---------|
 | 1 | [はじめてのAPI](./01-first-api.md) | api.phpで最初のAPIを作成 |
-| 2 | [デバッグ手法を身につける](./02-debugging.md) | Log、Telescope、dd()の使い分け |
+| 2 | [デバッグ手法を身につける](./02-debugging.md) | Log と dd() の使い分け |
 | 3 | [API設計の基本](./03-api-design.md) | RESTful API設計原則を学ぶ |
 | 4 | [User APIの実装](./04-user-api.md) | Controller、API Resourceの活用 |
 | 5 | [バリデーション](./05-validation.md) | FormRequestによる堅牢なバリデーション |
