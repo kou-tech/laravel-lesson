@@ -1,0 +1,7 @@
+{
+    "extends": "../../../../tsconfig.json",
+    "include": [
+        "../../../../resources/js/types/**/*.d.ts",
+        "./f6.side.types.tsx"
+    ]
+}

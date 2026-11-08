@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="348" viewBox="0 0 960 348" font-family="Hiragino Sans, 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', 'Yu Gothic', Meiryo, sans-serif">
+<rect x="0.5" y="0.5" width="959" height="347" rx="16" fill="#FBFBFC" stroke="#E6E8EB"/>
+<rect x="40" y="28" width="240" height="36" rx="18" fill="#F0F1F3"/>
+<text x="60" y="51.5" font-size="15" font-weight="600" fill="#4A5361">フラグで表す</text>
+<text x="252" y="108" font-size="13" fill="#7A828E" text-anchor="middle">remaining あり</text>
+<text x="404" y="108" font-size="13" fill="#7A828E" text-anchor="middle">remaining なし</text>
+<text x="64" y="160" font-size="13" fill="#7A828E">isFull: false</text>
+<text x="64" y="252" font-size="13" fill="#7A828E">isFull: true</text>
+<rect x="184" y="124" width="136" height="64" rx="10" fill="#FFFFFF" stroke="#C9CDD3" stroke-width="2"/>
+<text x="252" y="161.4" font-size="15" fill="#4A5361" text-anchor="middle">空きあり</text>
+<rect x="336" y="124" width="136" height="64" rx="10" fill="#FFFFFF" stroke="#C9CDD3" stroke-width="2"/>
+<text x="404" y="161.4" font-size="15" fill="#4A5361" text-anchor="middle">未集計</text>
+<rect x="184" y="216" width="136" height="64" rx="10" fill="#F8EEE4" stroke="#E3BC94" stroke-width="2"/>
+<text x="252" y="253.4" font-size="15" fill="#4A5361" text-anchor="middle">ありえない</text>
+<rect x="336" y="216" width="136" height="64" rx="10" fill="#FFFFFF" stroke="#C9CDD3" stroke-width="2"/>
+<text x="404" y="253.4" font-size="15" fill="#4A5361" text-anchor="middle">満席</text>
+<rect x="560" y="28" width="240" height="36" rx="18" fill="#E8F4ED"/>
+<text x="580" y="51.5" font-size="15" font-weight="600" fill="#4A5361">判別可能なユニオン</text>
+<rect x="584" y="96" width="312" height="64" rx="10" fill="#FFFFFF" stroke="#9DCBB0" stroke-width="2"/>
+<text x="608" y="124" font-size="15" font-weight="600" fill="#4A5361">kind: 'available'</text>
+<text x="608" y="147" font-size="13" fill="#7A828E">remaining</text>
+<rect x="584" y="176" width="312" height="64" rx="10" fill="#FFFFFF" stroke="#9DCBB0" stroke-width="2"/>
+<text x="608" y="213.4" font-size="15" font-weight="600" fill="#4A5361">kind: 'full'</text>
+<rect x="584" y="256" width="312" height="64" rx="10" fill="#FFFFFF" stroke="#9DCBB0" stroke-width="2"/>
+<text x="608" y="293.4" font-size="15" font-weight="600" fill="#4A5361">kind: 'unknown'</text>
+</svg>

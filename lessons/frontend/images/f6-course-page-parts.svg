@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="436" viewBox="0 0 960 436" font-family="Hiragino Sans, 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', 'Yu Gothic', Meiryo, sans-serif">
+<rect x="0.5" y="0.5" width="959" height="435" rx="16" fill="#FBFBFC" stroke="#E6E8EB"/>
+<rect x="40" y="28" width="880" height="380" rx="16" fill="#F0F1F3"/>
+<text x="64" y="60" font-size="15" font-weight="600" fill="#4A5361">CoursesIndex</text>
+<text x="176" y="60" font-size="13" fill="#7A828E">pages/courses/index.tsx</text>
+<rect x="64" y="80" width="832" height="88" rx="14" fill="#E9F0F9"/>
+<text x="88" y="110" font-size="15" font-weight="600" fill="#4A5361">StatusFilter</text>
+<rect x="88" y="124" width="96" height="32" rx="8" fill="#FFFFFF" stroke="#9DB8DC" stroke-width="2"/>
+<text x="136" y="145" font-size="13" fill="#4A5361" text-anchor="middle">すべて</text>
+<rect x="196" y="124" width="96" height="32" rx="8" fill="#FFFFFF" stroke="#9DB8DC" stroke-width="2"/>
+<text x="244" y="145" font-size="13" fill="#4A5361" text-anchor="middle">下書き</text>
+<rect x="304" y="124" width="96" height="32" rx="8" fill="#FFFFFF" stroke="#9DB8DC" stroke-width="2"/>
+<text x="352" y="145" font-size="13" fill="#4A5361" text-anchor="middle">公開中</text>
+<rect x="412" y="124" width="96" height="32" rx="8" fill="#FFFFFF" stroke="#9DB8DC" stroke-width="2"/>
+<text x="460" y="145" font-size="13" fill="#4A5361" text-anchor="middle">終了</text>
+<rect x="64" y="184" width="832" height="200" rx="14" fill="#E8F4ED"/>
+<text x="88" y="214" font-size="15" font-weight="600" fill="#4A5361">CourseList</text>
+<rect x="88" y="232" width="253.3" height="128" rx="12" fill="#FFFFFF" stroke="#9DCBB0" stroke-width="2"/>
+<text x="214.7" y="301.4" font-size="15" fill="#4A5361" text-anchor="middle">CourseCard</text>
+<rect x="353.3" y="232" width="253.3" height="128" rx="12" fill="#FFFFFF" stroke="#9DCBB0" stroke-width="2"/>
+<text x="480" y="301.4" font-size="15" fill="#4A5361" text-anchor="middle">CourseCard</text>
+<rect x="618.7" y="232" width="253.3" height="128" rx="12" fill="#FFFFFF" stroke="#9DCBB0" stroke-width="2"/>
+<text x="745.3" y="301.4" font-size="15" fill="#4A5361" text-anchor="middle">CourseCard</text>
+</svg>
